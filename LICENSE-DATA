@@ -1,0 +1,124 @@
+GIẤY PHÉP DỮ LIỆU
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Bản quyền 2026 BDSG.
+
+================================================================================
+PHẠM VI ÁP DỤNG — ĐỌC TRƯỚC
+================================================================================
+
+Giấy phép này CHỈ áp cho bộ dữ liệu nằm trong thư mục:
+
+    bo-du-lieu/
+
+Giấy phép này KHÔNG áp cho:
+
+  - MÃ NGUỒN của kho này (gồm mọi thứ trong huan-luyen/, danh-gia/, cong/ và
+    mọi tệp .py, .sh, .yaml, .json cấu hình). Mã nguồn theo Apache License 2.0
+    — xem tệp LICENSE-CODE.
+
+  - Các nguồn dữ liệu ĐÃ BỊ LOẠI khỏi bản phát hành. Chúng không nằm trong kho,
+    nên không có gì để cấp phép. Danh sách và lý do loại ghi trong README.md,
+    mục "Những gì CỐ Ý không có trong bộ này và vì sao". Tóm tắt các nguồn bị
+    loại: map5d.khach_dn (1.079.991 bản ghi dữ liệu khách hàng CRM),
+    kho-tri-thuc (118/118 tệp mang cấp phép bên thứ ba), ocop, tin-tuc,
+    bai-dang, nao-agent, bai-dang-bds, và cột
+    business.capabilities.description.
+
+  - TRỌNG SỐ MÔ HÌNH. Tại 25/09/2026 chưa có trọng số nào được phát hành.
+    Khi có, giấy phép của trọng số sẽ được công bố riêng — không mặc định là
+    giấy phép này.
+
+Thư mục bo-du-lieu/ do nhóm bộ dữ liệu giữ và có thẻ dữ liệu (datasheet)
+riêng bên trong. Giấy phép này có hiệu lực với mọi nội dung nằm trong thư mục
+đó, kể cả nội dung được bổ sung sau ngày viết tệp này (25/09/2026).
+
+================================================================================
+TÓM TẮT ĐIỀU KHOẢN (bản dễ đọc, KHÔNG thay thế văn bản pháp lý)
+================================================================================
+
+BẠN ĐƯỢC TỰ DO:
+
+  - CHIA SẺ — sao chép và phân phối lại dữ liệu ở bất kỳ định dạng hoặc phương
+    tiện nào.
+
+  - CHỈNH SỬA — trộn lẫn, biến đổi và xây dựng tác phẩm phái sinh từ dữ liệu,
+    cho bất kỳ mục đích nào, KỂ CẢ MỤC ĐÍCH THƯƠNG MẠI.
+
+  Bên cấp phép không thể thu hồi các quyền tự do này miễn là bạn tuân thủ điều
+  khoản của giấy phép.
+
+THEO CÁC ĐIỀU KHOẢN SAU:
+
+  - GHI CÔNG — Bạn phải ghi công thích đáng, cung cấp liên kết tới giấy phép,
+    và nêu rõ nếu có thay đổi. Bạn có thể làm điều đó theo bất kỳ cách hợp lý
+    nào, nhưng không theo cách gợi ý rằng bên cấp phép ủng hộ bạn hoặc việc bạn
+    sử dụng dữ liệu.
+
+  - KHÔNG CÓ HẠN CHẾ BỔ SUNG — Bạn không được áp dụng các điều khoản pháp lý
+    hoặc biện pháp công nghệ nhằm hạn chế người khác làm bất cứ điều gì mà giấy
+    phép cho phép.
+
+LƯU Ý:
+
+  - Bạn không phải tuân thủ giấy phép đối với những phần dữ liệu thuộc phạm vi
+    công cộng, hoặc khi việc sử dụng của bạn được cho phép bởi một ngoại lệ
+    hay giới hạn quyền tác giả hiện hành.
+
+  - Giấy phép không cấp mọi quyền cần thiết cho mọi mục đích sử dụng. Các quyền
+    khác như quyền nhân thân, quyền riêng tư, hoặc quyền nhân thân đối với hình
+    ảnh có thể giới hạn cách bạn sử dụng dữ liệu.
+
+================================================================================
+VĂN BẢN PHÁP LÝ ĐẦY ĐỦ
+================================================================================
+
+Phần tóm tắt ở trên là bản dễ đọc, KHÔNG phải giấy phép. Văn bản có hiệu lực
+pháp lý là bản đầy đủ của Creative Commons Attribution 4.0 International:
+
+    https://creativecommons.org/licenses/by/4.0/legalcode
+    Bản tiếng Việt: https://creativecommons.org/licenses/by/4.0/legalcode.vi
+    Trang tóm tắt chính thức: https://creativecommons.org/licenses/by/4.0/
+
+Khi có mâu thuẫn giữa tệp này và văn bản pháp lý đầy đủ, VĂN BẢN PHÁP LÝ ĐẦY ĐỦ
+THẮNG.
+
+================================================================================
+CÁCH GHI CÔNG
+================================================================================
+
+Chuỗi ghi công tối thiểu:
+
+    Nguồn dữ liệu: Open LLM Business Việt Nam (BDSG), CC BY 4.0
+    https://llm.bdsg.vn
+
+Nếu bạn có chỉnh sửa, hãy nêu rõ đã chỉnh sửa gì. Ví dụ:
+
+    Dữ liệu dẫn xuất từ Open LLM Business Việt Nam (BDSG), CC BY 4.0,
+    đã lọc bỏ các đoạn còn rác cào web và chuẩn hoá lại dấu tiếng Việt.
+
+================================================================================
+KHÔNG BẢO ĐẢM — ĐIỀU CẦN BIẾT VỀ CHÍNH DỮ LIỆU NÀY
+================================================================================
+
+Dữ liệu được cung cấp NGUYÊN TRẠNG, không kèm bảo đảm dưới bất kỳ hình thức nào.
+Những giới hạn sau đã được ĐO và công bố, không phải điều khoản miễn trừ chung
+chung:
+
+  - 110 trên 11.733 đoạn (0,17 MB trên 7,16 MB = 2,3%) còn dính rác cào web
+    (menu web, CSS, JS, URL ngoài), tập trung ở nguồn ho-so-niem-yet
+    (110/5.192 = 2,1%). Đây là số đo trên bản thô, đo ngày 25/09/2026; bộ lọc
+    của bản phát hành thuộc mốc M4 và trạng thái của nó ghi trong bo-du-lieu/.
+
+  - Dữ liệu chụp trạng thái tại thời điểm cào. Thông tin doanh nghiệp thay đổi
+    liên tục; không dùng bộ này làm nguồn dữ kiện chính thức.
+
+  - Ngữ liệu có 29 khớp chuỗi dạng mã số thuế / số ĐKKD doanh nghiệp — ở Việt
+    Nam đây là thông tin đăng ký CÔNG KHAI của pháp nhân, được giữ lại có chủ
+    đích. Quét cùng ngày cho 0 email, 0 số điện thoại, 0 URL nội bộ.
+    Đo ngày 25/09/2026.
+
+  - Bộ dữ liệu thiên lệch về doanh nghiệp niêm yết: nguồn ho-so-niem-yet chiếm
+    4,20 trên 7,16 MB, tức 59% dung lượng.
+
+  - Phân bố theo tỉnh CHƯA ĐƯỢC ĐO. Không suy ra độ phủ vùng miền từ bộ này.

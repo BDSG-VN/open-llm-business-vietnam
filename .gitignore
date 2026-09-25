@@ -1,0 +1,86 @@
+# .gitignore — Open LLM Business Việt Nam
+#
+# Nguyên tắc: kho công khai này phát hành DỮ LIỆU ĐÃ LỌC, MÃ và BỘ ĐÁNH GIÁ.
+# Dữ liệu thô, bí mật và trọng số lớn không bao giờ được đi vào lịch sử git,
+# vì một khi đã commit thì gỡ ra khỏi lịch sử là việc rất khó và người khác
+# có thể đã clone rồi.
+
+# ------------------------------------------------------------------
+# 1. Môi trường Python
+# ------------------------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ------------------------------------------------------------------
+# 2. Bí mật
+# ------------------------------------------------------------------
+# Khoá LiteLLM, chuỗi kết nối CSDL, khoá gọi llm.bdsg.vn.
+# Ngữ liệu đã được quét sạch email/số điện thoại (đo 25/09/2026: 0/0/0),
+# nhưng bí mật hạ tầng thì nằm ở tệp cấu hình chứ không nằm trong ngữ liệu.
+.env
+.env.*
+*.pem
+*.key
+bi-mat/
+cau-hinh-cuc-bo.*
+
+# ------------------------------------------------------------------
+# 3. Dữ liệu thô — thứ CHƯA qua bước lọc và bước gỡ dữ liệu cá nhân
+# ------------------------------------------------------------------
+# Đây là ranh giới quan trọng nhất của tệp này. Bản kết xuất thô từ CSDL
+# chứa cả các nguồn ĐÃ BỊ LOẠI khỏi bản phát hành (map5d.khach_dn 1.079.991
+# bản ghi CRM, kho-tri-thuc 118/118 tệp cấp phép bên thứ ba, hai nguồn máy
+# sinh 6.055 đoạn). Chỉ thứ đã qua dây chuyền lọc mới được vào bo-du-lieu/.
+du-lieu-tho/
+ket-xuat-csdl/
+*.dump
+*.sql.gz
+
+# Mọi .jsonl mặc định bị chặn vì đó là định dạng của bản kết xuất thô...
+*.jsonl
+# ...trừ bộ dữ liệu đã lọc, đã cấp phép CC BY 4.0, nằm trong bo-du-lieu/.
+!bo-du-lieu/**/*.jsonl
+
+# ------------------------------------------------------------------
+# 4. Trọng số và điểm dừng huấn luyện
+# ------------------------------------------------------------------
+# Tại 25/09/2026 chưa có trọng số nào. Khi có, chúng đi lên kho trọng số
+# (Hugging Face) chứ không đi vào git: git không xử lý tốt tệp nhị phân lớn.
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.onnx
+trong-so/
+diem-dung/
+checkpoints/
+
+# ------------------------------------------------------------------
+# 5. Nhật ký chạy và kết quả trung gian
+# ------------------------------------------------------------------
+wandb/
+swanlog/
+runs/
+nhat-ky/
+*.log
+
+# ------------------------------------------------------------------
+# 6. Rác hệ điều hành và trình soạn thảo
+# ------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Danh sách danh tính của cổng khong-danh-tinh — KHÔNG BAO GIỜ đưa lên kho.
+# Xem đầu cong/khong-danh-tinh.py để biết vì sao nó phải nằm ngoài git.
+cong/danh-tinh.local

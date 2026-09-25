@@ -1,0 +1,43 @@
+{
+  "hidden_size": 768,
+  "num_hidden_layers": 16,
+  "num_attention_heads": 8,
+  "num_key_value_heads": 4,
+  "head_dim": 96,
+  "intermediate_size": 2432,
+  "vocab_size": 24576,
+  "hidden_act": "silu",
+  "max_position_embeddings": 32768,
+  "rope_theta": 1000000.0,
+  "rms_norm_eps": 1e-06,
+  "tie_word_embeddings": true,
+  "flash_attn": true,
+  "dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "use_moe": false,
+  "bdsg": {
+    "ten": "bdsg-vua",
+    "muc_dich": "Huan luyen tren MOT GPU 24GB (3090 / 4090 / A5000). Ban chinh de danh gia.",
+    "tham_so_uoc_tinh": {
+      "tong": 136867584,
+      "tong_trieu": 136.87,
+      "kich_hoat_trieu": 136.87,
+      "trang_thai": "TINH TOAN, CHUA DO.",
+      "cach_tinh": "Xem huan-luyen/cau-hinh/tinh_tham_so.py.",
+      "bo_nho_trong_so_fp16_MB": 261.1,
+      "bo_nho_trong_so_fp32_MB": 522.1,
+      "bo_nho_huan_luyen_uoc_tinh_GB": 2.04,
+      "bo_nho_huan_luyen_tinh_ra_sao": "AdamW giu ban fp32 cua trong so (4 byte) + hai moment (4+4 byte) + gradient (4 byte) = 16 byte moi tham so. 136867584 * 16 / 1024^3 = 2.04 GiB. CHUA tinh activation, activation phu thuoc batch_size va max_seq_len nen chua do duoc o day."
+    },
+    "vi_sao_chon_so_nay": [
+      "16 lop thay vi 8: MobileLLM (duoc MiniMind dan lai trong README muc 'Model Configuration') ket luan o quy mo nho, CHIEU SAU an hon CHIEU RONG voi cung ngan sach tham so. minimind2 (104M) cung dung 16 lop o hidden 768.",
+      "num_key_value_heads=4 tren 8 query head: GQA ti le 2:1, giam KV cache con mot nua so voi MHA. Day la lua chon cua minimind-3 (khong phai cua minimind2, ban do dung kv=2).",
+      "vocab_size=24576: giong het cac cau hinh khac trong ho."
+    ],
+    "canh_bao": [
+      "Con so 2.2 GB chi la bo nho trang thai toi uu. Khong duoc dung no de hua 'chay vua 24GB' — chua do activation.",
+      "Xem canh bao vocab_size o nho.json, ap dung y het."
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "hidden_size": 512,
+  "num_hidden_layers": 8,
+  "num_attention_heads": 8,
+  "num_key_value_heads": 4,
+  "head_dim": 64,
+  "intermediate_size": 1664,
+  "vocab_size": 24576,
+  "hidden_act": "silu",
+  "max_position_embeddings": 32768,
+  "rope_theta": 1000000.0,
+  "rms_norm_eps": 1e-06,
+  "tie_word_embeddings": true,
+  "flash_attn": true,
+  "dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "use_moe": false,
+
+  "bdsg": {
+    "ten": "bdsg-nho",
+    "muc_dich": "Chay tren may ca nhan, CPU. Day la cau hinh mac dinh de nguoi dung tai ve.",
+    "tham_so_uoc_tinh": {
+      "tong": 39331328,
+      "tong_trieu": 39.33,
+      "kich_hoat_trieu": 39.33,
+      "trang_thai": "TINH TOAN, CHUA DO. Chua co trong so nao ton tai (25/09/2026).",
+      "cach_tinh": "Xem huan-luyen/cau-hinh/tinh_tham_so.py. Cong thuc doi chieu voi bang tham so trong README_en.md cua MiniMind: cau hinh 768/8/kv4/vocab6400 ra 63.91M, ho ghi 64M; cau hinh MoE 4 chuyen gia ra 198.42M-A63.94M, ho ghi 198M-A64M. Sai so duoi 0.2% nen cong thuc duoc coi la dung.",
+      "bo_nho_trong_so_fp16_MB": 75.0,
+      "bo_nho_trong_so_fp32_MB": 150.0
+    },
+    "vi_sao_chon_so_nay": [
+      "hidden_size=512 va 8 lop: dung lai dung kich thuoc minimind2-small (26M o vocab 6400) vi day la cau hinh duy nhat trong ho MiniMind da co bang chung chay duoc that. BDSG khong phat minh kich thuoc moi o ban dau.",
+      "intermediate_size=1664 la ket qua cong thuc mac dinh cua MiniMind: ceil(512*pi/64)*64. Ghi ro ra day de khong phu thuoc vao gia tri mac dinh cua thu vien.",
+      "head_dim=64 = hidden_size/num_attention_heads, dung mac dinh cua MiniMindConfig.",
+      "vocab_size=24576: BAT BUOC giong het hai cau hinh con lai. Ly do o README muc 3."
+    ],
+    "canh_bao": [
+      "vocab_size PHAI khop voi tu vung that sinh ra tu huan-luyen/tu-vung/huan_luyen_tu_vung.py. Neu lech, embedding tra ve loi chi so ngay batch dau.",
+      "trainer/train_pretrain.py dong 108 va trainer/train_full_sft.py dong 109 KHONG truyen vocab_size vao MiniMindConfig, nen mo hinh se lang le lay mac dinh 6400. Phai va hai dong do. Xem README muc 6."
+    ]
+  }
+}
