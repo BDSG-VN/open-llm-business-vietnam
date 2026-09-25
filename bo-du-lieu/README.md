@@ -114,27 +114,28 @@ Cột `description` của bảng này **bị loại** — lý do ở mục 6.2.
 
 ---
 
-## 3. Ngôn ngữ: tiếng Việt → tiếng Anh → tiếng Trung
+## 3. Ngôn ngữ: tiếng Việt là chính, tiếng Anh là phụ
 
-Thứ tự ưu tiên của dự án do chủ dự án chốt: **tiếng Việt là chính, tiếng Anh thứ hai,
-tiếng Trung thứ ba.** Tiếng Trung **được giữ lại**, chỉ xếp sau hai thứ tiếng kia.
+Phạm vi ngôn ngữ của dự án, chốt ngày 26/09/2026, là **đúng hai**: tiếng Việt là chính,
+tiếng Anh là phụ. Không có ngôn ngữ thứ ba, không trong ngữ liệu và không trong lược đồ.
 
-Điều đó áp vào bộ dữ liệu này như sau, và có chỗ phải nói thẳng là *không có*:
+Điều đó áp vào bộ dữ liệu này như sau, và có chỗ phải nói thẳng là *chưa đo*:
 
 | Ngôn ngữ | Thứ tự | Có trong bộ dữ liệu này không |
 |---|---|---|
 | Tiếng Việt | 1 | **Có** — là toàn bộ lớp 1, phần lớn lớp 2 và cột `name` của lớp 3. |
 | Tiếng Anh | 2 | **Có, nhưng ít và chưa đo riêng** — chỉ nằm ở cột `name_en` (lớp 3). Khối lượng riêng phần tiếng Anh: **chưa đo**. |
-| Tiếng Trung | 3 | **KHÔNG có trong bộ này.** Bộ dữ liệu BDSG không chứa ngữ liệu tiếng Trung nào. |
 
-Tiếng Trung vào dự án ở **tầng khác**: ngữ liệu gốc của MiniMind
-(github.com/jingyaogong/minimind, Apache-2.0) là tiếng Trung + tiếng Anh, và bộ từ vựng
-BPE mức byte phải chừa chỗ cho cả ba thứ tiếng. Đó là việc của phần `huan-luyen/tu-vung`
-và `huan-luyen/du-lieu`, **không phải của bộ dữ liệu mở này**. Ở đây, thứ tự ba ngôn ngữ
-chỉ để lại một dấu vết đo được: mỗi bản ghi JSONL mang trường `ngon_ngu`
-(`vi` | `en` | `zh` | `vi+en`), để sau này ai cũng đếm được tỉ lệ ba thứ tiếng thay vì đoán.
+Dấu vết đo được của thứ tự ấy: mỗi bản ghi JSONL mang trường `ngon_ngu`
+(`vi` | `en` | `vi+en`), để sau này ai cũng **đếm được** tỉ lệ hai thứ tiếng thay vì đoán.
 
-Tỉ lệ trộn ba ngôn ngữ khi tiền huấn luyện: **chưa quyết, chưa đo.**
+Tỉ lệ trộn hai ngôn ngữ khi tiền huấn luyện: **chưa quyết, chưa đo.**
+
+> **Vì sao thu phạm vi lại.** Bản trước của thẻ này liệt kê ba ngôn ngữ, trong đó ngôn ngữ
+> thứ ba có đúng một ô ghi *"chưa chọn nguồn, chưa đo"* — tức là một lời hứa không kèm số
+> đo nào. Theo đúng nguyên tắc ở đầu thẻ (*không có số nào được viết ra mà chưa đo*), cách
+> xử đúng không phải là để ô trống chờ mãi, mà là **bỏ hẳn khỏi phạm vi**. Một phạm vi hẹp
+> mà đo được thì kiểm chứng được; một phạm vi rộng mà mọi ô đều ghi "chưa đo" thì không.
 
 ---
 

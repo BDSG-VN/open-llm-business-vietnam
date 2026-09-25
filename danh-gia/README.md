@@ -62,9 +62,14 @@ nghiệp, **bịa một con số nguy hiểm hơn là không trả lời đượ
   ngữ liệu, chỉ cần lấy ra. Được 0,636 ở phần dễ nhất là chỗ còn nhiều việc nhất, không
   phải chỗ để khoe.
 - **0,953 ở câu bẫy là con số tốt nhất trong bảng**, và cũng là con số đáng giữ nhất. Mọi
-  thay đổi về sau phải kiểm lại số này trước tiên: tài liệu của chính MiniMind ghi rõ mô
-  hình của họ **bịa kiến thức**, và **độ ổn định sự thật giảm sau giai đoạn học tăng cường**.
-  Nghĩa là con số này được dự báo sẽ **tụt** ở các mốc sau. Biết trước thì phải canh.
+  thay đổi về sau phải kiểm lại số này trước tiên. Hai lý do đã biết trước: mô hình ngôn
+  ngữ **nhỏ** bịa kiến thức (không đủ chỗ nhớ sự kiện, nên khi bị hỏi thứ nó không biết,
+  đầu ra trôi chảy vẫn là đầu ra bịa), và **độ ổn định sự thật thường giảm sau các giai
+  đoạn tinh chỉnh theo sở thích** (RLHF/DPO) — mô hình học cách trả lời *dễ nghe* hơn, và
+  dễ nghe đôi khi trái với đúng. Nghĩa là con số này được **dự báo** sẽ tụt ở các mốc sau.
+  Đây là dự báo theo hiểu biết chung về mô hình nhỏ, **không phải số đo của BDSG** — nhưng
+  biết trước thì phải canh, và phải canh sau **mỗi** giai đoạn tinh chỉnh chứ không chỉ
+  một lần ở cuối.
 - **0,908 tiếng Việt tổng quát** đến từ mô hình bên thứ ba đang chạy, **không** phải từ
   trọng số của BDSG (xem mục ngay dưới).
 
@@ -96,12 +101,12 @@ mô hình nhúng nào) đặt trước **một mô hình của bên thứ ba**.
 Vậy nên:
 
 - Năm con số trên đo **hệ truy hồi + mô hình bên thứ ba**.
-- Chúng **không** đo mô hình MiniMind mà dự án sắp huấn luyện.
+- Chúng **không** đo mô hình mà dự án sắp huấn luyện.
 - Khi mô hình tự huấn luyện đầu tiên chạy được, điểm của nó **gần như chắc chắn thấp hơn
-  nhiều** — một mô hình cỡ 26M–198M tham số không so được với mô hình thương mại lớn. Điều
-  đó **không phải thất bại**; nó là cái giá của việc người dùng tải mô hình về chạy trên máy
-  cá nhân. Nhưng phải công bố hai cột số riêng, **không được để lẫn**, và mọi con số phải
-  ghi rõ đo trên hệ nào.
+  nhiều** — một mô hình đủ nhỏ để chạy trên máy cá nhân không so được với mô hình thương mại
+  lớn. Điều đó **không phải thất bại**; nó là cái giá của việc người dùng tải mô hình về
+  chạy trên máy mình. Nhưng phải công bố hai cột số riêng, **không được để lẫn**, và mọi con
+  số phải ghi rõ đo trên hệ nào.
 
 Nói gọn: bảng 22/09/2026 là **điểm xuất phát để so sánh**, không phải thành tích của mô
 hình sắp có.
@@ -135,17 +140,18 @@ Luật này được ghi thành ràng buộc kiểm tra trong [`luoc-do-bo-de.md
 
 ## Ngôn ngữ
 
-Thứ tự ưu tiên của dự án: **tiếng Việt chính → tiếng Anh thứ hai → tiếng Trung thứ ba.**
+Phạm vi ngôn ngữ của dự án, chốt ngày 26/09/2026, là **đúng hai**: tiếng Việt là chính,
+tiếng Anh là phụ.
 
-Bộ 227 câu hiện tại phục vụ **tiếng Việt**. Về tiếng Anh và tiếng Trung: **chưa đo** — hiện
-không có nhóm câu nào cho hai thứ tiếng ấy, và không có con số nào để công bố.
+Bộ 227 câu hiện tại phục vụ **tiếng Việt**, cả 227 câu. Về tiếng Anh: **chưa đo** — hiện
+không có nhóm câu nào, và không có con số nào để công bố.
 
-Vì sao vẫn phải tính đến chúng, và vì sao tiếng Trung không bị bỏ hẳn: MiniMind vốn được
-huấn luyện trên ngữ liệu **tiếng Trung + tiếng Anh**, `requirements.txt` của họ còn có
-`jieba` để tách từ tiếng Trung. BDSG huấn luyện **từ đầu** với từ vựng riêng ưu tiên tiếng
-Việt, nên năng lực hai thứ tiếng kia sẽ **thay đổi** so với bản gốc — theo hướng nào thì
-chưa biết, vì chưa đo. Giữ tiếng Trung ở vị trí thứ ba nghĩa là: vẫn phải đo, nhưng đo sau,
-và không được lấy kết quả tiếng Việt để suy ra.
+Vì sao tiếng Anh vẫn phải có nhóm câu riêng, dù là ngôn ngữ phụ: BDSG huấn luyện từ vựng
+**ưu tiên tiếng Việt**, và phép đo ngày 25/09/2026 cho thấy điều đó **làm tiếng Anh tệ đi
+22,0%** ở mức nén token. Đó là bằng chứng rằng năng lực tiếng Anh **thay đổi** chứ không
+đứng yên — theo hướng nào ở mức *trả lời*, chứ không phải ở mức *nén token*, thì **chưa
+biết, vì chưa đo**. Nén tốt hơn không đồng nghĩa trả lời tốt hơn, và chiều ngược lại cũng
+vậy. Không được lấy kết quả tiếng Việt để suy ra tiếng Anh.
 
 Khi bổ sung, thêm nhóm mới kèm số câu, **đừng sửa 227 câu đang có** — sửa bộ đề cũ là mất
 luôn khả năng so với đường cơ sở 22/09/2026.

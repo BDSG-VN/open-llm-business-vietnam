@@ -1,38 +1,61 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Do chat luong tu vung (tokenizer) tren tieng Viet — va so sanh nhieu tu vung.
+"""Do chat luong tu vung (tokenizer) tren tieng Viet va tieng Anh — va so sanh nhieu bo.
 
 =============================================================================
 TEP NAY LA CAI GI
 =============================================================================
-README cua du an khang dinh: tu vung 6.400 tu cua MiniMind, huan luyen tren
-tieng Trung va tieng Anh, bam chu tieng Viet co dau thanh qua nhieu token.
-Mot khang dinh khong co so do di kem thi chi la y kien. Tep nay la cai may do.
+Kho nay khang dinh: mot tu vung khong hoc tieng Viet se bam chu tieng Viet co
+dau thanh qua nhieu token. Mot khang dinh khong co so do di kem thi chi la y
+kien. Tep nay la cai may do.
 
 No tra loi bon cau hoi, va chi bon cau hoi do:
 
-  1. Mot ky tu tieng Viet ton bao nhieu token?  (token_tren_ky_tu — thap la tot)
-  2. Chu CO DAU co bi bam nhieu hon chu KHONG DAU khong, trong CUNG mot tu vung?
-     Day moi la phep so sanh co gia tri: no loai bo moi khac biet ve do dai tu,
-     ve chu de van ban, chi con lai dung mot bien la dau thanh.
-  3. Bao nhieu token khong che duoc tron mot ky tu nao (manh byte)?
-     Byte-level BPE khong bao gio bao loi khi gap chu la — no tut xuong muc byte.
+  1. Mot ky tu tieng Viet ton bao nhieu token?  (thap la tot)
+  2. Chu CO DAU co bi bam vun hon chu KHONG DAU khong, trong CUNG mot tu vung?
+     Day moi la phep so co gia tri nhat: no loai bo moi khac biet ve do dai tu,
+     ve chu de van ban, ve kich thuoc tu vung — chi con lai dung mot bien la
+     dau thanh.
+  3. Bao nhieu token khong che duoc tron mot ky tu moi nao (manh byte)?
+     Byte-level BPE khong bao gio bao loi khi gap chu la, no tut xuong muc byte.
      Mot chu tieng Viet trong UTF-8 chiem 2-3 byte, nen mot chu khong co merge
      se thanh 2-3 token byte. Day la cho tien ngu canh chay ra ma khong ai thay.
-  4. So sanh truc tiep hai hay nhieu tu vung tren cung mot van ban.
+  4. So sanh truc tiep hai hay nhieu tu vung tren CUNG mot van ban.
 
-NO KHONG tra loi: tu vung nao cho mo hinh thong minh hon. Do phai do bang bo
-danh gia tren mo hinh da huan luyen, khong phai bang may dem token.
+NO KHONG tra loi: tu vung nao lam mo hinh thong minh hon. Do phai do bang bo
+danh gia tren mo hinh da huan luyen (danh-gia/), khong phai bang may dem token.
+Nen tot la dieu kien CAN, khong phai dieu kien DU.
+
+=============================================================================
+CACH SO SANH CONG BANG — DOC TRUOC KHI TIN BAT KY CON SO NAO
+=============================================================================
+Hai luat, vi pham mot trong hai la phep do vo nghia:
+
+  LUAT 1 — CUNG KICH THUOC TU VUNG. Tu vung lon hon LUON nen tot hon, bat ke no
+  hoc tieng gi. Khoe "toi giam duoc 66% token" trong khi am tham tang tu vung
+  tu 6.400 len 24.576 la so sanh gian. Script nay IN RA kich thuoc that cua
+  tung bo va CANH BAO khi chung lech nhau, de khong ai vo tinh doc nham.
+
+  LUAT 2 — DOI CHUNG PHAI TU SINH DUOC. Doi chung tot nhat khong phai tu vung
+  cua nguoi khac ma la tu vung do CHINH minh huan luyen, chi khac mot bien.
+  Sinh no nhu sau (khong can du lieu cua ai):
+
+      python3 huan_luyen_tu_vung.py --nguon-anh <ngu-lieu-tieng-anh.jsonl> \\
+          --ti-le-viet 0 --ti-le-anh 1 --tu-vung 6400 --ra /tmp/doi-chung-en
+
+  Ban do chung la mot tu vung CUNG 6.400 nhung KHONG hoc tieng Viet. So no voi
+  ban hoc tieng Viet thi khac biet con dung mot bien, va ca phep do tu chua —
+  khong phu thuoc vao tu vung cua bat ky ai.
 
 =============================================================================
 CHAY
 =============================================================================
-  # so tu vung BDSG voi tu vung goc cua MiniMind, tren van ban mau co san:
-  python3 do_tokenizer.py --bo bdsg=../../bo-du-lieu/tu-vung-bdsg-v1 \
-                          --bo minimind=<thu-muc-minimind>/model
+  # so hai bo tren van ban mau co san:
+  python3 do_tokenizer.py --bo bdsg=../../bo-du-lieu/tu-vung-bdsg-v1 \\
+                          --bo doi-chung-en=/tmp/doi-chung-en
 
   # do tren ngu lieu that cua minh thay vi van ban mau:
-  python3 do_tokenizer.py --bo bdsg=<thu-muc> --van-ban vi=/du/lieu/bdsg.jsonl
+  python3 do_tokenizer.py --bo bdsg=<thu-muc> --van-ban vi_co_dau=/du/lieu/bdsg.jsonl
 
   # ghi ket qua ra JSON de dua vao bao cao:
   python3 do_tokenizer.py --bo ... --ra ket-qua-do.json
@@ -54,22 +77,18 @@ except ImportError:
 
 # ---------------------------------------------------------------------------
 # Van ban mau. Tu viet, khong lay tu nguon co ban quyen.
+#
+# Ba nhan, va ba nhan nay la mot thiet ke chu khong phai liet ke tuy tien:
+#   vi_co_dau    — tieng Viet dung chinh ta day du. Day la cai can do.
+#   vi_khong_dau — DUNG NOI DUNG AY, chi bo dau. Day la doi chung noi bo: moi
+#                  khac biet giua hai dong nay chi con do dau thanh gay ra.
+#   en           — tieng Anh, de thay tu vung co thien vi ngon ngu nao.
+#
 # Chu de co tinh: van phong ho so doanh nghiep — dung loai van ban ma mo hinh
-# nay se phai doc. Do tokenizer tren van chuong roi ket luan cho ho so tai chinh
-# la do sai doi tuong.
+# nay se phai doc. Do tokenizer tren van chuong roi ket luan cho ho so tai
+# chinh la do sai doi tuong.
 # ---------------------------------------------------------------------------
 VAN_BAN_MAU = {
-    "vi": [
-        "Cong ty co phan dau tu va phat trien bat dong san cong bo bao cao tai chinh "
-        "hop nhat quy ba nam 2026, voi doanh thu thuan dat muc tang truong hai con so "
-        "so voi cung ky nam truoc.",
-        "Doanh nghiep dang ky nganh nghe kinh doanh chinh la tu van quan ly, xay dung "
-        "cong trinh ky thuat dan dung va kinh doanh bat dong san, quyen su dung dat "
-        "thuoc chu so huu, chu su dung hoac di thue.",
-        "Hoi dong quan tri thong qua nghi quyet ve viec trien khai du an khu do thi "
-        "moi tai tinh Thanh Hoa, tong muc dau tu du kien duoc phe duyet trong ky hop "
-        "thuong nien sap toi.",
-    ],
     "vi_co_dau": [
         "Công ty cổ phần đầu tư và phát triển bất động sản công bố báo cáo tài chính "
         "hợp nhất quý ba năm 2026, với doanh thu thuần đạt mức tăng trưởng hai con số "
@@ -81,6 +100,17 @@ VAN_BAN_MAU = {
         "mới tại tỉnh Thanh Hóa, tổng mức đầu tư dự kiến được phê duyệt trong kỳ họp "
         "thường niên sắp tới.",
     ],
+    "vi_khong_dau": [
+        "Cong ty co phan dau tu va phat trien bat dong san cong bo bao cao tai chinh "
+        "hop nhat quy ba nam 2026, voi doanh thu thuan dat muc tang truong hai con so "
+        "so voi cung ky nam truoc.",
+        "Doanh nghiep dang ky nganh nghe kinh doanh chinh la tu van quan ly, xay dung "
+        "cong trinh ky thuat dan dung va kinh doanh bat dong san, quyen su dung dat "
+        "thuoc chu so huu, chu su dung hoac di thue.",
+        "Hoi dong quan tri thong qua nghi quyet ve viec trien khai du an khu do thi "
+        "moi tai tinh Thanh Hoa, tong muc dau tu du kien duoc phe duyet trong ky hop "
+        "thuong nien sap toi.",
+    ],
     "en": [
         "The company published its consolidated financial statements for the third "
         "quarter of 2026, reporting double-digit growth in net revenue compared with "
@@ -89,22 +119,21 @@ VAN_BAN_MAU = {
         "engineering construction, and real estate trading of land use rights owned, "
         "used or leased by the enterprise.",
     ],
-    "zh": [
-        "公司公布了二零二六年第三季度"
-        "合并财务报表，净收入与去年同"
-        "期相比实现了两位数增长。",
-        "登记的主要经营范围包括管理"
-        "咨询、土木工程建设以及土地"
-        "使用权的房地产经营。",
-    ],
 }
 
 NHAN = {
-    "vi": "tieng Viet KHONG dau",
     "vi_co_dau": "tieng Viet CO dau",
+    "vi_khong_dau": "tieng Viet KHONG dau",
     "en": "tieng Anh",
-    "zh": "tieng Trung",
 }
+
+# Cua so ngu canh dung de quy doi con so tru tuong "token moi ky tu" thanh cau
+# "doc duoc bao nhieu chu". 2048 KHONG phai so dat de minh hoa: do la dung
+# max_position_embeddings ma ca ba tep huan-luyen/cau-hinh/*.json (nho/vua/lon)
+# khai, do lai 26/09/2026. Lay dung tran that de cau "doc duoc bao nhieu chu"
+# noi ve mo hinh BDSG chu khong ve mot mo hinh tuong tuong. Doi bang --cua-so
+# neu muon quy doi sang mot tran khac.
+CUA_SO_MAC_DINH = 2048
 
 
 def co_dau_tieng_viet(ch):
@@ -112,9 +141,10 @@ def co_dau_tieng_viet(ch):
 
     Cach do: tach ky tu ra dang NFD; neu con lai mot dau ket hop (category Mn)
     thi la chu co dau. Rieng d-gach (d/D) khong co dau ket hop trong NFD nen
-    phai liet ke tay.
+    phai liet ke tay — bo sot no lam moi con so "tu co dau" thap di mot cach
+    co he thong.
     """
-    if ch in "đĐ":          # d va D co gach ngang
+    if ch in "đĐ":
         return True
     tach = unicodedata.normalize("NFD", ch)
     return len(tach) > 1 and any(unicodedata.category(c) == "Mn" for c in tach)
@@ -124,7 +154,7 @@ def tach_tu(van_ban):
     """Tach thanh tu theo khoang trang, bo dau cau o hai dau."""
     ra = []
     for tho in van_ban.split():
-        tu = tho.strip(".,;:!?()[]{}\"'’“”–—。，")
+        tu = tho.strip(".,;:!?()[]{}\"'’“”–—")
         if tu:
             ra.append(tu)
     return ra
@@ -141,13 +171,15 @@ def nap_tokenizer(duong_dan):
 
 
 def do_van_ban(tok, van_ban):
+    """Do nen ngu canh tren mot doan van ban."""
     enc = tok.encode(van_ban, add_special_tokens=False)
     so_token = len(enc.ids)
     so_ky_tu = len(van_ban)
 
-    # Token khong che duoc ky tu nao: offsets cua no rong. Voi ByteLevel, mot
-    # token la manh byte giua chung mot ky tu se cho khoang offset khong phu
-    # them ky tu moi. Dem theo cach nay chac an hon la doan tu chuoi token.
+    # Token khong che duoc ky tu MOI nao = manh byte giua chung mot ky tu. Voi
+    # ByteLevel, nhieu token lien tiep cung tro vao mot ky tu se cho khoang
+    # offset khong phu them ky tu nao. Dem theo offset chac an hon la doan tu
+    # hinh dang chuoi token.
     da_che = [False] * so_ky_tu
     token_khong_che = 0
     for (a, b) in enc.offsets:
@@ -173,11 +205,11 @@ def do_van_ban(tok, van_ban):
 
 
 def do_tu_co_dau(tok, van_ban):
-    """So sanh chu CO dau va chu KHONG dau trong CUNG mot van ban, cung tu vung.
+    """So sanh chu CO dau va chu KHONG dau trong CUNG mot van ban, CUNG mot tu vung.
 
-    Do tu kem theo mot khoang trang dang truoc (" " + tu), vi trong van chay
-    that tu nao cung di sau mot khoang trang, va ByteLevel coi khoang trang do
-    la mot phan cua token. Do tu tran trui se cho con so dep hon thuc te.
+    Do tu kem mot khoang trang dang truoc (" " + tu), vi trong van chay that tu
+    nao cung di sau mot khoang trang, va ByteLevel coi khoang trang do la mot
+    phan cua token. Do tu tran trui se cho con so dep hon thuc te.
     """
     co_dau_n, co_dau_tok, co_dau_bam = 0, 0, 0
     khong_dau_n, khong_dau_tok, khong_dau_bam = 0, 0, 0
@@ -203,8 +235,45 @@ def do_tu_co_dau(tok, van_ban):
     }
 
 
+def boc_van_ban_tu_tep(duong, toi_da_ky_tu):
+    """Doc .jsonl (text / noi_dung / hoi_thoai cua BDSG) hoac .txt thanh mot chuoi."""
+    doan = []
+    tong = 0
+    la_txt = duong.lower().endswith(".txt")
+    with open(duong, "r", encoding="utf-8", errors="ignore") as f:
+        for dong in f:
+            dong = dong.strip()
+            if not dong:
+                continue
+            if la_txt:
+                vb = dong
+            else:
+                try:
+                    d = json.loads(dong)
+                except ValueError:
+                    continue
+                if not isinstance(d, dict):
+                    continue
+                if "text" in d:
+                    vb = str(d["text"])
+                elif "noi_dung" in d and not isinstance(d.get("noi_dung"), (list, dict)):
+                    vb = str(d["noi_dung"])
+                elif "hoi_thoai" in d and isinstance(d["hoi_thoai"], list):
+                    vb = "\n".join(str(m.get("noi_dung", "")) for m in d["hoi_thoai"]
+                                   if isinstance(m, dict))
+                else:
+                    continue
+            if not vb.strip():
+                continue
+            doan.append(vb)
+            tong += len(vb)
+            if toi_da_ky_tu and tong >= toi_da_ky_tu:
+                break
+    return "\n".join(doan)
+
+
 def gom_van_ban(args):
-    """Tra ve {ma_ngon_ngu: van_ban_gop}. Uu tien ngu lieu that neu nguoi dung dua."""
+    """Tra ve ({nhan: van_ban}, mo_ta_nguon). Uu tien ngu lieu that neu nguoi dung dua."""
     if not args.van_ban:
         return dict((k, "\n".join(v)) for k, v in VAN_BAN_MAU.items()), "van ban mau co san"
     ra = {}
@@ -213,47 +282,23 @@ def gom_van_ban(args):
             raise ValueError("--van-ban phai co dang <nhan>=<duong_dan>")
         nhan, duong = s.split("=", 1)
         duong = os.path.abspath(os.path.expanduser(duong.strip()))
-        doan = []
-        tong = 0
-        with open(duong, "r", encoding="utf-8", errors="ignore") as f:
-            for dong in f:
-                dong = dong.strip()
-                if not dong:
-                    continue
-                if duong.lower().endswith(".txt"):
-                    vb = dong
-                else:
-                    try:
-                        d = json.loads(dong)
-                    except ValueError:
-                        continue
-                    if not isinstance(d, dict):
-                        continue
-                    if "text" in d:
-                        vb = str(d["text"])
-                    elif "conversations" in d:
-                        vb = "\n".join(str(m.get("content", "")) for m in d["conversations"]
-                                       if isinstance(m, dict))
-                    else:
-                        continue
-                if not vb.strip():
-                    continue
-                doan.append(vb)
-                tong += len(vb)
-                if args.toi_da_ky_tu and tong >= args.toi_da_ky_tu:
-                    break
-        ra[nhan.strip()] = "\n".join(doan)
+        ra[nhan.strip()] = boc_van_ban_tu_tep(duong, args.toi_da_ky_tu)
     return ra, "ngu lieu that nguoi dung dua"
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="Do va so sanh chat luong tokenizer tren tieng Viet")
+    p = argparse.ArgumentParser(
+        description="Do va so sanh chat luong tokenizer tren tieng Viet va tieng Anh")
     p.add_argument("--bo", action="append", default=[], metavar="TEN=DUONGDAN",
-                   help="tu vung can do, lap lai duoc. Vi du: --bo bdsg=../../bo-du-lieu/tu-vung-bdsg-v1")
+                   help="tu vung can do, lap lai duoc. "
+                        "Vi du: --bo bdsg=../../bo-du-lieu/tu-vung-bdsg-v1")
     p.add_argument("--van-ban", action="append", default=[], metavar="NHAN=DUONGDAN",
                    help="do tren ngu lieu that thay vi van ban mau (.jsonl hoac .txt)")
     p.add_argument("--toi-da-ky-tu", type=int, default=2000000,
                    help="doc toi da bao nhieu ky tu moi nhan khi dung --van-ban (mac dinh 2 trieu)")
+    p.add_argument("--cua-so", type=int, default=CUA_SO_MAC_DINH,
+                   help="cua so ngu canh dung de quy doi ra 'doc duoc bao nhieu chu' "
+                        "(mac dinh {})".format(CUA_SO_MAC_DINH))
     p.add_argument("--ra", default=None, help="ghi ket qua ra tep JSON")
     args = p.parse_args(argv)
 
@@ -271,23 +316,43 @@ def main(argv=None):
             p.error(str(e))
         cac_bo.append((ten.strip(), tok, duong_that))
 
-    van_ban, nguon_vb = gom_van_ban(args)
+    try:
+        van_ban, nguon_vb = gom_van_ban(args)
+    except ValueError as e:
+        p.error(str(e))
 
     print("")
     print("Nguon van ban : {}".format(nguon_vb))
     print("Tu vung do    : " + ", ".join(
-        "{} ({} tu)".format(t, tok.get_vocab_size()) for t, tok, _ in cac_bo))
+        "{} ({:,} tu)".format(t, tok.get_vocab_size()) for t, tok, _ in cac_bo))
+
+    # LUAT 1 o phan dau tep: kich thuoc lech nhau thi phep so khong con cong
+    # bang. Canh bao chu KHONG dung chay — doi khi nguoi ta co y so hai kich
+    # thuoc khac nhau, chi can ho biet minh dang lam gi.
+    cac_kich_thuoc = set(tok.get_vocab_size() for _, tok, _ in cac_bo)
+    if len(cac_kich_thuoc) > 1:
+        print("")
+        print("  !! CANH BAO: cac bo KHONG cung kich thuoc tu vung ({}).".format(
+            ", ".join("{:,}".format(k) for k in sorted(cac_kich_thuoc))))
+        print("     Tu vung lon hon LUON nen tot hon, bat ke no hoc tieng gi. Moi so")
+        print("     chenh lech duoi day deu lan ca hai nguyen nhan, khong tach ra duoc.")
+        print("     Muon ket luan ve NGON NGU thi phai do o cung mot kich thuoc.")
     print("")
 
-    ket_qua = {"nguon_van_ban": nguon_vb, "tu_vung": {}, "theo_nhan": {}}
+    ket_qua = {
+        "nguon_van_ban": nguon_vb,
+        "cua_so_ngu_canh": args.cua_so,
+        "cung_kich_thuoc_tu_vung": len(cac_kich_thuoc) == 1,
+        "tu_vung": {}, "theo_nhan": {},
+    }
     for ten, tok, duong in cac_bo:
         ket_qua["tu_vung"][ten] = {"duong_dan": duong, "so_tu": tok.get_vocab_size()}
 
-    # --- Bang 1: nen ngu canh ------------------------------------------------
+    # --- Bang 1: nen ngu canh ---------------------------------------------
     print("=" * 86)
     print("BANG 1 — MOT KY TU TON BAO NHIEU TOKEN  (thap la tot; cot cuoi: token la manh byte)")
     print("=" * 86)
-    print("{:<22} {:<12} {:>9} {:>9} {:>9} {:>11}".format(
+    print("{:<22} {:<16} {:>9} {:>9} {:>9} {:>11}".format(
         "van ban", "tu vung", "ky tu", "token", "tok/kt", "manh byte"))
     print("-" * 86)
     for nhan in sorted(van_ban.keys()):
@@ -298,20 +363,20 @@ def main(argv=None):
         for ten, tok, _ in cac_bo:
             d = do_van_ban(tok, vb)
             ket_qua["theo_nhan"][nhan].setdefault(ten, {}).update(d)
-            print("{:<22} {:<12} {:>9,} {:>9,} {:>9.3f} {:>10.1%}".format(
-                NHAN.get(nhan, nhan)[:22], ten[:12], d["so_ky_tu"], d["so_token"],
+            print("{:<22} {:<16} {:>9,} {:>9,} {:>9.3f} {:>10.1%}".format(
+                NHAN.get(nhan, nhan)[:22], ten[:16], d["so_ky_tu"], d["so_token"],
                 d["token_tren_ky_tu"], d["ti_le_token_khong_che"]))
         print("-" * 86)
 
-    # --- Bang 2: dau thanh ---------------------------------------------------
+    # --- Bang 2: dau thanh ------------------------------------------------
     print("")
     print("=" * 86)
     print("BANG 2 — DAU THANH LAM TON THEM BAO NHIEU")
     print("=" * 86)
-    print("So sanh trong CUNG mot van ban, CUNG mot tu vung: tu co dau va tu khong dau.")
-    print("Neu cot 'gap' > 1 nghia la dau thanh that su lam tu bi bam nho hon.")
+    print("So trong CUNG mot van ban, CUNG mot tu vung: tu co dau va tu khong dau.")
+    print("Cot 'gap' > 1 nghia la dau thanh that su lam tu bi bam nho hon.")
     print("")
-    print("{:<22} {:<12} {:>9} {:>9} {:>7} {:>12}".format(
+    print("{:<22} {:<16} {:>9} {:>9} {:>7} {:>12}".format(
         "van ban", "tu vung", "tok/tu+", "tok/tu-", "gap", "%tu+ bi bam"))
     print("-" * 86)
     for nhan in sorted(van_ban.keys()):
@@ -321,15 +386,14 @@ def main(argv=None):
         da_in = False
         for ten, tok, _ in cac_bo:
             d = do_tu_co_dau(tok, vb)
-            # Van ban khong co chu nao mang dau tieng Viet thi khong co gi de so;
-            # in mot dong rong o day chi lam bang kho doc.
+            # Van ban khong co chu nao mang dau tieng Viet thi khong co gi de so.
             if d["so_tu_co_dau"] == 0:
                 continue
             ket_qua["theo_nhan"].setdefault(nhan, {}).setdefault(ten, {}).update(d)
             gap = (d["token_tb_tu_co_dau"] / d["token_tb_tu_khong_dau"]
                    if d["token_tb_tu_khong_dau"] else 0.0)
-            print("{:<22} {:<12} {:>9.2f} {:>9.2f} {:>7.2f} {:>11.1%}".format(
-                NHAN.get(nhan, nhan)[:22], ten[:12],
+            print("{:<22} {:<16} {:>9.2f} {:>9.2f} {:>7.2f} {:>11.1%}".format(
+                NHAN.get(nhan, nhan)[:22], ten[:16],
                 d["token_tb_tu_co_dau"], d["token_tb_tu_khong_dau"], gap,
                 d["ti_le_tu_co_dau_bi_bam"]))
             da_in = True
@@ -339,7 +403,7 @@ def main(argv=None):
     print("tok/tu- = so token trung binh cho mot tu KHONG dau, trong cung van ban do")
     print("(chi in cac van ban that su co tu mang dau tieng Viet)")
 
-    # --- Ket luan may tinh ra, khong phai nguoi viet san --------------------
+    # --- Ket luan: MAY TINH RA, khong phai nguoi viet san ------------------
     print("")
     print("=" * 86)
     print("DOC RA SAO")
@@ -350,7 +414,7 @@ def main(argv=None):
         xep = sorted(muc.items(), key=lambda kv: kv[1].get("token_tren_ky_tu", 9e9))
         print("Tren tieng Viet CO dau:")
         for ten, d in xep:
-            print("  {:<12} {:.3f} token moi ky tu   ({:.2f} ky tu moi token)".format(
+            print("  {:<16} {:.3f} token moi ky tu   ({:.2f} ky tu moi token)".format(
                 ten, d["token_tren_ky_tu"], d["ky_tu_tren_token"]))
         if len(xep) >= 2:
             tot, te = xep[0], xep[-1]
@@ -358,27 +422,46 @@ def main(argv=None):
             print("")
             print("  '{}' ton gap {:.2f} lan '{}' cho cung mot doan van.".format(
                 te[0], ti, tot[0]))
-            print("  Voi cua so ngu canh {} token: {} vs {} ky tu lot vao duoc.".format(
-                512, int(512 / te[1]["token_tren_ky_tu"]), int(512 / tot[1]["token_tren_ky_tu"])))
+            print("  Voi cua so ngu canh {:,} token: {:,} vs {:,} ky tu lot vao duoc.".format(
+                args.cua_so,
+                int(args.cua_so / te[1]["token_tren_ky_tu"]),
+                int(args.cua_so / tot[1]["token_tren_ky_tu"])))
+            if not ket_qua["cung_kich_thuoc_tu_vung"]:
+                print("  (nhac lai: cac bo KHONG cung kich thuoc, nen ti so nay khong")
+                print("   quy duoc cho rieng chuyen hoc ngon ngu nao)")
         else:
             print("  (chi co mot tu vung — them --bo thu hai de so sanh cheo)")
-        # So voi tieng Anh trong CUNG tu vung: cho biet tu vung do thien vi ngon
-        # ngu nao. Day la phep so noi bo, khong can tu vung thu hai.
+
+        # Doi chung NOI BO: cung tu vung, cung noi dung, chi khac dau thanh.
+        # Phep nay khong can tu vung thu hai, va la phep kho cai nhat.
+        if "vi_khong_dau" in tn:
+            print("")
+            print("Cung mot tu vung, cung noi dung, CHI KHAC dau thanh:")
+            for ten, d in xep:
+                dk = tn["vi_khong_dau"].get(ten, {}).get("token_tren_ky_tu")
+                if dk:
+                    print("  {:<16} co dau {:.3f} vs khong dau {:.3f}  ->  dau thanh lam "
+                          "moi ky tu ton gap {:.2f} lan".format(
+                              ten, d["token_tren_ky_tu"], dk,
+                              d["token_tren_ky_tu"] / dk))
+
+        # Thien vi ngon ngu, trong CUNG mot tu vung.
         if "en" in tn:
             print("")
             print("Cung mot tu vung, tieng Viet co dau so voi tieng Anh:")
             for ten, d in xep:
                 den = tn["en"].get(ten, {}).get("token_tren_ky_tu")
                 if den:
-                    print("  {:<12} vi {:.3f} vs en {:.3f}  ->  moi ky tu tieng Viet ton "
+                    print("  {:<16} vi {:.3f} vs en {:.3f}  ->  moi ky tu tieng Viet ton "
                           "gap {:.2f} lan mot ky tu tieng Anh".format(
                               ten, d["token_tren_ky_tu"], den,
                               d["token_tren_ky_tu"] / den))
     else:
         print("Khong co van ban tieng Viet co dau trong tap do nen khong ket luan gi.")
+        print("Dat nhan 'vi_co_dau' cho --van-ban neu muon phan nay chay.")
     print("")
     print("LUU Y: day la phep do NEN NGU CANH, khong phai phep do chat luong mo hinh.")
-    print("Tu vung nen tot la dieu kien can, khong phai dieu kien du.")
+    print("Tu vung nen tot la dieu kien CAN, khong phai dieu kien DU.")
 
     if args.ra:
         with open(os.path.abspath(os.path.expanduser(args.ra)), "w", encoding="utf-8") as f:

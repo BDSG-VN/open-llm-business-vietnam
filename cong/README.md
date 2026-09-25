@@ -1,7 +1,10 @@
 # cong/ — cổng kiểm tự động trước khi đẩy lên kho công khai
 
-Thư mục này có bốn cổng và một kịch bản chạy tất cả. Chúng chạy **trước** khi đẩy, không
-phải sau.
+Thư mục này có **sáu cổng** và một kịch bản chạy tất cả. Chúng chạy **trước** khi đẩy,
+không phải sau.
+
+Năm cổng đầu chặn thứ **lọt ra** khỏi kho. Cổng thứ sáu chặn một thứ khác hẳn: một **lời
+khai sai ở lại trong** kho. Hai họ lỗi khác nhau, và chúng cần luật khác nhau.
 
 ## Vì sao phải chặn trước, không phải dọn sau
 
@@ -40,7 +43,7 @@ y hệt một cổng hỏng; phải bắt nó cắn được chuỗi cố tình 
 kho. Cổng nào trượt tự kiểm thì bước quét của nó bị **bỏ hẳn** và tính là hỏng — chứ không
 phải chạy rồi lấy kết quả.
 
-## Bốn cổng
+## Sáu cổng
 
 | Cổng | Chặn gì | Vì sao | Miễn trừ nội dòng |
 |---|---|---|---|
@@ -48,8 +51,75 @@ phải chạy rồi lấy kết quả.
 | `khong-ha-tang.py` | IPv4 công cộng, đường dẫn vận hành, tên container, tên miền quản trị, số cổng nội bộ | Hạ tầng **không có nút thu hồi**. Lộ là lộ vĩnh viễn, và là bản đồ cho người dò | Có |
 | `khong-du-lieu-cam.py` | bản ghi không chứng minh được nguồn; nguồn bị cấm (dữ liệu CRM khách hàng, tài liệu có cấp phép bên thứ ba, nội dung người khác, đầu ra máy sinh) | Dữ liệu của người khác thì không có lý do kỹ thuật nào biến thành của mình | **Không** |
 | `khong-lo-hong.py` | cookie phiên kèm giá trị, cờ bảo mật bị tắt, đường dẫn và số dòng của hệ đang chạy, mô tả khai thác gắn với vật thể cụ thể | Viết đường khai thác mất 10 giây, vá hệ mất nhiều ngày. Khoảng chênh ấy là cửa sổ tấn công | Có |
+| `khong-danh-tinh.py` | danh tính cá nhân do người vận hành khai trong `cong/danh-tinh.local` (tệp bị `.gitignore` chặn) | Bốn cổng trên ĐẠT toàn kho, rồi một lượt soát TAY vẫn tìm ra họ tên thật của chủ dự án. Thứ soát tay tìm được phải trở thành cổng | Có |
+| `khong-tham-chieu-ngoai.py` | tên một **dự án ngoài** (mọi cách viết hoa), và tên một **ngôn ngữ đã bị đưa ra khỏi phạm vi** dự án ngày 26/09/2026 — gồm ba cách viết tên ngôn ngữ ấy, ký tự chữ Hán, mã ngôn ngữ dạng `zh` + gạch nối + mã vùng, và tên một thư viện tách từ chỉ dùng cho ngôn ngữ ấy | Xoá tên dự án ngoài mà giữ phần dẫn xuất thì vừa phạm Apache-2.0 điều 4 (giữ ghi công, nêu rõ chỗ đã sửa) vừa là **lời khai sai về nguồn gốc mô hình** — đúng thứ kho này đặt ra để chống | Có |
 
 Chi tiết đầy đủ nằm trong phần đầu mỗi tệp `.py`, kèm số đo và ngày đo.
+
+### Cổng 6 nói gì, và vì sao tài liệu này KHÔNG viết thẳng chuỗi nó chặn
+
+`khong-tham-chieu-ngoai.py` chặn hai thứ, và cả hai đều là **lời khai sai ở lại trong kho**
+chứ không phải rò rỉ ra ngoài:
+
+1. **Tên một dự án ngoài.** Kiến trúc và bộ huấn luyện của kho này do BDSG viết độc lập,
+   dựng từ kỹ thuật đã công bố trong bài báo (RMSNorm arXiv:1910.07467, RoPE
+   arXiv:2104.09864, GQA arXiv:2305.13245, SwiGLU arXiv:2002.05202, pre-norm
+   arXiv:2002.04745). Một cái tên thượng nguồn còn sót lại trong tài liệu là một lời khai
+   sai về nguồn gốc mô hình.
+2. **Tên một ngôn ngữ đã bị đưa ra khỏi phạm vi** ngày 26/09/2026. Phạm vi còn đúng hai:
+   tiếng Việt chính, tiếng Anh phụ.
+
+**Tài liệu này cố ý không viết thẳng các chuỗi ấy ra**, cùng lý do với ô ví dụ miễn trừ ở
+trên: `cong/README.md` nằm trong phạm vi quét, nên một chuỗi viết nguyên vẹn ở đây sẽ bị
+chính cổng bắt, và tài liệu mô tả cổng lại trở thành vi phạm đầu tiên của cổng. Muốn biết
+chính xác cổng chặn chữ gì thì **đọc phần khai biến ở đầu tệp `.py`** — nó đọc được dù
+không viết chuỗi ra.
+
+Chính tệp cổng cũng chơi đúng thủ thuật đó: mọi chuỗi cấm trong đó được **ghép lúc chạy**
+từ hai mảnh, nên trên đĩa chuỗi không bao giờ xuất hiện nguyên vẹn. Và cổng **tự quét chính
+nó** — không có dòng loại trừ nào cho `__file__`. Bài tự kiểm còn chép nguyên mã nguồn của
+chính nó vào thư mục tạm rồi quét, đòi kết quả **0 vi phạm, 0 miễn trừ**.
+
+Phép thử ấy không phải trang trí: **nó bắt lỗi ngay ở lần chạy đầu tiên, 26/09/2026.** Bản
+đầu viết biên giới khối chữ Hán bằng dãy thoát `\u…` trong chuỗi nguồn; công cụ ghi tệp đã
+**diễn giải** dãy thoát ấy trước khi ghi, nên trên đĩa nó thành bốn ký tự chữ Hán thật —
+đúng thứ cổng sinh ra để chặn, nằm ngay trong tệp cổng. Bản sửa dựng biên giới bằng `chr()`
+để trên đĩa chỉ còn chữ số hex.
+
+Đó là lý do luật "cổng phải tự quét chính nó" tồn tại, và nó đến từ một lỗi thật khác:
+**bản đầu của `khong-danh-tinh.py` viết bốn danh tính thật vào phần tự kiểm làm mẫu thử.**
+Nó ĐẠT — vì tự loại mình khỏi phạm vi quét — rồi được đẩy lên kho công khai, mang theo đúng
+bốn thứ nó sinh ra để chặn. Một bộ dò mang theo danh sách thứ nó dò thì chính nó là chỗ rò.
+
+### Ca miễn trừ hợp pháp của cổng 6: mục lịch sử thay đổi
+
+Cổng 6 **có** miễn trừ nội dòng, và ca hợp pháp của nó rất cụ thể: muốn ghi trung thực rằng
+ngày 26/09/2026 dự án đã **bỏ** một ngôn ngữ khỏi phạm vi thì phải gọi tên ngôn ngữ ấy.
+Không có đường thoát hợp pháp thì người viết chỉ còn hai lựa chọn — nói dối lịch sử, hoặc
+tắt cổng. Cả hai đều tệ hơn một miễn trừ có ghi lý do.
+
+Đối xứng với điều đó, cổng 6 **cố ý không chặn** mã ngôn ngữ `zh` trần (không có gạch nối
+và mã vùng). Lý do đo được: chuỗi `zh` nằm trong **"Zhang"** — họ của một trong hai tác giả
+bài báo RMSNorm mà chính kho này bắt buộc phải trích dẫn. Một cổng cắt oan tên tác giả bài
+báo sẽ bị tắt, và **một cổng bị tắt là một cổng không tồn tại**. Hệ quả phải chấp nhận và
+đã khai trong mục PHẠM VI TỰ KHAI: một giá trị enum `zh` trần sẽ lọt qua.
+
+Cùng họ với ca ấy: cổng chỉ bắt tên ngôn ngữ khi nó đi **sau chữ "tiếng"**. Bắt chữ đó đứng
+một mình sẽ cắt oan `trung bình`, `tập trung`, `Trung tâm`, `muc_tin_cay = "trung-binh"` —
+cả bốn đều là tiếng Việt thường ngày và **đều có thật trong kho này**. Bài tự kiểm có dòng
+đối chứng cho từng ca.
+
+### Tên trường cấu hình chuẩn transformers ĐƯỢC GIỮ
+
+`hidden_size`, `num_hidden_layers`, `num_attention_heads`, `num_key_value_heads`,
+`intermediate_size`, `vocab_size`, `rms_norm_eps`, `rope_theta`, `tie_word_embeddings` là
+quy ước chung của cả hệ sinh thái mô hình mở, không phải tên riêng của ai. Giữ nguyên bộ
+tên ấy là điều kiện để trọng số BDSG nạp được ở nơi khác.
+
+Bài tự kiểm của cổng 6 có một **dòng sạch gồm đúng các tên ấy**, để bất kỳ ai siết cổng về
+sau cũng lập tức thấy chúng phải lọt. Đây là ví dụ cho luật *"ngoại lệ không có bài thử là
+lỗ thủng"* áp theo chiều ngược: thứ **phải lọt** cũng cần một bài thử, nếu không lần siết
+luật sau sẽ vô tình cắt mất nó mà không ai biết.
 
 ## Hai nguyên tắc mà cổng nào cũng phải giữ
 
@@ -61,7 +131,7 @@ là bảo vệ toàn diện, và đó là lúc nó nguy hiểm hơn cả không 
 
 Những chỗ mù đã biết, tính đến 25/09/2026:
 
-- **Ảnh chụp màn hình**: không cổng nào đọc. Một ảnh terminal lộ nhiều hơn mọi thứ bốn cổng
+- **Ảnh chụp màn hình**: không cổng nào đọc. Một ảnh terminal lộ nhiều hơn mọi thứ các cổng
   bắt được. Phải soi bằng mắt.
 - **IPv6**: chưa có luật. Chưa đo, đừng tưởng đã chặn.
 - **Tệp nhị phân và trọng số mô hình**: không mở ra đọc. Bí mật nằm trong trọng số là thứ

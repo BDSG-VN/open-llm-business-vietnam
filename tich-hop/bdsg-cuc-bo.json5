@@ -1,0 +1,59 @@
+// ══════════════════════════════════════════════════════════════════════════
+// HỒ SƠ 2 — CHẠY HẲN TRÊN MÁY NGƯỜI DÙNG, KHÔNG KHOÁ BÊN THỨ BA
+//
+// Đây là hồ sơ đạt đúng mục tiêu của dự án: tải mô hình của BDSG về, chạy tại
+// máy, mọi tính năng hoạt động mà không cần khoá API của bất kỳ ai.
+//
+// ⚠ HỒ SƠ NÀY CHƯA CHẠY ĐƯỢC (26/09/2026), và lý do phải nói thẳng:
+// BDSG CHƯA HUẤN LUYỆN TRỌNG SỐ NÀO. Kiến trúc đã viết xong và qua 12/12 phép
+// kiểm; đường xuất sang định dạng máy chủ cục bộ đọc được đã viết xong và qua
+// 7/7 phép kiểm. Nhưng giữa hai thứ đó còn một bước cần GPU thuê, chưa làm.
+//
+// Giữ tệp này trong kho vì nó là HỢP ĐỒNG: nó nói rõ mắt xích cuối cần gì, để
+// ngày có trọng số thì không ai phải đoán lại. Đừng xoá vì "chưa dùng được".
+//
+// `apiKey` để chuỗi rỗng là CÓ Ý. Máy chủ cục bộ không kiểm khoá, nhưng phần
+// lớn thư viện gọi API vẫn đòi trường ấy tồn tại; bỏ hẳn trường đi thì lỗi báo
+// ra là "thiếu khoá", làm người dùng đi tìm một khoá không hề cần.
+// ══════════════════════════════════════════════════════════════════════════
+{
+  models: {
+    providers: {
+      "bdsg-cuc-bo": {
+        // Cổng mặc định của máy chủ suy luận cục bộ. Đổi nếu bạn chạy cổng khác.
+        baseUrl: "http://127.0.0.1:8080/v1",
+        apiKey: "",
+        api: "openai-completions",
+
+        // Máy cá nhân không có GPU sinh chữ chậm hơn nhiều so với máy chủ.
+        // 600 giây là để một câu trả lời dài không bị cắt giữa chừng trên máy
+        // yếu — thà chờ còn hơn nhận nửa câu mà không biết vì sao nó dừng.
+        timeoutSeconds: 600,
+
+        models: [
+          {
+            id: "openbiz-vn-nho",
+            name: "BDSG Open Biz · bản nhỏ (cục bộ)",
+            reasoning: false,
+            input: ["text"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+
+            // Hai số dưới đây phải khớp cấu hình mô hình THẬT khi đã huấn luyện.
+            // Khai lớn hơn khả năng thật thì mô hình nhận đầu vào dài quá sức và
+            // trả rác; khai nhỏ hơn thì phí phần đã trả tiền huấn luyện.
+            // Lấy từ huan-luyen/cau-hinh/nho.json — đối chiếu lại trước khi phát hành.
+            contextWindow: 4096,
+            maxTokens: 2048,
+          },
+        ],
+      },
+    },
+  },
+
+  // ⚠ KHÔNG khai một mô hình dự phòng trỏ ra ngoài ở hồ sơ này.
+  //
+  // Một chuỗi dự phòng "cục bộ trước, đám mây sau" nghe có vẻ chu đáo, nhưng nó
+  // phá đúng thứ hồ sơ này hứa: người dùng tưởng mình đang chạy cục bộ, còn câu
+  // hỏi thì âm thầm đi ra ngoài mỗi khi máy chủ cục bộ chậm hoặc chưa kịp khởi
+  // động. Thà hỏng ra mặt còn hơn gửi dữ liệu đi mà không ai biết.
+}

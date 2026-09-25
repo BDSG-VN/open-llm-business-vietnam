@@ -1,0 +1,59 @@
+// ══════════════════════════════════════════════════════════════════════════
+// HỒ SƠ 1 — NỐI VÀO MÁY CHỦ CỦA BDSG
+//
+// Dùng khi bạn muốn thử ngay mà chưa tải mô hình về máy. Trả lời đi qua
+// llm.bdsg.vn, nên VẪN PHỤ THUỘC một dịch vụ bên ngoài — đây KHÔNG phải cấu
+// hình đạt mục tiêu "không cần khoá bên thứ ba". Xem hồ sơ 2 cho mục tiêu ấy.
+//
+// Số đo ngày 26/09/2026, đọc thẳng từ https://llm.bdsg.vn/v1/models:
+//   openbiz-vn-chat      · bdsg_la_trong_so_bdsg = false · có truy hồi
+//   openbiz-vn-reasoner  · bdsg_la_trong_so_bdsg = false · có truy hồi
+//
+// ⚠ `bdsg_la_trong_so_bdsg = false` nghĩa là trọng số đằng sau KHÔNG phải của
+// BDSG. Cổng của BDSG tự khai điều đó ra API chứ không chỉ ghi ở trang giới
+// thiệu, vì một tuyên bố sai về mô hình là kiểu nói dối khó kiểm nhất từ bên
+// ngoài. Đừng sửa dòng ấy thành true cho tới khi có trọng số thật.
+// ══════════════════════════════════════════════════════════════════════════
+{
+  models: {
+    providers: {
+      bdsg: {
+        baseUrl: "https://llm.bdsg.vn/v1",
+        apiKey: "${BDSG_API_KEY}",
+        api: "openai-completions",
+
+        // Truy hồi chạy TRƯỚC mô hình, trên 1.091.918 bản ghi, nên lượt đầu của
+        // một câu hỏi về doanh nghiệp chậm hơn một cuộc gọi mô hình trần.
+        timeoutSeconds: 300,
+
+        models: [
+          {
+            id: "openbiz-vn-chat",
+            name: "BDSG Open Biz",
+            reasoning: false,
+            input: ["text"],
+            // Không tính tiền ở bản này. Để 0 chứ không bỏ trống: bỏ trống thì
+            // phần theo dõi chi phí đọc ra `undefined` và im lặng bỏ qua.
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 32768,
+            maxTokens: 2048,   // khớp tranTokenRa đã khai trong mã cổng
+          },
+          {
+            id: "openbiz-vn-reasoner",
+            name: "BDSG Open Biz · Suy luận",
+            reasoning: true,
+            input: ["text"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 32768,
+            // 4096 chứ không phải 2048: mô hình suy luận tiêu token để NGHĨ
+            // trước khi trả lời. Đã đo trên cổng: một câu hỏi 5 chữ tốn 56 token
+            // suy luận. Đặt trần thấp cho nhánh này nghĩa là khách nhận một
+            // chuỗi RỖNG mà không hiểu vì sao — đã đo: 12 token cho nội dung
+            // rỗng, 400 token mới ra được "Hà Nội.".
+            maxTokens: 4096,
+          },
+        ],
+      },
+    },
+  },
+}

@@ -1,82 +1,143 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Huan luyen tu vung (tokenizer) ba thu tieng: tieng Viet -> tieng Anh -> tieng Trung.
+"""Huan luyen tu vung (tokenizer) HAI ngon ngu cho ho mo hinh BDSG.
+
+Tieng Viet la ngon ngu chinh. Tieng Anh la ngon ngu phu. Khong co ngon ngu thu ba.
 
 =============================================================================
-VI SAO TEP NAY TON TAI, DU MiniMind KHUYEN DUNG LAM
+1. VI SAO BDSG PHAI TU HUAN LUYEN TU VUNG — SO DO, KHONG PHAI Y KIEN
 =============================================================================
-Dong dau tien cua trainer/train_tokenizer.py trong MiniMind viet nguyen van:
-"khong khuyen nghi huan luyen lai tokenizer" — ly do ho neu ra la mo hinh huan
-luyen tren tu dien khac se cho dau ra khong thong nhat, lam giam kha nang dung
-lai trong so trong cong dong.
+Phep do ngay 25/09/2026 (bien ban day du o ket-qua/do-luong-25-09-2026.md):
+tren 1.037.113 ky tu tieng Viet chua tung thay luc huan luyen, hai tu vung
+CUNG kich thuoc 6.400, khac nhau dung mot bien la co hoc tieng Viet hay khong:
 
-Canh bao do DUNG, nhung no danh cho nguoi DUNG LAI trong so da phat hanh cua
-MiniMind. BDSG huan luyen TU DAU, khong nap mot byte trong so nao cua ho, nen
-khong co gi de "khong thong nhat" voi. Nguoc lai, giu tu vung cua ho moi la sai:
-tu vung 6.400 cua MiniMind duoc huan luyen tren ngu lieu tieng Trung + tieng Anh,
-khong co tieng Viet. Byte-level BPE khong bao gio bao loi khi gap chu co dau —
-no chi lang le bam chu do thanh nhieu token hon, va ngan sach ngu canh bi dot
-vao dau thanh dieu.
+    tu vung KHONG hoc tieng Viet : 852.285 token  ->  1,22 ky tu moi token
+    tu vung CO hoc tieng Viet    : 289.266 token  ->  3,59 ky tu moi token
 
-Do khong phai suy doan. Chay huan-luyen/tu-vung/do_tokenizer.py de tu do lai
-tren may minh: no dem so token tren mot ky tu tieng Viet cua tung tu vung va
-so sanh truc tiep. So do la bang chung; cau van nay chi la loi dan.
+Giam 66,1% so token. Cung mot ngan sach ngu canh thi chua duoc nhieu hon 2,95
+lan chu tieng Viet.
 
-=============================================================================
-GIU NGUYEN CAI GI CUA MiniMind, DOI CAI GI
-=============================================================================
-GIU NGUYEN (bat buoc, neu khong mo hinh se khong chay duoc voi ma cua ho):
-  - models.BPE + pre_tokenizers.ByteLevel(add_prefix_space=False)
-    + decoders.ByteLevel, y het trainer/train_tokenizer.py dong 47 va 72.
-  - Dung 36 vi tri token dac biet, DUNG THU TU do. Thu tu quan trong vi no
-    quyet dinh id: <|endoftext|>=0, <|im_start|>=1, <|im_end|>=2. Ba id nay
-    duoc viet cung vao cau hinh mo hinh (bos_token_id=1, eos_token_id=2 trong
-    MiniMindConfig, model/model_minimind.py dong 18-19) va vao cac tep
-    cau-hinh/*.json cua BDSG. Doi thu tu = hong im lang.
-  - chat_template y nguyen ban cua MiniMind. Ly do: dataset/lm_dataset.py dong
-    91-107 (ham generate_labels) tim chuoi "<bos>assistant\\n" va "<eos>\\n" trong chuoi da token hoa
-    de dung nhan huan luyen. Doi mau hoi thoai ma khong doi ham do thi nhan se
-    sai het ma KHONG bao loi — mat mat van giam, mo hinh van "hoc", chi la hoc
-    sai cho. Day la kieu loi hong-ma-khong-bao.
+Co che nhin thay duoc, khong phai suy doan: byte-level BPE KHONG BAO GIO bao loi
+khi gap chu la. No lang le day chu do xuong tung byte UTF-8 tho. Chu "Cong" o
+tu vung khong hoc tieng Viet ton 4 token, vi dau thanh khong co merge nao de
+gop. O tu vung co hoc tieng Viet no la 1 token. Ca mot cau thu: 72 token so voi
+21 token.
 
-DOI:
-  - vocab_size: tham so dong lenh, mac dinh 24576 thay vi 6400. Xem README.
-  - Nguon du lieu: nhieu tep, co TRONG SO theo ngon ngu, thay vi mot tep duy nhat.
+Cho nen: khong co loi nao bao "tu vung cua ban sai voi tieng Viet". Chi co
+ngan sach ngu canh bi dot vao dau thanh, va khong ai thay. Day dung la ho loi
+hong-ma-khong-bao ma kho nay dat ra de chong. Cach phat hien duy nhat la DO,
+bang do_tokenizer.py nam canh tep nay.
+
+Ky thuat dung o day la ky thuat da cong bo, khong phai phat minh cua ai trong
+mot kho ma cu the:
+  - BPE (byte-pair encoding) cho don vi tu con : arXiv:1508.07909
+  - BPE o muc BYTE (khong bao gio co <unk>)    : arXiv:1909.03341
+Thu vien `tokenizers` cua HuggingFace la CONG CU hien thuc hai ky thuat do.
+Dung mot thu vien la chuyen binh thuong; moi dong chu thich trong tep nay la
+cua BDSG, va moi lua chon duoi day la lua chon cua BDSG.
 
 =============================================================================
-TRONG SO NGON NGU DUOC AP DAT NHU THE NAO
+2. BO TOKEN DAC BIET CUA BDSG — CHON THEO NHU CAU THAT, TUNG CAI MOT
 =============================================================================
-BPE hoc merge tu TAN SUAT xuat hien. Muon tieng Viet chiem uu the thi phai cho
-no nhieu KY TU hon trong ngu lieu huan luyen tu vung — chu khong phai nhieu tep
-hon hay nhieu dong hon (mot dong tieng Trung 50 ky tu khong bang mot doan tieng
-Viet 5.000 ky tu).
+Mot bo token dac biet khong duoc sao chep tu noi khac. Moi token dac biet an
+mot hang trong ma tran nhung va chiem vinh vien mot id. Khai bao token cho mot
+kha nang minh khong co (anh, am thanh, video) la KHAI SAI ve mo hinh: nguoi doc
+cau hinh se tuong mo hinh nhan duoc anh. Do 26/09/2026: trong ca kho nay khong
+co mot duong ong nao doc hay ghi anh, am thanh hay video. Nen khong co token
+nao cho chung.
 
-Nen script nay chia NGAN SACH KY TU theo ti le, mac dinh vi=0.60 / en=0.25 /
-zh=0.15, roi doc tung ngon ngu cho den khi het ngan sach cua no.
+BDSG can dung ba viec, va chi ba viec:
+
+  id 0  <|het-van-ban|>
+      Ba vai trong mot: (a) dau ngan cach hai van ban khac nhau khi tien huan
+      luyen, (b) token dem (padding) khi xep lo, (c) cho lui neu co gi do doi
+      mot token khong ton tai.
+      VI SAO DAT O ID 0: bo dem trong torch mac dinh la so 0. Neu id 0 la mot
+      tu that, mot tensor quen khoi tao se giai ma ra mot cau tieng Viet troi
+      chay va trong nhu du lieu that. Neu id 0 la token nay, no giai ma ra
+      "khong co gi" — loi nhin thay duoc ngay.
+
+  id 1  <|mo-luot|>
+  id 2  <|dong-luot|>
+      Mo va dong mot luot noi. San pham that cua BDSG (chat.bdsg.vn, hoi dap
+      tren ho so doanh nghiep) la doi thoai nhieu luot, nen mo hinh phai biet
+      luot cua ai bat dau o dau va het o dau.
+      VI SAO HAI TOKEN CHU KHONG PHAI MOT: mat na nhan khi huan luyen co giam
+      sat phai xac dinh DUNG doan nao la cau tra loi cua tro ly de tinh mat mat
+      tren doan do. Voi mot dau hieu duy nhat thi ranh gioi cuoi la mo ho, va
+      mat na se lech — ma mat mat VAN giam, mo hinh VAN "hoc", chi la hoc sai
+      cho. Hai dau hieu thi ranh gioi la hien nhien.
+      VI SAO DUNG ID 1 VA 2: cac tep huan-luyen/cau-hinh/*.json cua kho nay da
+      khai bos_token_id=1 va eos_token_id=2. Neu tu vung de hai token nay o id
+      khac, mo hinh se sinh va dung o token sai — va khong co loi nao bao. Nen
+      ham huan_luyen() KIEM cung ba id nay truoc khi ghi ra dia, va tu choi ghi
+      neu lech.
+
+  13 o du tru  <|du-tru-01|> .. <|du-tru-13|>
+      Them mot token sau nay lam doi vocab_size, doi vocab_size lam doi hinh
+      dang ma tran nhung, va doi ma tran nhung lam HONG moi trong so da phat
+      hanh. Luc duy nhat de tru cho re la bay gio, khi chua co trong so nao.
+      3 + 13 = 16, mot so tron de con so merge hoc duoc cung tron.
+      Chung duoc danh dau special=false trong tokenizer.json, CO CHU Y: neu mot
+      o du tru bao gio do hien ra trong dau ra thi co gi do sai, va toi muon
+      NHIN THAY no chu khong muon skip_special_tokens=True nuot mat.
+
+=============================================================================
+3. TEN TRUONG CAU HINH — QUY UOC CHUNG, GIU NGUYEN
+=============================================================================
+tokenizer_config.json dung cac ten truong theo CHUAN THU VIEN transformers
+(bos_token, eos_token, pad_token, model_max_length, chat_template,
+tokenizer_class...). Day la quy uoc chung cua ca he sinh thai, khong phai cua
+rieng du an nao, va giu no la dieu kien de thu muc nay nap duoc o may nguoi
+khac. Gia tri ben trong thi la cua BDSG.
+
+Mau hoi thoai (chat_template) cung vay: `messages`, `role`, `content` la ten
+BIEN ma transformers.apply_chat_template truyen vao mau — khong phai lua chon
+cua BDSG. Con GIA TRI cua role thi la cua BDSG: "nguoi" va "tro-ly", dung nhu
+dinh dang ngu lieu ma huan-luyen/du-lieu/tron.py xuat ra.
+
+RANG BUOC PHAI GIU CUNG NHAU: mat na nhan khi huan luyen co giam sat phai tim
+dung chuoi "<|mo-luot|>tro-ly\n" ... "<|dong-luot|>". Ai doi MAU_HOI_THOAI thi
+phai doi ham sinh mat na trong CUNG mot lan sua. Doi mot ben thoi la lam mat na
+tro sai cho ma khong co loi nao bao.
+
+=============================================================================
+4. TRONG SO NGON NGU DUOC AP DAT NHU THE NAO
+=============================================================================
+BPE hoc merge tu TAN SUAT. Muon tieng Viet chiem uu the thi phai cho no nhieu
+KY TU hon — khong phai nhieu TEP hon, cung khong phai nhieu DONG hon. Mot dong
+tieng Anh 40 ky tu khong dang gia bang mot doan tieng Viet 4.000 ky tu, nen dem
+dong se cho ti le sai hoan toan.
+
+Nen script chia NGAN SACH KY TU theo ti le, mac dinh --ti-le-viet 0.80 va
+--ti-le-anh 0.20.
+
+0,80 / 0,20 la con so DAT, CHUA DO. Toi khong co phep do noi ti le nao la tot
+nhat. Cach do no: chay lai script nay o vai ti le khac nhau roi do tung ban
+bang do_tokenizer.py, tim cho ky tu/token tieng Viet thoi cai thien va tieng
+Anh bat dau te di ro. Chua ai lam phep do do (26/09/2026).
 
 Mot lua chon co y: neu mot ngon ngu KHONG DU du lieu de tieu het ngan sach,
 script ghi ro phan thieu vao bao cao va van chay tiep. No KHONG lap lai van ban
-de bu cho du. Lap lai van ban se lam BPE hoc thuoc chinh nhung chuoi bi lap,
-sinh ra merge rac ma nhin tu vung khong thay duoc. Thieu thi ghi la thieu.
+de bu cho du. Lap lai lam BPE hoc thuoc chinh nhung chuoi bi lap va de ra merge
+rac ma nhin tu vung khong thay duoc. Thieu thi ghi la thieu.
 
 =============================================================================
-CHAY
+5. CHAY
 =============================================================================
   python3 huan_luyen_tu_vung.py \
-      --nguon vi=/duong/dan/bdsg-da-lam-sach.jsonl \
-      --nguon vi=/duong/dan/wikipedia-vi.jsonl \
-      --nguon en=/duong/dan/nen-tieng-anh.jsonl \
-      --nguon zh=/duong/dan/nen-tieng-trung.jsonl \
-      --ti-le vi=0.60,en=0.25,zh=0.15 \
-      --vocab-size 24576 \
-      --ngan-sach-ky-tu 200000000 \
+      --nguon-viet ../../bo-du-lieu/doan_tri_thuc.sach.jsonl \
+      --nguon-viet /duong/dan/wikipedia-vi.jsonl \
+      --nguon-anh  /duong/dan/nen-tieng-anh.jsonl \
+      --ti-le-viet 0.80 --ti-le-anh 0.20 \
+      --tu-vung 24576 \
       --ra ../../bo-du-lieu/tu-vung-bdsg-v1
 
-  # Thu nhanh cho chac script chay (tu sinh du lieu gia, khong dung du lieu that):
+  # Thu nhanh cho chac script chay (tu sinh du lieu gia, khong dung ngu lieu that):
   python3 huan_luyen_tu_vung.py --tu-kiem
 
-Chi can: python >= 3.8 va thu vien `tokenizers`. KHONG can torch, KHONG can
-transformers. (Da chay thu tren python 3.9.6 + tokenizers 0.22.2, 25/09/2026.)
+Chi can python >= 3.8 va thu vien `tokenizers`. KHONG can torch, KHONG can
+transformers. (Da chay that tren python 3.9.6 + tokenizers 0.22.2, 26/09/2026.)
 """
 
 import argparse
@@ -95,35 +156,37 @@ except ImportError:
         "Script nay KHONG can torch va KHONG can transformers.\n")
     raise
 
-# ---------------------------------------------------------------------------
-# 36 VI TRI TOKEN DAC BIET — sao chep tu trainer/train_tokenizer.py cua MiniMind
-# (dong 49-60). Thu tu la hop dong voi mo hinh, dung sap xep lai.
-# ---------------------------------------------------------------------------
-TOKEN_DAC_BIET_LOI = [
-    "<|endoftext|>", "<|im_start|>", "<|im_end|>",
-    "<|object_ref_start|>", "<|object_ref_end|>", "<|box_start|>", "<|box_end|>",
-    "<|quad_start|>", "<|quad_end|>",
-    "<|vision_start|>", "<|vision_end|>", "<|vision_pad|>", "<|image_pad|>", "<|video_pad|>",
-    "<|audio_start|>", "<|audio_end|>", "<|audio_pad|>",
-    "<tts_pad>", "<tts_text_bos>", "<tts_text_eod>", "<tts_text_bos_single>",
-]
-TOKEN_THEM = [
-    "<tool_call>", "</tool_call>",
-    "<tool_response>", "</tool_response>",
-    "<think>", "</think>",
-]
-SO_TOKEN_DAC_BIET = 36
+# Hai ngon ngu, theo dung thu tu uu tien cua du an: Viet truoc, Anh sau.
+NGON_NGU = ["vi", "en"]
+TI_LE_MAC_DINH = {"vi": 0.80, "en": 0.20}
 
-# Mau hoi thoai (chat template) sao chep NGUYEN VAN tu model/tokenizer_config.json
-# cua MiniMind (3.895 ky tu). Da doi chieu: chuoi nay giong het chuoi trong
-# trainer/train_tokenizer.py (kiem bang difflib, 25/09/2026, khong co dong khac biet).
-# Dung sua tay. Neu can doi, phai doi ca SFTDataset.generate_labels trong
-# dataset/lm_dataset.py cung luc.
-MAU_HOI_THOAI = '{%- if tools %}\n    {{- \'<|im_start|>system\\n\' }}\n    {%- if messages[0].role == \'system\' %}\n        {{- messages[0].content + \'\\n\\n\' }}\n    {%- endif %}\n    {{- "# Tools\\n\\nYou may call one or more functions to assist with the user query.\\n\\nYou are provided with function signatures within <tools></tools> XML tags:\\n<tools>" }}\n    {%- for tool in tools %}\n        {{- "\\n" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- "\\n</tools>\\n\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\n<tool_call>\\n{\\"name\\": <function-name>, \\"arguments\\": <args-json-object>}\\n</tool_call><|im_end|>\\n" }}\n{%- else %}\n    {%- if messages[0].role == \'system\' %}\n        {{- \'<|im_start|>system\\n\' + messages[0].content + \'<|im_end|>\\n\' }}\n    {%- endif %}\n{%- endif %}\n{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}\n{%- for message in messages[::-1] %}\n    {%- set index = (messages|length - 1) - loop.index0 %}\n    {%- if ns.multi_step_tool and message.role == "user" and message.content is string and not(message.content.startswith(\'<tool_response>\') and message.content.endswith(\'</tool_response>\')) %}\n        {%- set ns.multi_step_tool = false %}\n        {%- set ns.last_query_index = index %}\n    {%- endif %}\n{%- endfor %}\n{%- for message in messages %}\n    {%- if message.content is string %}\n        {%- set content = message.content %}\n    {%- else %}\n        {%- set content = \'\' %}\n    {%- endif %}\n    {%- if (message.role == "user") or (message.role == "system" and not loop.first) %}\n        {{- \'<|im_start|>\' + message.role + \'\\n\' + content + \'<|im_end|>\' + \'\\n\' }}\n    {%- elif message.role == "assistant" %}\n        {%- set reasoning_content = \'\' %}\n        {%- if message.reasoning_content is string %}\n            {%- set reasoning_content = message.reasoning_content %}\n        {%- else %}\n            {%- if \'</think>\' in content %}\n                {%- set reasoning_content = content.split(\'</think>\')[0].rstrip(\'\\n\').split(\'<think>\')[-1].lstrip(\'\\n\') %}\n                {%- set content = content.split(\'</think>\')[-1].lstrip(\'\\n\') %}\n            {%- endif %}\n        {%- endif %}\n        {%- if true %}\n            {{- \'<|im_start|>\' + message.role + \'\\n<think>\\n\' + reasoning_content.strip(\'\\n\') + \'\\n</think>\\n\\n\' + content.lstrip(\'\\n\') }}\n        {%- endif %}\n        {%- if message.tool_calls %}\n            {%- for tool_call in message.tool_calls %}\n                {%- if (loop.first and content) or (not loop.first) %}\n                    {{- \'\\n\' }}\n                {%- endif %}\n                {%- if tool_call.function %}\n                    {%- set tool_call = tool_call.function %}\n                {%- endif %}\n                {{- \'<tool_call>\\n{"name": "\' }}\n                {{- tool_call.name }}\n                {{- \'", "arguments": \' }}\n                {%- if tool_call.arguments is string %}\n                    {{- tool_call.arguments }}\n                {%- else %}\n                    {{- tool_call.arguments | tojson }}\n                {%- endif %}\n                {{- \'}\\n</tool_call>\' }}\n            {%- endfor %}\n        {%- endif %}\n        {{- \'<|im_end|>\\n\' }}\n    {%- elif message.role == "tool" %}\n        {%- if loop.first or (messages[loop.index0 - 1].role != "tool") %}\n            {{- \'<|im_start|>user\' }}\n        {%- endif %}\n        {{- \'\\n<tool_response>\\n\' }}\n        {{- content }}\n        {{- \'\\n</tool_response>\' }}\n        {%- if loop.last or (messages[loop.index0 + 1].role != "tool") %}\n            {{- \'<|im_end|>\\n\' }}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- \'<|im_start|>assistant\\n\' }}\n    {%- if open_thinking is defined and open_thinking is true %}\n        {{- \'<think>\\n\' }}\n    {%- else %}\n        {{- \'<think>\\n\\n</think>\\n\\n\' }}\n    {%- endif %}\n{%- endif %}'
+# --- Bo token dac biet cua BDSG. Ly do tung cai o muc 2 phan dau tep. --------
+TOKEN_LOI = ["<|het-van-ban|>", "<|mo-luot|>", "<|dong-luot|>"]
+SO_O_DU_TRU = 13
+# Hop dong id voi huan-luyen/cau-hinh/*.json. Lech la hong im lang.
+ID_BAT_BUOC = {"<|het-van-ban|>": 0, "<|mo-luot|>": 1, "<|dong-luot|>": 2}
 
-# Ba ngon ngu, theo dung thu tu uu tien cua du an.
-NGON_NGU = ["vi", "en", "zh"]
-TI_LE_MAC_DINH = {"vi": 0.60, "en": 0.25, "zh": 0.15}
+# Mau hoi thoai cua BDSG. Ngan co chu y: mau cang dai thi cang nhieu cho de mot
+# lan sua tay lam lech mat na nhan ma khong ai thay. Xem muc 3 phan dau tep.
+MAU_HOI_THOAI = r"""{%- for tin in messages %}
+{{- '<|mo-luot|>' + tin['role'] + '\n' + tin['content'] + '<|dong-luot|>\n' }}
+{%- endfor %}
+{%- if add_generation_prompt %}
+{{- '<|mo-luot|>tro-ly\n' }}
+{%- endif %}"""
+
+# Cau thu tieng Viet dung de bao cao ky tu/token ngay sau khi huan luyen. Tu
+# viet, khong lay tu nguon co ban quyen. Chu de co tinh: van phong ho so doanh
+# nghiep — dung loai van ban mo hinh nay se phai doc.
+CAU_THU_TIENG_VIET = (
+    "Công ty Cổ phần Tập đoàn BDSG hoạt động trong lĩnh vực bất động sản tại Thanh Hoá."
+)
+
+
+def danh_sach_token_dac_biet():
+    """Ba token loi, roi 13 o du tru. Thu tu nay QUYET DINH id, dung sap lai."""
+    du_tru = ["<|du-tru-{:02d}|>".format(i) for i in range(1, SO_O_DU_TRU + 1)]
+    return TOKEN_LOI + du_tru
 
 
 # ---------------------------------------------------------------------------
@@ -132,17 +195,17 @@ TI_LE_MAC_DINH = {"vi": 0.60, "en": 0.25, "zh": 0.15}
 def doc_van_ban(duong_dan):
     """Sinh tung doan van ban tu mot tep.
 
-    Chap nhan ba dinh dang, vi ca ba deu ton tai trong du an:
-      - .jsonl kieu tien-huan-luyen : {"text": "..."}
-      - .jsonl kieu SFT            : {"conversations": [{"role":..,"content":..}, ...]}
-      - .txt                       : moi dong la mot doan
+    Chap nhan ba dinh dang, vi ca ba deu ton tai trong kho nay:
+      - .jsonl tien huan luyen : {"text": "...", "nguon": "...", "ngon_ngu": "vi"}
+      - .jsonl tien huan luyen : {"noi_dung": "..."}   (ten truong cu cua CSDL)
+      - .jsonl doi thoai BDSG  : {"hoi_thoai": [{"vai": "...", "noi_dung": "..."}]}
+      - .txt                   : moi dong la mot doan
 
-    Ham get_texts cua MiniMind (trainer/train_tokenizer.py dong 13-43) co mot ghi
-    chu dang doc: ban dau ho chi boc truong "conversations", nen khi tro DATA_PATH
-    sang tep tien-huan-luyen thi khong lay duoc dong nao, BPE chi hoc tren
-    initial_alphabet va de ra mot tu vung KHONG CO MERGE NAO — ma khong bao loi.
-    Do la ly do ham nay xu ly ca hai dinh dang, va ly do ham chay chinh dung lai
-    neu tong so ky tu doc duoc bang 0.
+    VI SAO HAM NAY PHAI BAO DUOC LA NO KHONG DOC RA GI: neu no am tham tra ve
+    rong — vi tep dung ten truong khac chang han — thi BPE se chi hoc tren 256
+    byte goc va de ra mot tu vung KHONG CO MERGE NAO. Khong co loi nao. Tu vung
+    van ghi ra dia, van nap duoc, va van vo dung. Nen main() dung han neu tong
+    so ky tu doc duoc bang 0.
     """
     mo_rong = os.path.splitext(duong_dan)[1].lower()
     with open(duong_dan, "r", encoding="utf-8", errors="ignore") as f:
@@ -162,9 +225,11 @@ def doc_van_ban(duong_dan):
                 continue
             if "text" in d:
                 vb = str(d["text"])
-            elif "conversations" in d:
-                phan = [m.get("content") for m in d.get("conversations", [])
-                        if isinstance(m, dict) and m.get("content")]
+            elif "noi_dung" in d and not isinstance(d.get("noi_dung"), (list, dict)):
+                vb = str(d["noi_dung"])
+            elif "hoi_thoai" in d and isinstance(d["hoi_thoai"], list):
+                phan = [m.get("noi_dung") for m in d["hoi_thoai"]
+                        if isinstance(m, dict) and m.get("noi_dung")]
                 vb = "\n".join(str(x) for x in phan)
             else:
                 continue
@@ -172,20 +237,22 @@ def doc_van_ban(duong_dan):
                 yield vb
 
 
-def luong_theo_ngon_ngu(cac_tep, ngan_sach_ky_tu):
-    """Doc xen ke cac tep cua MOT ngon ngu cho den khi het ngan sach ky tu.
+def gom_mot_ngon_ngu(cac_tep, ngan_sach_ky_tu):
+    """Doc XEN KE cac tep cua MOT ngon ngu cho den khi het ngan sach ky tu.
 
-    Xen ke (round-robin) chu khong noi duoi nhau: neu noi duoi nhau, mot tep to
-    doc truoc se an het ngan sach va cac tep sau khong gop duoc chu nao. Loi do
-    khong bao gi ca, chi lam tu vung lech ve mot nguon.
+    Xen ke (round-robin) chu khong noi duoi nhau: neu noi duoi nhau, tep to doc
+    truoc se an het ngan sach va cac tep sau khong gop duoc chu nao. Loi do
+    khong bao gi ca, no chi lam tu vung lech ve mot nguon duy nhat.
 
-    Tra ve (danh_sach_van_ban, so_ky_tu_da_dung, so_doan, thong_ke_tung_tep).
+    ngan_sach_ky_tu = 0 nghia la doc het (che do tu tinh ngan sach, xem main).
+
+    Tra ve (danh_sach_van_ban, so_ky_tu_da_doc, so_doan, thong_ke_tung_tep).
     """
     luong = [doc_van_ban(t) for t in cac_tep]
     con_song = [True] * len(luong)
     thong_ke = [{"tep": t, "so_doan": 0, "so_ky_tu": 0} for t in cac_tep]
     ket_qua = []
-    da_dung = 0
+    da_doc = 0
     so_doan = 0
     while any(con_song):
         for i, g in enumerate(luong):
@@ -198,53 +265,77 @@ def luong_theo_ngon_ngu(cac_tep, ngan_sach_ky_tu):
                 continue
             ket_qua.append(vb)
             n = len(vb)
-            da_dung += n
+            da_doc += n
             so_doan += 1
             thong_ke[i]["so_doan"] += 1
             thong_ke[i]["so_ky_tu"] += n
-            if ngan_sach_ky_tu and da_dung >= ngan_sach_ky_tu:
-                return ket_qua, da_dung, so_doan, thong_ke
-    return ket_qua, da_dung, so_doan, thong_ke
+            if ngan_sach_ky_tu and da_doc >= ngan_sach_ky_tu:
+                return ket_qua, da_doc, so_doan, thong_ke
+    return ket_qua, da_doc, so_doan, thong_ke
+
+
+def cat_theo_ngan_sach(van_ban, ngan_sach_ky_tu):
+    """Cat bot danh sach doan cho vua ngan sach ky tu. Tra ve (danh_sach, so_ky_tu).
+
+    Cat theo DOAN, khong cat giua doan — mot doan bi chem doi se day mot cau cut
+    vao ngu lieu hoc merge.
+
+    CHU Y VE SO 0: o ham nay, ngan sach 0 nghia la KHONG LAY GI, khac han
+    gom_mot_ngon_ngu() noi 0 nghia la doc het. Hai nghia nguoc nhau nen phai
+    ghi ra day. Ly do: ham nay luon nhan mot ngan sach da TINH RA
+    (int(tong_dich * ti_le)), nen 0 o day chi xay ra khi nguoi chay dat ti le
+    cua mot ngon ngu bang 0 — tuc la co y bo han ngon ngu do. Neu 0 lai co
+    nghia "khong gioi han" thi dat --ti-le-viet 0 se nap TOAN BO tieng Viet
+    vao, dung nguoc lai y nguoi chay, va khong co loi nao bao. Chinh chuong
+    trinh doi chung tu sinh (tu vung chi hoc tieng Anh) can dat ti le 0 nay.
+    """
+    if ngan_sach_ky_tu <= 0:
+        return [], 0
+    giu = []
+    tong = 0
+    for v in van_ban:
+        if tong >= ngan_sach_ky_tu:
+            break
+        giu.append(v)
+        tong += len(v)
+    return giu, tong
 
 
 # ---------------------------------------------------------------------------
 # Huan luyen
 # ---------------------------------------------------------------------------
-def danh_sach_token_dac_biet():
-    con_lai = SO_TOKEN_DAC_BIET - len(TOKEN_DAC_BIET_LOI) - len(TOKEN_THEM)
-    if con_lai < 0:
-        raise ValueError("Danh sach token dac biet dai hon {} vi tri".format(SO_TOKEN_DAC_BIET))
-    dem = ["<|buffer{}|>".format(i) for i in range(1, con_lai + 1)]
-    return TOKEN_DAC_BIET_LOI + TOKEN_THEM + dem
-
-
-def huan_luyen(van_ban, vocab_size, thu_muc_ra):
+def huan_luyen(van_ban, tu_vung, thu_muc_ra):
+    """Huan luyen byte-level BPE va ghi ra thu muc tuong thich transformers."""
     tokenizer = Tokenizer(models.BPE())
+    # add_prefix_space=False: khong tu chen khoang trang truoc chuoi dau vao.
+    # Neu bat, "Cong ty" va " Cong ty" cho ra cung day token, va moi phep do
+    # ky tu/token se lech mot token moi doan ma khong ai de y.
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
 
     tat_ca_dac_biet = danh_sach_token_dac_biet()
     trainer = trainers.BpeTrainer(
-        vocab_size=vocab_size,
+        vocab_size=tu_vung,
         show_progress=True,
-        # initial_alphabet = 256 byte: bao dam khong bao gio co token <unk>.
-        # Chu tieng Viet co dau va chu Han deu tut xuong byte neu chua hoc merge,
-        # nen "khong loi" khong co nghia la "token hoa tot".
+        # initial_alphabet = 256 byte. Dieu nay bao dam KHONG BAO GIO co <unk>:
+        # moi ky tu Unicode deu phan ra duoc thanh byte. Nhac lai cho ro, vi day
+        # chinh la cho de hieu nham: "khong bao gio loi" KHONG co nghia la
+        # "token hoa tot". Chu tieng Viet co dau ma khong duoc hoc merge se tut
+        # xuong 2-3 token byte va chay thang, khong mot loi nao.
         initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
         special_tokens=tat_ca_dac_biet,
     )
     tokenizer.train_from_iterator(van_ban, trainer=trainer)
     tokenizer.decoder = decoders.ByteLevel()
-    tokenizer.add_special_tokens(TOKEN_DAC_BIET_LOI)
 
-    # --- Kiem tra hop dong id truoc khi ghi ra dia -------------------------
-    # Neu ba id nay khong dung, cau hinh mo hinh (bos_token_id=1, eos_token_id=2)
-    # se tro sai token, va hong nay KHONG bao loi luc huan luyen.
-    mong_doi = {"<|endoftext|>": 0, "<|im_start|>": 1, "<|im_end|>": 2}
-    for tok, id_mong in mong_doi.items():
+    # --- Kiem hop dong id TRUOC khi ghi ra dia -----------------------------
+    # Xem muc 2 phan dau tep. Neu ba id nay khong dung, mo hinh se sinh va dung
+    # o token sai, va khong co loi nao bao. Tha hong o day con hon hong sau ba
+    # ngay huan luyen.
+    for tok, id_mong in sorted(ID_BAT_BUOC.items(), key=lambda kv: kv[1]):
         that = tokenizer.token_to_id(tok)
         if that != id_mong:
             raise RuntimeError(
-                "Token {} co id {} nhung cau hinh mo hinh cho doi {}. "
+                "Token {} co id {} nhung huan-luyen/cau-hinh/*.json cho doi {}. "
                 "Dung ghi tu vung nay ra — no se lam hong mo hinh mot cach im lang."
                 .format(tok, that, id_mong))
 
@@ -254,13 +345,14 @@ def huan_luyen(van_ban, vocab_size, thu_muc_ra):
     tokenizer.save(duong_tokenizer)
     tokenizer.model.save(thu_muc_ra)  # vocab.json + merges.txt, de doc bang mat
 
-    # Danh dau lai co "special": chi 21 token loi la special, phan con lai la
-    # token thuong. Buoc nay sao y MiniMind (train_tokenizer.py dong 80-84).
+    # --- Danh dau lai co "special" -----------------------------------------
+    # Chi ba token loi la special. 13 o du tru de special=false CO CHU Y: neu
+    # mot o du tru hien ra trong dau ra thi co gi do sai, va toi muon no HIEN
+    # RA chu khong muon skip_special_tokens=True nuot mat bang chung.
     with open(duong_tokenizer, "r", encoding="utf-8") as f:
         du_lieu = json.load(f)
     for tt in du_lieu.get("added_tokens", []):
-        if tt["content"] not in TOKEN_DAC_BIET_LOI:
-            tt["special"] = False
+        tt["special"] = tt["content"] in TOKEN_LOI
     with open(duong_tokenizer, "w", encoding="utf-8") as f:
         json.dump(du_lieu, f, ensure_ascii=False, indent=2)
 
@@ -273,31 +365,35 @@ def huan_luyen(van_ban, vocab_size, thu_muc_ra):
             "normalized": False,
             "rstrip": False,
             "single_word": False,
-            "special": tok in TOKEN_DAC_BIET_LOI,
+            "special": tok in TOKEN_LOI,
         }
 
+    # Ten truong duoi day theo CHUAN THU VIEN transformers — quy uoc chung cua
+    # he sinh thai, khong phai cua rieng du an nao. Gia tri la cua BDSG.
     cau_hinh = {
         "add_bos_token": False,
         "add_eos_token": False,
         "add_prefix_space": False,
         "added_tokens_decoder": bang_giai_ma,
-        "additional_special_tokens": [t for t in TOKEN_DAC_BIET_LOI if t != "<|endoftext|>"],
-        "bos_token": "<|im_start|>",
+        "additional_special_tokens": [t for t in TOKEN_LOI if t != "<|het-van-ban|>"],
+        "bos_token": "<|mo-luot|>",
         "clean_up_tokenization_spaces": False,
-        "eos_token": "<|im_end|>",
-        "legacy": True,
-        "model_max_length": 131072,
-        "pad_token": "<|endoftext|>",
-        "sp_model_kwargs": {},
+        "eos_token": "<|dong-luot|>",
+        # model_max_length = 2048 khop max_position_embeddings trong CA BA tep
+        # huan-luyen/cau-hinh/*.json (nho/vua/lon — do lai 26/09/2026, ca ba deu
+        # 2048). Dat so lon hon o day khong lam mo hinh doc duoc dai hon — chi
+        # lam tokenizer im lang cho qua doan dai hon cai mo hinh xu ly duoc.
+        # Truoc 26/09/2026 cho nay ghi 32768, gap 16 lan tran that. Hau qua do
+        # duoc: mo-hinh/kien_truc.py nem ValueError ngay khi tong do dai vuot
+        # max_position_embeddings, nen moi ai tin con so cua tokenizer roi cat
+        # du lieu theo no se dung o batch dau; con buoc chuan bi du lieu (chon
+        # --cat-doan trong tron.py) thi sai am tham vi khong ai chay mo hinh luc
+        # do. Ai doi max_position_embeddings trong cau-hinh/*.json PHAI doi con
+        # so nay trong CUNG mot lan sua.
+        "model_max_length": 2048,
+        "pad_token": "<|het-van-ban|>",
+        "unk_token": "<|het-van-ban|>",
         "spaces_between_special_tokens": False,
-        "unk_token": "<|endoftext|>",
-        "image_token": "<|image_pad|>",
-        "audio_token": "<|audio_pad|>",
-        "video_token": "<|video_pad|>",
-        "vision_bos_token": "<|vision_start|>",
-        "vision_eos_token": "<|vision_end|>",
-        "audio_bos_token": "<|audio_start|>",
-        "audio_eos_token": "<|audio_end|>",
         "chat_template": MAU_HOI_THOAI,
         "tokenizer_class": "PreTrainedTokenizerFast",
     }
@@ -310,56 +406,35 @@ def huan_luyen(van_ban, vocab_size, thu_muc_ra):
 # ---------------------------------------------------------------------------
 # Dong lenh
 # ---------------------------------------------------------------------------
-def phan_tich_nguon(cac_chuoi):
-    """'vi=/duong/dan.jsonl' -> {'vi': ['/duong/dan.jsonl', ...], ...}"""
-    ra = {}
-    for s in cac_chuoi:
-        if "=" not in s:
-            raise ValueError("--nguon phai co dang <ngon_ngu>=<duong_dan>, nhan duoc: {}".format(s))
-        ng, duong = s.split("=", 1)
-        ng = ng.strip().lower()
-        if ng not in NGON_NGU:
-            raise ValueError("Ngon ngu '{}' khong nam trong {}".format(ng, NGON_NGU))
-        ra.setdefault(ng, []).append(os.path.abspath(os.path.expanduser(duong.strip())))
-    return ra
+def duong_tuyet_doi(duong):
+    return os.path.abspath(os.path.expanduser(duong.strip()))
 
 
-def phan_tich_ti_le(s):
-    """'vi=0.6,en=0.25,zh=0.15' -> dict da chuan hoa ve tong 1.0"""
-    if not s:
-        return dict(TI_LE_MAC_DINH)
-    ra = {}
-    for phan in s.split(","):
-        if "=" not in phan:
-            raise ValueError("--ti-le phai co dang vi=0.6,en=0.25,zh=0.15")
-        k, v = phan.split("=", 1)
-        k = k.strip().lower()
-        if k not in NGON_NGU:
-            raise ValueError("Ngon ngu '{}' khong nam trong {}".format(k, NGON_NGU))
-        ra[k] = float(v)
-    tong = sum(ra.values())
+def chuan_hoa_ti_le(ti_le_viet, ti_le_anh):
+    """Chuan hoa ve tong 1,0. Tra ve dict {'vi': .., 'en': ..}."""
+    if ti_le_viet < 0 or ti_le_anh < 0:
+        raise ValueError("Ti le khong duoc am")
+    tong = ti_le_viet + ti_le_anh
     if tong <= 0:
-        raise ValueError("Tong ti le phai lon hon 0")
-    return dict((k, v / tong) for k, v in ra.items())
+        raise ValueError("Tong --ti-le-viet va --ti-le-anh phai lon hon 0")
+    return {"vi": ti_le_viet / tong, "en": ti_le_anh / tong}
 
 
 def tu_kiem(thu_muc_tam):
-    """Tu sinh du lieu gia de chung minh script CHAY DUOC.
+    """Tu sinh du lieu gia de chung minh script CHAY DUOC tu dau den cuoi.
 
-    Day KHONG phai danh gia chat luong — van ban gia qua nho de noi len dieu gi
-    ve tu vung. No chi tra loi mot cau hoi: script co chay tron tu dau den cuoi
-    va de ra tep hop le khong.
+    Day KHONG phai phep danh gia chat luong: van ban gia qua nho de noi len dieu
+    gi ve tu vung. No tra loi dung mot cau hoi — script co chay tron va de ra
+    tep hop le khong, va ba id bat buoc co dung cho khong.
     """
     if not os.path.isdir(thu_muc_tam):
         os.makedirs(thu_muc_tam)
     mau = {
-        "vi": ["Doanh nghiep niem yet cong bo bao cao tai chinh quy ba nam 2026.",
-               "Cong ty co phan bat dong san trien khai du an tai tinh Thanh Hoa.",
-               "Nganh nghe kinh doanh chinh: tu van quan ly va dau tu ha tang."],
+        "vi": ["Doanh nghiệp niêm yết công bố báo cáo tài chính quý ba năm 2026.",
+               "Công ty cổ phần bất động sản triển khai dự án tại tỉnh Thanh Hoá.",
+               "Ngành nghề kinh doanh chính: tư vấn quản lý và đầu tư hạ tầng."],
         "en": ["The company reported consolidated revenue for the third quarter.",
                "Business registration and industry classification for listed firms."],
-        "zh": ["公司公布了第三季度财务报告。",
-               "上市公司的主要经营范围包括基础设施投资。"],
     }
     tep = {}
     for ng, cau in mau.items():
@@ -367,23 +442,29 @@ def tu_kiem(thu_muc_tam):
         with open(d, "w", encoding="utf-8") as f:
             for _ in range(200):
                 for c in cau:
-                    f.write(json.dumps({"text": c}, ensure_ascii=False) + "\n")
+                    f.write(json.dumps({"text": c, "nguon": "tu-kiem", "ngon_ngu": ng},
+                                       ensure_ascii=False) + "\n")
         tep[ng] = d
     return tep
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        description="Huan luyen tu vung BPE ba thu tieng cho ho mo hinh BDSG",
+        description="Huan luyen tu vung BPE hai ngon ngu (Viet chinh, Anh phu) cho ho mo hinh BDSG",
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--nguon", action="append", default=[], metavar="NGONNGU=DUONGDAN",
-                   help="nguon du lieu, lap lai duoc. Vi du: --nguon vi=/du/lieu.jsonl")
-    p.add_argument("--ti-le", default=None, metavar="vi=0.6,en=0.25,zh=0.15",
-                   help="ti le ngan sach ky tu theo ngon ngu (mac dinh vi=0.60,en=0.25,zh=0.15)")
-    p.add_argument("--vocab-size", type=int, default=24576,
-                   help="kich thuoc tu vung (mac dinh 24576; MiniMind dung 6400 cho hai thu tieng)")
-    p.add_argument("--ngan-sach-ky-tu", type=int, default=200000000,
-                   help="tong so ky tu dua vao huan luyen BPE; 0 = khong gioi han (mac dinh 200 trieu)")
+    p.add_argument("--nguon-viet", action="append", default=[], metavar="DUONGDAN",
+                   help="tep ngu lieu tieng Viet (.jsonl hoac .txt), lap lai duoc")
+    p.add_argument("--nguon-anh", action="append", default=[], metavar="DUONGDAN",
+                   help="tep ngu lieu tieng Anh (.jsonl hoac .txt), lap lai duoc")
+    p.add_argument("--ti-le-viet", type=float, default=TI_LE_MAC_DINH["vi"],
+                   help="phan ngan sach KY TU danh cho tieng Viet (mac dinh 0.80)")
+    p.add_argument("--ti-le-anh", type=float, default=TI_LE_MAC_DINH["en"],
+                   help="phan ngan sach KY TU danh cho tieng Anh (mac dinh 0.20)")
+    p.add_argument("--tu-vung", type=int, default=24576,
+                   help="kich thuoc tu vung (mac dinh 24576, khop huan-luyen/cau-hinh/*.json)")
+    p.add_argument("--ngan-sach-ky-tu", type=int, default=0,
+                   help="tong so ky tu dua vao huan luyen BPE. 0 = TU TINH: lay ngan sach lon "
+                        "nhat ma du lieu hien co con giu dung ti le (mac dinh 0)")
     p.add_argument("--ra", default="./tu-vung-bdsg", help="thu muc ghi ket qua")
     p.add_argument("--tu-kiem", action="store_true",
                    help="tu sinh du lieu gia va chay thu (chung minh script chay duoc)")
@@ -395,59 +476,108 @@ def main(argv=None):
         import tempfile
         tam = tempfile.mkdtemp(prefix="tu-vung-tu-kiem-")
         tep = tu_kiem(tam)
-        nguon = dict((k, [v]) for k, v in tep.items())
-        args.vocab_size = min(args.vocab_size, 1000)
+        nguon = {"vi": [tep["vi"]], "en": [tep["en"]]}
+        args.tu_vung = min(args.tu_vung, 1000)
         args.ngan_sach_ky_tu = 0
         args.ra = os.path.join(tam, "ra")
         print("[tu-kiem] du lieu gia o {}".format(tam))
     else:
-        if not args.nguon:
-            p.error("Phai co it nhat mot --nguon (hoac dung --tu-kiem de chay thu)")
-        nguon = phan_tich_nguon(args.nguon)
+        if not args.nguon_viet and not args.nguon_anh:
+            p.error("Phai co it nhat mot --nguon-viet hoac --nguon-anh "
+                    "(hoac dung --tu-kiem de chay thu)")
+        nguon = {"vi": [duong_tuyet_doi(t) for t in args.nguon_viet],
+                 "en": [duong_tuyet_doi(t) for t in args.nguon_anh]}
 
-    ti_le = phan_tich_ti_le(args.ti_le)
+    try:
+        ti_le = chuan_hoa_ti_le(args.ti_le_viet, args.ti_le_anh)
+    except ValueError as e:
+        p.error(str(e))
 
-    thieu_tep = []
-    for ng, ds in nguon.items():
-        for t in ds:
-            if not os.path.isfile(t):
-                thieu_tep.append(t)
+    thieu_tep = [t for ds in nguon.values() for t in ds if not os.path.isfile(t)]
     if thieu_tep:
         p.error("Khong tim thay tep:\n  " + "\n  ".join(thieu_tep))
 
     print("")
-    print("Ngan sach ky tu: {}".format(
-        "khong gioi han" if not args.ngan_sach_ky_tu else "{:,}".format(args.ngan_sach_ky_tu)))
-    print("Ti le ngon ngu : " + ", ".join("{}={:.2f}".format(k, ti_le.get(k, 0.0)) for k in NGON_NGU))
-    print("vocab_size     : {}".format(args.vocab_size))
+    print("Ngan sach ky tu : {}".format(
+        "TU TINH tu du lieu hien co" if not args.ngan_sach_ky_tu
+        else "{:,}".format(args.ngan_sach_ky_tu)))
+    print("Ti le ngon ngu  : vi={:.2f}, en={:.2f}  (chuan hoa ve tong 1,0)".format(
+        ti_le["vi"], ti_le["en"]))
+    print("Kich thuoc tu vung: {:,}".format(args.tu_vung))
     print("")
 
-    tat_ca_van_ban = []
-    bao_cao_ngon_ngu = {}
-    for ng in NGON_NGU:          # luon theo thu tu vi -> en -> zh
-        if ng not in nguon:
+    # --- Doc du lieu -------------------------------------------------------
+    # Hai che do, khac nhau ve BO NHO va can ghi ro:
+    #   ngan sach > 0 : doc den khi day ngan sach roi dung. Bo nho co chan.
+    #   ngan sach = 0 : doc HET moi tep de biet tung ngon ngu co bao nhieu, roi
+    #                   moi tinh ngan sach lon nhat giu dung ti le. Chinh xac
+    #                   hon, nhung giu ca ngu lieu trong RAM. O quy mo hien tai
+    #                   (ngu lieu BDSG 7,13 MB) thi khong sao; voi vai GB thi
+    #                   phai dat --ngan-sach-ky-tu tuong minh.
+    kho = {}
+    for ng in NGON_NGU:
+        if not nguon.get(ng):
             print("  {}: khong co nguon nao -> bo qua".format(ng))
-            bao_cao_ngon_ngu[ng] = {"ngan_sach": 0, "da_dung": 0, "so_doan": 0,
-                                    "thieu": 0, "tep": []}
+            kho[ng] = {"van_ban": [], "ky_tu_co": 0, "so_doan": 0, "tep": []}
             continue
-        ngan_sach = int(args.ngan_sach_ky_tu * ti_le.get(ng, 0.0)) if args.ngan_sach_ky_tu else 0
-        vb, da_dung, so_doan, tk = luong_theo_ngon_ngu(nguon[ng], ngan_sach)
-        thieu = max(0, ngan_sach - da_dung) if ngan_sach else 0
-        tat_ca_van_ban.extend(vb)
-        bao_cao_ngon_ngu[ng] = {"ngan_sach": ngan_sach, "da_dung": da_dung,
-                                "so_doan": so_doan, "thieu": thieu, "tep": tk}
-        canh_bao = ""
-        if thieu:
-            canh_bao = "  <-- THIEU {:,} ky tu ({:.1f}% ngan sach). Khong bu bang cach lap lai.".format(
-                thieu, 100.0 * thieu / ngan_sach)
-        print("  {}: {:,} doan, {:,} ky tu{}".format(ng, so_doan, da_dung, canh_bao))
+        if ti_le[ng] <= 0:
+            # Ti le 0 = co y bo han ngon ngu nay. Khong doc tep cua no vao RAM
+            # lam gi. Che do doi chung tu sinh (--ti-le-viet 0) di duong nay.
+            print("  {}: ti le 0 -> khong nap (co y bo han ngon ngu nay)".format(ng))
+            kho[ng] = {"van_ban": [], "ky_tu_co": 0, "so_doan": 0, "tep": []}
+            continue
+        han = int(args.ngan_sach_ky_tu * ti_le[ng]) if args.ngan_sach_ky_tu else 0
+        vb, da_doc, so_doan, tk = gom_mot_ngon_ngu(nguon[ng], han)
+        kho[ng] = {"van_ban": vb, "ky_tu_co": da_doc, "so_doan": so_doan, "tep": tk}
+        print("  {}: doc duoc {:,} doan, {:,} ky tu tu {} tep".format(
+            ng, so_doan, da_doc, len(nguon[ng])))
 
-    tong_ky_tu = sum(v["da_dung"] for v in bao_cao_ngon_ngu.values())
-    if tong_ky_tu == 0:
+    co_mat = [ng for ng in NGON_NGU if kho[ng]["ky_tu_co"] > 0]
+    if not co_mat:
         sys.stderr.write(
             "\nKHONG doc duoc ky tu nao. Neu van chay tiep, BPE chi hoc tren 256 byte\n"
             "goc va de ra mot tu vung khong co merge nao — ma khong bao loi. Dung lai.\n"
-            "Kiem lai: tep .jsonl co truong \"text\" hoac \"conversations\" khong?\n")
+            "Kiem lai: tep .jsonl co truong \"text\", \"noi_dung\" hay \"hoi_thoai\" khong?\n")
+        return 2
+
+    # --- Quyet dinh ngan sach tung ngon ngu --------------------------------
+    if args.ngan_sach_ky_tu:
+        tong_dich = args.ngan_sach_ky_tu
+    else:
+        # Ngon ngu it du lieu nhat quyet dinh quy mo, neu muon giu DUNG ti le.
+        # Con so nay TINH RA, khong dat tay, va duoc in ra de nguoi chay thay
+        # minh dang phai bo bot bao nhieu cua ngon ngu con lai.
+        kha_thi = [kho[ng]["ky_tu_co"] / ti_le[ng] for ng in co_mat if ti_le[ng] > 0]
+        tong_dich = int(min(kha_thi)) if kha_thi else sum(kho[ng]["ky_tu_co"] for ng in co_mat)
+
+    print("")
+    print("  {:<4} {:>16} {:>16} {:>16} {:>10}".format(
+        "ngon", "ky tu co", "ngan sach", "thuc dung", "thieu"))
+    print("  " + "-" * 66)
+    bao_cao_ngon_ngu = {}
+    tat_ca_van_ban = []
+    for ng in NGON_NGU:
+        han = int(tong_dich * ti_le[ng])
+        vb, dung = cat_theo_ngan_sach(kho[ng]["van_ban"], han)
+        thieu = max(0, han - dung)
+        tat_ca_van_ban.extend(vb)
+        bao_cao_ngon_ngu[ng] = {
+            "ngan_sach": han, "ky_tu_co": kho[ng]["ky_tu_co"], "ky_tu_dung": dung,
+            "so_doan_dung": len(vb), "thieu": thieu, "ti_le_dinh": ti_le[ng],
+            "tep": kho[ng]["tep"],
+        }
+        print("  {:<4} {:>16,} {:>16,} {:>16,} {:>10,}".format(
+            ng, kho[ng]["ky_tu_co"], han, dung, thieu))
+    for ng in NGON_NGU:
+        t = bao_cao_ngon_ngu[ng]["thieu"]
+        ns = bao_cao_ngon_ngu[ng]["ngan_sach"]
+        if t and ns:
+            print("  CANH BAO {}: thieu {:,} ky tu = {:.1f}% ngan sach cua no. "
+                  "Script KHONG lap lai van ban de bu.".format(ng, t, 100.0 * t / ns))
+
+    tong_ky_tu = sum(v["ky_tu_dung"] for v in bao_cao_ngon_ngu.values())
+    if tong_ky_tu == 0:
+        sys.stderr.write("\nNgan sach tinh ra bang 0 ky tu. Dung lai.\n")
         return 2
 
     print("")
@@ -455,31 +585,47 @@ def main(argv=None):
         len(tat_ca_van_ban), tong_ky_tu))
     print("")
 
-    thu_muc_ra = os.path.abspath(os.path.expanduser(args.ra))
-    tokenizer, so_tu, so_merge = huan_luyen(tat_ca_van_ban, args.vocab_size, thu_muc_ra)
+    thu_muc_ra = duong_tuyet_doi(args.ra)
+    tokenizer, so_tu, so_merge = huan_luyen(tat_ca_van_ban, args.tu_vung, thu_muc_ra)
     giay = time.time() - bat_dau
 
-    # Ti le thuc te tung ngon ngu chiem trong ngu lieu huan luyen — ghi lai con
-    # so DUOC, khong phai con so DINH.
+    # Ti le THAT tung ngon ngu chiem trong ngu lieu — con so DUOC, khong phai
+    # con so DINH. Hai cot nay lech nhau khi mot ngon ngu thieu du lieu.
     for ng in NGON_NGU:
-        bao_cao_ngon_ngu[ng]["ti_le_dinh"] = ti_le.get(ng, 0.0)
         bao_cao_ngon_ngu[ng]["ti_le_that"] = (
-            bao_cao_ngon_ngu[ng]["da_dung"] / float(tong_ky_tu)) if tong_ky_tu else 0.0
+            bao_cao_ngon_ngu[ng]["ky_tu_dung"] / float(tong_ky_tu)) if tong_ky_tu else 0.0
+
+    # Do ngay mot phep nen tren cau thu tieng Viet. Mot con so o day dat hon ba
+    # dong khang dinh: nguoi chay thay lien tu vung vua sinh nen duoc bao nhieu.
+    ma = tokenizer.encode(CAU_THU_TIENG_VIET, add_special_tokens=False)
+    ky_tu_tren_token = len(CAU_THU_TIENG_VIET) / float(len(ma.ids)) if ma.ids else 0.0
 
     bao_cao = {
         "ngay_chay": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "vocab_size_yeu_cau": args.vocab_size,
-        "vocab_size_that": so_tu,
+        "ngon_ngu": NGON_NGU,
+        "tu_vung_yeu_cau": args.tu_vung,
+        "tu_vung_that": so_tu,
         "so_merge": so_merge,
-        "so_token_dac_biet": SO_TOKEN_DAC_BIET,
-        "id_kiem_tra": {t: tokenizer.token_to_id(t) for t in
-                        ["<|endoftext|>", "<|im_start|>", "<|im_end|>", "<think>", "</think>"]},
+        "token_dac_biet": {"loi": TOKEN_LOI, "so_o_du_tru": SO_O_DU_TRU,
+                           "tong": len(danh_sach_token_dac_biet())},
+        "id_kiem_tra": {t: tokenizer.token_to_id(t) for t in danh_sach_token_dac_biet()[:5]},
         "tong_ky_tu": tong_ky_tu,
         "tong_doan": len(tat_ca_van_ban),
-        "ngan_sach_ky_tu": args.ngan_sach_ky_tu,
+        "ngan_sach_ky_tu": args.ngan_sach_ky_tu or tong_dich,
+        "ngan_sach_tu_tinh": not args.ngan_sach_ky_tu,
         "theo_ngon_ngu": bao_cao_ngon_ngu,
+        "cau_thu_tieng_viet": {
+            "cau": CAU_THU_TIENG_VIET,
+            "so_ky_tu": len(CAU_THU_TIENG_VIET),
+            "so_token": len(ma.ids),
+            "ky_tu_tren_token": round(ky_tu_tren_token, 3),
+            "doi_chieu": ("Duong co so 25/09/2026 tren 1.037.113 ky tu tieng Viet: "
+                          "3,59 ky tu/token khi hoc tieng Viet, 1,22 khi khong hoc. "
+                          "Con so o day do tren MOT cau nen chi la dau hieu som, "
+                          "khong thay duoc do_tokenizer.py."),
+        },
         "giay_chay": round(giay, 1),
-        "ghi_chu": ("Ti le THAT co the lech ti le DINH neu mot ngon ngu khong du du lieu. "
+        "ghi_chu": ("Ti le THAT lech ti le DINH khi mot ngon ngu khong du du lieu. "
                     "Xem truong 'thieu'. Script khong lap lai van ban de bu."),
     }
     duong_bao_cao = os.path.join(thu_muc_ra, "bao_cao_tu_vung.json")
@@ -488,16 +634,19 @@ def main(argv=None):
 
     print("")
     print("Xong sau {:.1f} giay.".format(giay))
-    print("  tu vung that : {} tu, {} merge".format(so_tu, so_merge))
-    print("  id kiem tra  : " + ", ".join(
-        "{}={}".format(k, v) for k, v in bao_cao["id_kiem_tra"].items()))
+    print("  tu vung that : {:,} tu, {:,} merge".format(so_tu, so_merge))
+    print("  token dac biet: {} loi + {} o du tru = {}".format(
+        len(TOKEN_LOI), SO_O_DU_TRU, len(danh_sach_token_dac_biet())))
+    print("  id bat buoc  : " + ", ".join(
+        "{}={}".format(t, tokenizer.token_to_id(t)) for t in TOKEN_LOI))
+    print("  cau thu vi   : {} ky tu -> {} token = {:.2f} ky tu/token".format(
+        len(CAU_THU_TIENG_VIET), len(ma.ids), ky_tu_tren_token))
     print("  ghi ra       : {}".format(thu_muc_ra))
     print("    tokenizer.json, tokenizer_config.json, vocab.json, merges.txt")
     print("    bao_cao_tu_vung.json")
     print("")
-    print("BUOC TIEP THEO — dung tin tu vung nay tot cho den khi do:")
-    print("  python3 do_tokenizer.py --bo bdsg={} \\".format(thu_muc_ra))
-    print("                          --bo minimind=<thu-muc-minimind>/model")
+    print("BUOC TIEP THEO — dung tin tu vung nay tot cho den khi do tu te:")
+    print("  python3 do_tokenizer.py --bo bdsg={}".format(thu_muc_ra))
     return 0
 
 

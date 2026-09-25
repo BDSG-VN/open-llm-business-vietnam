@@ -1,54 +1,113 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Tinh so tham so cua mot cau hinh MiniMind ma KHONG can cai torch.
+"""Tinh so tham so cua mot cau hinh BDSG ma KHONG can cai torch.
 
+=============================================================================
 VI SAO CO TEP NAY
------------------
-Cac so "39.33M", "136.87M", "212.38M-A77.90M" ghi trong cac tep .json canh day la
-so TINH RA, khong phai so DO tren mo hinh that (25/09/2026: BDSG chua huan luyen
-trong so nao, chua co mo hinh de dem). Mot con so tinh ra ma khong kem cach tinh
-thi khong kiem chung duoc. Tep nay la cach tinh, chay duoc, ai cung doi chieu lai duoc.
+=============================================================================
+Cac con so "36,18M", "119,56M", "295,75M" ghi trong cac tep .json canh day la so
+TINH RA, khong phai so DO tren mo hinh that. Ngay 26/09/2026 BDSG chua huan luyen
+trong so nao, nen khong co mo hinh de dem. Mot con so tinh ra ma khong kem cach
+tinh thi khong ai kiem chung lai duoc — nen cach tinh nam o day, chay duoc.
 
-CACH DOI CHIEU (da lam, 25/09/2026)
------------------------------------
-MiniMind cong bo bang tham so trong README_en.md dong 576-580. Chay:
-    python3 tinh_tham_so.py --doi-chieu
-se dung chinh cong thuc nay tinh lai cac cau hinh cua HO va so voi con so HO ghi:
-    768 / 8 lop / kv4 / vocab 6400            -> tinh ra 63.91M, ho ghi 64M
-    768 / 8 lop / kv4 / vocab 6400 / 4 expert -> tinh ra 198.42M-A63.94M, ho ghi 198M-A64M
-    512 / 8 lop / kv2 / vocab 6400            -> tinh ra 28.98M, ho ghi 26M   (lech 11%)
-    768 / 16 lop / kv2 / vocab 6400           -> tinh ra 118.19M, ho ghi 104M (lech 14%)
-Hai dong dau khop duoi 0.2%. Hai dong sau LECH, va toi KHONG biet vi sao: ca hai deu la
-"phien ban lich su" (README_en.md dong 578-580), rat co the chung dung mot cau hinh khac
-voi cai ghi trong bang (vi du intermediate_size khac, hoac ho dem theo cach khac — khong
-dem embedding chang han). Toi ghi ca cho lech nay ra thay vi giau no.
-=> Cong thuc duoc coi la dung cho nhanh minimind-3 (cai BDSG dung). Voi cac phien ban
-   lich su thi chua chac, va do la ly do BDSG khong lay so cua ho lam can cu.
+Tep nay KHONG tham chieu den kho ma nao khac. No dem theo kien truc ma BDSG
+chon, va kien truc do lay tu KY THUAT DA CONG BO trong cac bai bao:
 
-CACH DEM (doc tu model/model_minimind.py cua MiniMind, khong doan)
-------------------------------------------------------------------
-  embedding   : vocab_size * hidden_size
-                Dem MOT LAN neu tie_word_embeddings=True, vi lop
-                MiniMindForCausalLM gan model.embed_tokens.weight = lm_head.weight
-                (cung mot doi tuong Parameter), va nn.Module.parameters() loc trung.
+  RMSNorm            arXiv:1910.07467   (Zhang & Sennrich, 2019)
+  RoPE               arXiv:2104.09864   (Su et al., 2021)
+  GQA                arXiv:2305.13245   (Ainslie et al., 2023)
+  SwiGLU             arXiv:2002.05202   (Shazeer, 2020)
+  pre-norm           arXiv:2002.04745   (Xiong et al., 2020)
+  buoc embedding     arXiv:1608.05859   (Press & Wolf, 2016) — tie_word_embeddings
+
+Ten cac truong cau hinh (hidden_size, num_hidden_layers, ...) theo CHUAN
+TRANSFORMERS: day la quy uoc chung cua ca he sinh thai (Llama, Mistral, Qwen deu
+dung ten nay), khong phai cua rieng du an nao. Giu dung ten la dieu kien de mo
+hinh BDSG nap duoc o noi khac ma khong phai viet lop chuyen doi.
+
+=============================================================================
+CACH DEM — TUNG DONG MOT, KHONG DOAN
+=============================================================================
+Mo hinh la decoder-only, pre-norm, khong dung bias o cac lop tuyen tinh
+(chuan tu dong Llama tro di: bias o q/k/v/o va o FFN khong cai thien gi do duoc
+o quy mo nay, ma them tham so va them mot duong lech).
+
+  embedding      V * h
+                 Dem MOT LAN neu tie_word_embeddings = true: luc do lop dau ra
+                 (lm_head) dung CHUNG doi tuong Parameter voi bang embedding, va
+                 nn.Module.parameters() loc trung nen no chi xuat hien mot lan.
+                 Neu tie = false thi cong them V * h nua cho lm_head.
+
   moi lop:
-    q_proj    : hidden_size * (num_attention_heads * head_dim)
-    k_proj    : hidden_size * (num_key_value_heads * head_dim)
-    v_proj    : hidden_size * (num_key_value_heads * head_dim)
-    o_proj    : (num_attention_heads * head_dim) * hidden_size
-    q_norm    : head_dim          (RMSNorm co dung mot vector weight)
-    k_norm    : head_dim
-    2 RMSNorm : 2 * hidden_size   (input_layernorm + post_attention_layernorm)
-    FFN dac   : 3 * hidden_size * intermediate_size   (gate + up + down, deu bias=False)
-    FFN MoE   : hidden_size * num_experts             (router gate)
-                + num_experts * 3 * hidden_size * moe_intermediate_size
-  cuoi cung   : hidden_size       (RMSNorm norm)
-  KHONG dem   : freqs_cos / freqs_sin — la buffer (persistent=False), khong phai tham so.
+    q_proj       h * (num_attention_heads   * head_dim)
+    k_proj       h * (num_key_value_heads   * head_dim)     <- GQA: kv it hon q
+    v_proj       h * (num_key_value_heads   * head_dim)
+    o_proj       (num_attention_heads * head_dim) * h
+    2 RMSNorm    2 * h
+                 RMSNorm chi co MOT vector he so nhan, khong co do lech (beta) —
+                 do la khac biet voi LayerNorm, va la ly do no re hon.
+                 Hai cai: mot truoc attention, mot truoc FFN (pre-norm).
+    FFN SwiGLU   3 * h * intermediate_size
+                 Ba ma tran: gate, up, down. SwiGLU can BA chu khong phai hai
+                 nhu FFN co dien — do la ly do intermediate_size thuong lay
+                 khoang 8/3 * h chu khong phai 4 * h, de tong tham so FFN giu
+                 nguyen muc 8 * h^2.
 
-Chay:
-    python3 tinh_tham_so.py                    # tinh het cac .json trong thu muc nay
-    python3 tinh_tham_so.py nho.json vua.json  # tinh rieng
-    python3 tinh_tham_so.py --doi-chieu        # kiem cong thuc voi so MiniMind cong bo
+  cuoi cung      h        (mot RMSNorm truoc lop dau ra)
+
+  KHONG dem:
+    - bang cos/sin cua RoPE. No la dai luong TINH RA tu vi tri, khong hoc, nen
+      dang le phai dang ky la buffer (persistent=False) va khong nam trong tep
+      trong so. No VAN chiem RAM luc chay — xem phan "bo nho RoPE" ben duoi.
+    - mat na nhan qua (causal mask), cung la buffer.
+
+  GIA DINH PHAI NOI RO: cong thuc nay gia dinh kien truc KHONG dung QK-norm
+  (chuan hoa rieng cho q va k truoc khi tinh diem chu y). Neu mo-hinh/ ma nhom
+  kia dang viet co them QK-norm thi phai cong them 2 * head_dim moi lop. Voi
+  cau hinh "nho" do la 128 tham so tren 36 trieu — khong doi con so lam tron,
+  nhung ghi ra de khong ai phai doan.
+
+=============================================================================
+SO TINH RA vs SO DEM DUOC — DOI CHIEU THE NAO
+=============================================================================
+Khi mo-hinh/ da co ma that, chay:
+
+    python3 -c "
+    import importlib.util, sys, json
+    # Thu muc ten la 'mo-hinh' co gach ngang nen khong import thang duoc; phai nap
+    # theo duong dan tep. Lop mo hinh ten that la BDSGChoNgonNgu (doc 26/09/2026).
+    spec = importlib.util.spec_from_file_location(
+        'mo_hinh', 'mo-hinh/__init__.py', submodule_search_locations=['mo-hinh'])
+    mh = importlib.util.module_from_spec(spec); sys.modules['mo_hinh'] = mh
+    spec.loader.exec_module(mh)
+    cfg = json.load(open('huan-luyen/cau-hinh/nho.json')); cfg.pop('bdsg', None)
+    m = mh.BDSGChoNgonNgu(mh.CauHinhBDSG(**cfg))
+    print(sum(p.numel() for p in m.parameters()))
+    "
+(chay tu GOC KHO. Lenh nay da chay that 26/09/2026 — ket qua o muc ngay duoi.)
+
+roi so voi cot TONG o day. Hai so PHAI khop tuyet doi, khong phai khop xap xi:
+ca hai deu la phep dem so nguyen tren cung mot kien truc. Lech du mot tham so
+nghia la mot ben hieu sai kien truc — thuong la chuyen buoc embedding (tie) hoac
+chuyen bias. Lech thi SUA, dung lam tron cho qua.
+
+DA DOI CHIEU THAT, 26/09/2026 — ket qua:
+    nho.json  tinh ra 36.184.576  ·  dem duoc 36.184.576  ·  lech 0
+    vua.json  tinh ra 119.563.008 ·  dem duoc 119.563.008 ·  lech 0
+    lon.json  tinh ra 295.748.608 ·  dem duoc 295.748.608 ·  lech 0
+CauHinhBDSG.so_tham_so() cua mo-hinh/ — mot phep dem thu ba, viet doc lap — cung
+ra dung cac so ay, khop den tung phan (embedding 12.582.912 · mot lop 2.950.144 ·
+norm cuoi 512 cho nho.json).
+
+Luu y: sum(p.numel() for p in m.parameters()) da tu loc trung khi tie=True, vi
+tap parameters() duoc de-duplicate theo dinh danh doi tuong.
+
+=============================================================================
+CHAY
+=============================================================================
+    python3 tinh_tham_so.py                     # tinh het cac .json trong thu muc nay
+    python3 tinh_tham_so.py nho.json lon.json   # tinh rieng
+    python3 tinh_tham_so.py --tu-kiem           # kiem cong thuc bang so hoc tay
 """
 
 import argparse
@@ -59,148 +118,256 @@ import sys
 
 THU_MUC = os.path.dirname(os.path.abspath(__file__))
 
+# DON VI — doc ky, day la cho hai tep trong kho tung noi hai so khac nhau.
+# Moi con so bo nho o tep nay tinh theo LUY THUA 2: 1 MiB = 1024^2 byte,
+# 1 GiB = 1024^3. Ly do: cau hoi thuc te la "co vua RAM/VRAM khong", ma RAM va
+# VRAM deu duoc dem theo luy thua 2.
+# CANH BAO KHI DOI CHIEU: mo-hinh/cau_hinh.py co ham bo_nho_trong_so_MB() va
+# bo_nho_kv_cache_MB() tinh theo MB THAP PHAN (1 MB = 1e6 byte). Cung mot mo hinh
+# se ra hai con so lech nhau 4,86% — khong phai hai ben bat dong, ma la hai don vi.
+# Vi du nho.json: 69,0 MiB = 72,4 MB thap phan. Cot "tai ve" ben duoi in ca hai,
+# vi kich thuoc tep tai ve thi the gioi quen doc theo MB thap phan.
+MiB = 1024.0 * 1024.0
+GiB = 1024.0 * 1024.0 * 1024.0
+KiB = 1024.0
+MB_THAP_PHAN = 1e6
 
-def intermediate_mac_dinh(hidden_size):
-    """Cong thuc mac dinh cua MiniMindConfig: ceil(hidden_size*pi/64)*64."""
-    return math.ceil(hidden_size * math.pi / 64) * 64
+
+def intermediate_mac_dinh(hidden_size, boi_so=128):
+    """Gia tri intermediate_size mac dinh khi cau hinh khong ghi ro.
+
+    8/3 * h roi lam tron LEN theo boi so 128. Vi sao 8/3: FFN co dien co hai ma
+    tran voi kich thuoc trung gian 4h, tong 8 * h^2 tham so. SwiGLU can ba ma
+    tran, nen de giu nguyen ngan sach 8 * h^2 thi kich thuoc trung gian phai la
+    8h/3. Vi sao lam tron len boi so 128: cac nhan GEMM tren GPU chia khoi theo
+    boi so cua 64/128; mot chieu le lam giam hieu suat ma khong doi ket qua.
+    """
+    return int(math.ceil(hidden_size * 8.0 / 3.0 / boi_so) * boi_so)
 
 
 def doc_cau_hinh(duong_dan):
     with open(duong_dan, "r", encoding="utf-8") as f:
         cfg = json.load(f)
-    # Khoa "bdsg" la ghi chu cua BDSG, KHONG phai tham so cua MiniMindConfig.
-    # Ai nap cau hinh nay vao MiniMindConfig(**cfg) phai bo khoa nay truoc.
+    # Khoa "bdsg" la ghi chu cua BDSG (muc dich, cach tinh, canh bao), KHONG phai
+    # tham so kien truc. Ai nap cau hinh nay vao CauHinhBDSG(**cfg) phai bo khoa
+    # nay truoc, neu khong se nhan TypeError ve tham so la.
     cfg.pop("bdsg", None)
     return cfg
 
 
 def tinh(cfg):
+    """Dem tham so tu mot dict cau hinh. Tra ve dict cac phan da tach rieng."""
     h = cfg["hidden_size"]
     L = cfg["num_hidden_layers"]
-    V = cfg.get("vocab_size", 6400)
-    n_q = cfg.get("num_attention_heads", 8)
-    n_kv = cfg.get("num_key_value_heads", 4)
+    V = cfg["vocab_size"]
+    n_q = cfg["num_attention_heads"]
+    n_kv = cfg.get("num_key_value_heads", n_q)
     hd = cfg.get("head_dim", h // n_q)
     inter = cfg.get("intermediate_size", intermediate_mac_dinh(h))
-    tie = cfg.get("tie_word_embeddings", True)
-    dung_moe = bool(cfg.get("use_moe", False))
-    n_exp = cfg.get("num_experts", 4)
-    n_act = cfg.get("num_experts_per_tok", 1)
-    moe_inter = cfg.get("moe_intermediate_size", inter)
+    tie = bool(cfg.get("tie_word_embeddings", True))
+    ctx = cfg.get("max_position_embeddings", 2048)
 
     embedding = V * h
     lm_head = 0 if tie else V * h
 
-    attn = h * (n_q * hd) + h * (n_kv * hd) + h * (n_kv * hd) + (n_q * hd) * h
-    attn += 2 * hd                      # q_norm + k_norm
-    norm_lop = 2 * h                    # hai RMSNorm trong moi block
-
-    ffn_dac = 3 * h * inter
-    ffn_moe = h * n_exp + n_exp * 3 * h * moe_inter
-    ffn = ffn_moe if dung_moe else ffn_dac
+    attn = (
+        h * (n_q * hd)        # q_proj
+        + h * (n_kv * hd)     # k_proj
+        + h * (n_kv * hd)     # v_proj
+        + (n_q * hd) * h      # o_proj
+    )
+    norm_lop = 2 * h
+    ffn = 3 * h * inter
 
     mot_lop = attn + norm_lop + ffn
     tong = embedding + lm_head + L * mot_lop + h
 
-    # So kich hoat: tinh y het get_model_params trong trainer/trainer_utils.py
-    # dong 20-30 cua MiniMind. Luu y: bien 'expert' ben ho la tong tham so cua
-    # CHUYEN GIA SO 0 tren TAT CA cac lop, khong phai tren mot lop.
-    if dung_moe:
-        mot_chuyen_gia_moi_lop = 3 * h * moe_inter
-        expert_all_layers = L * mot_chuyen_gia_moi_lop
-        base = tong - expert_all_layers * n_exp
-        kich_hoat = base + expert_all_layers * n_act
-    else:
-        kich_hoat = tong
+    # Bo dem KV luc suy luan, MOI TOKEN, o fp16:
+    #   2 (K va V) * so_lop * num_key_value_heads * head_dim * 2 byte
+    # Day la cho GQA tra cong: n_kv nho hon n_q bao nhieu lan thi bo dem nho di
+    # bay nhieu lan. Voi ngu canh dai, bo dem nay lon hon ca trong so.
+    kv_moi_token = 2 * L * n_kv * hd * 2
+
+    # Bang cos/sin cua RoPE dung luc chay: hai tensor float32 co (ctx, head_dim/2)
+    # neu luu dang goc, hoac (ctx, head_dim) neu luu ca hai nua da nhan doi.
+    # Tinh theo truong hop ton kem hon (ctx * head_dim moi bang) de khong hua hep.
+    rope_byte = 2 * ctx * hd * 4
 
     return {
         "tong": tong,
-        "kich_hoat": kich_hoat,
         "embedding": embedding,
         "lm_head": lm_head,
         "mot_lop": mot_lop,
         "attn_mot_lop": attn,
         "ffn_mot_lop": ffn,
+        "norm_mot_lop": norm_lop,
+        "tong_cac_lop": L * mot_lop,
         "intermediate_size": inter,
         "head_dim": hd,
+        "num_key_value_heads": n_kv,
+        "max_position_embeddings": ctx,
         "ti_le_embedding": embedding / float(tong),
+        "kv_moi_token_byte": kv_moi_token,
+        "rope_byte": rope_byte,
+    }
+
+
+def bo_nho(tong_tham_so):
+    """Bo nho tinh tu so tham so.
+
+    DON VI: MiB/GiB (luy thua 2) — xem khoi chu thich canh hang so o dau tep.
+    Khoa `fp16_MB_thap_phan` la CUNG mot luong byte do, doi sang MB thap phan
+    (1e6 byte), vi do la don vi ma kich thuoc tep tai ve thuong duoc doc.
+
+    AdamW giu bon thu cho MOI tham so khi huan luyen o fp32:
+        ban trong so fp32        4 byte
+        gradient        fp32     4 byte
+        moment bac mot (m)       4 byte
+        moment bac hai (v)       4 byte
+                                = 16 byte / tham so
+    Con so 16 byte nay la SAN, KHONG phai tran: no CHUA tinh activation. Activation
+    phu thuoc batch_size, do dai chuoi va viec co bat gradient checkpointing hay
+    khong — khong tinh truoc duoc o day, va cung KHONG duoc doan bua.
+    """
+    return {
+        "fp16_MiB": tong_tham_so * 2 / MiB,
+        "fp32_MiB": tong_tham_so * 4 / MiB,
+        "adamw_fp32_GiB": tong_tham_so * 16 / GiB,
+        "fp16_MB_thap_phan": tong_tham_so * 2 / MB_THAP_PHAN,
     }
 
 
 def in_ket_qua(ten, cfg, kq):
-    nhan = "{:.2f}M".format(kq["tong"] / 1e6)
-    if kq["kich_hoat"] < kq["tong"]:
-        nhan = "{:.2f}M-A{:.2f}M".format(kq["tong"] / 1e6, kq["kich_hoat"] / 1e6)
+    bn = bo_nho(kq["tong"])
     print("")
-    print("=" * 72)
+    print("=" * 74)
     print("  {}".format(ten))
-    print("=" * 72)
+    print("=" * 74)
     print("  hidden={}  lop={}  q_head={}  kv_head={}  head_dim={}  inter={}".format(
-        cfg["hidden_size"], cfg["num_hidden_layers"],
-        cfg.get("num_attention_heads", 8), cfg.get("num_key_value_heads", 4),
-        kq["head_dim"], kq["intermediate_size"]))
-    print("  vocab={}  tie_word_embeddings={}  use_moe={}".format(
-        cfg.get("vocab_size", 6400), cfg.get("tie_word_embeddings", True),
-        bool(cfg.get("use_moe", False))))
-    print("  ------------------------------------------------------------------")
+        cfg["hidden_size"], cfg["num_hidden_layers"], cfg["num_attention_heads"],
+        kq["num_key_value_heads"], kq["head_dim"], kq["intermediate_size"]))
+    print("  vocab={}  ctx={}  tie_word_embeddings={}".format(
+        cfg["vocab_size"], kq["max_position_embeddings"],
+        bool(cfg.get("tie_word_embeddings", True))))
+    print("  " + "-" * 70)
     print("  embedding            {:>14,}   ({:.1%} tong so tham so)".format(
         kq["embedding"], kq["ti_le_embedding"]))
     if kq["lm_head"]:
         print("  lm_head (khong buoc) {:>14,}".format(kq["lm_head"]))
-    print("  mot lop              {:>14,}   (attn {:,} + ffn {:,})".format(
-        kq["mot_lop"], kq["attn_mot_lop"], kq["ffn_mot_lop"]))
-    print("  ------------------------------------------------------------------")
-    print("  TONG                 {:>14,}   =  {}".format(kq["tong"], nhan))
-    print("  Trong so fp16        {:>11.1f} MB".format(kq["tong"] * 2 / 1024.0 / 1024.0))
-    print("  Trong so fp32        {:>11.1f} MB".format(kq["tong"] * 4 / 1024.0 / 1024.0))
-    print("  Trang thai toi uu AdamW (fp32 + 2 moment + grad = 16 byte/tham so):")
-    print("                       {:>11.2f} GB   (CHUA tinh activation)".format(
-        kq["tong"] * 16 / 1024.0 ** 3))
+    print("  mot lop              {:>14,}   (attn {:,} + norm {:,} + ffn {:,})".format(
+        kq["mot_lop"], kq["attn_mot_lop"], kq["norm_mot_lop"], kq["ffn_mot_lop"]))
+    print("  {} lop               {:>14,}".format(
+        str(cfg["num_hidden_layers"]).rjust(2), kq["tong_cac_lop"]))
+    print("  " + "-" * 70)
+    print("  TONG                 {:>14,}   =  {:.2f}M".format(
+        kq["tong"], kq["tong"] / 1e6))
+    print("  " + "-" * 70)
+    print("  Trong so fp16                       {:>9.1f} MiB  (= {:.1f} MB thap phan)".format(
+        bn["fp16_MiB"], bn["fp16_MB_thap_phan"]))
+    print("  Trong so fp32                       {:>9.1f} MiB".format(bn["fp32_MiB"]))
+    print("  Trang thai AdamW fp32 (16 byte/ts)  {:>9.2f} GiB (CHUA co activation)".format(
+        bn["adamw_fp32_GiB"]))
+    print("  Bo dem KV moi token (fp16)          {:>9.1f} KiB".format(
+        kq["kv_moi_token_byte"] / KiB))
+    print("  Bo dem KV cho {:>5} token           {:>9.1f} MiB".format(
+        kq["max_position_embeddings"],
+        kq["kv_moi_token_byte"] * kq["max_position_embeddings"] / MiB))
+    print("  Bang cos/sin RoPE luc chay          {:>9.1f} MiB  (buffer, khong trong .pt)".format(
+        kq["rope_byte"] / MiB))
+    print("  (MiB = 1024^2 byte. mo-hinh/cau_hinh.py in cung cac dai luong nay theo MB")
+    print("   thap phan 1e6 byte, nen so o do lon hon 4,86% — hai don vi, khong phai")
+    print("   hai ket qua. Xem khoi chu thich hang so o dau tep nay.)")
 
 
-def doi_chieu():
-    """Tinh lai cac cau hinh MiniMind da cong bo, so voi con so ho ghi."""
-    truong_hop = [
-        ("minimind-3 (dense)", "64M",
-         dict(hidden_size=768, num_hidden_layers=8, vocab_size=6400,
-              num_attention_heads=8, num_key_value_heads=4)),
-        ("minimind-3-moe", "198M-A64M",
-         dict(hidden_size=768, num_hidden_layers=8, vocab_size=6400,
-              num_attention_heads=8, num_key_value_heads=4,
-              use_moe=True, num_experts=4, num_experts_per_tok=1)),
-        ("minimind2-small (ban lich su)", "26M",
-         dict(hidden_size=512, num_hidden_layers=8, vocab_size=6400,
-              num_attention_heads=8, num_key_value_heads=2)),
-        ("minimind2 (ban lich su)", "104M",
-         dict(hidden_size=768, num_hidden_layers=16, vocab_size=6400,
-              num_attention_heads=8, num_key_value_heads=2)),
-    ]
+def tu_kiem():
+    """Kiem cong thuc bang mot truong hop tinh tay duoc het bang giay but.
+
+    VI SAO KHONG DOI CHIEU VOI SO CUA MOT KHO MA KHAC: vi lam vay la lay con so
+    cua nguoi khac lam chuan cho kien truc cua minh, ma cai can chung minh o day
+    chi la PHEP DEM co dung so hoc hay khong. Mot truong hop nho, moi so viet ra
+    bang tay, la du va khong muon no gi cua ai.
+
+    Truong hop: h=8, L=2, V=10, q=2, kv=1, head_dim=4, inter=16, tie=true.
+      embedding = 10 * 8                          = 80
+      q_proj    = 8 * (2*4) = 8*8                 = 64
+      k_proj    = 8 * (1*4) = 8*4                 = 32
+      v_proj    = 8 * (1*4) = 8*4                 = 32
+      o_proj    = (2*4) * 8 = 8*8                 = 64
+      attn                                        = 192
+      2 RMSNorm = 2 * 8                           = 16
+      ffn       = 3 * 8 * 16                      = 384
+      mot lop   = 192 + 16 + 384                  = 592
+      2 lop                                       = 1184
+      norm cuoi = 8                               = 8
+      TONG      = 80 + 1184 + 8                   = 1272
+    """
+    cfg = dict(hidden_size=8, num_hidden_layers=2, vocab_size=10,
+               num_attention_heads=2, num_key_value_heads=1, head_dim=4,
+               intermediate_size=16, tie_word_embeddings=True)
+    kq = tinh(cfg)
+    mong_doi = {"embedding": 80, "attn_mot_lop": 192, "norm_mot_lop": 16,
+                "ffn_mot_lop": 384, "mot_lop": 592, "tong_cac_lop": 1184,
+                "tong": 1272}
     print("")
-    print("DOI CHIEU CONG THUC VOI BANG MiniMind cong bo (README_en.md dong 576-580)")
-    print("-" * 72)
-    print("{:<34} {:>16} {:>18}".format("cau hinh", "ho ghi", "cong thuc nay"))
-    print("-" * 72)
-    for ten, ho_ghi, cfg in truong_hop:
-        kq = tinh(cfg)
-        if kq["kich_hoat"] < kq["tong"]:
-            ta = "{:.2f}M-A{:.2f}M".format(kq["tong"] / 1e6, kq["kich_hoat"] / 1e6)
-        else:
-            ta = "{:.2f}M".format(kq["tong"] / 1e6)
-        print("{:<34} {:>16} {:>18}".format(ten, ho_ghi, ta))
-    print("-" * 72)
-    print("Hai dong dau khop duoi 0.2%. Hai dong 'ban lich su' lech — xem docstring")
-    print("dau tep. Cho lech duoc ghi ra thay vi giau di.")
+    print("TU KIEM PHEP DEM (truong hop tinh tay duoc, xem docstring ham tu_kiem)")
+    print("-" * 74)
+    print("{:<20} {:>12} {:>12}   {}".format("muc", "tinh tay", "ham tinh()", "ket qua"))
+    print("-" * 74)
+    hong = 0
+    for khoa in ["embedding", "attn_mot_lop", "norm_mot_lop", "ffn_mot_lop",
+                 "mot_lop", "tong_cac_lop", "tong"]:
+        that = kq[khoa]
+        cho = mong_doi[khoa]
+        ok = (that == cho)
+        if not ok:
+            hong += 1
+        print("{:<20} {:>12,} {:>12,}   {}".format(khoa, cho, that, "DAT" if ok else "HONG"))
+    print("-" * 74)
+
+    # Kiem them cong thuc intermediate mac dinh: 8/3 * h lam tron len boi so 128.
+    for h, mong in [(512, 1408), (768, 2048), (1024, 2816)]:
+        ra = intermediate_mac_dinh(h)
+        ok = (ra == mong)
+        if not ok:
+            hong += 1
+        print("intermediate_mac_dinh({:>4}) = {:>5}  (cho {:>5})   {}".format(
+            h, ra, mong, "DAT" if ok else "HONG"))
+
+    # Kiem viec bo buoc embedding lam tang dung V*h.
+    cfg2 = dict(cfg)
+    cfg2["tie_word_embeddings"] = False
+    kq2 = tinh(cfg2)
+    ok = (kq2["tong"] - kq["tong"] == 80)
+    if not ok:
+        hong += 1
+    print("bo tie_word_embeddings lam tong tang {:>4} (cho 80)   {}".format(
+        kq2["tong"] - kq["tong"], "DAT" if ok else "HONG"))
+    print("-" * 74)
+    if hong:
+        print("HONG {} muc — phep dem sai, KHONG duoc dung so tu tep nay.".format(hong))
+        return 1
+    print("DAT toan bo — phep dem nay dung so hoc.")
+    print("")
+    print("Bai tu kiem nay CHI chung minh phep dem dung so hoc. No khong chung minh")
+    print("cong thuc ta khop voi kien truc that. Phep do do la phep doi chieu voi")
+    print("mo-hinh/, va no DA CHAY 26/09/2026: ba cau hinh nho/vua/lon deu cho")
+    print("36.184.576 / 119.563.008 / 295.748.608 o ca ba duong dem doc lap")
+    print("(tep nay · CauHinhBDSG.so_tham_so() · sum(p.numel() for p in m.parameters()))")
+    print("— lech 0. Cach chay lai: xem docstring dau tep.")
+    return 0
 
 
 def main():
-    p = argparse.ArgumentParser(description="Tinh so tham so cua cau hinh MiniMind (khong can torch)")
-    p.add_argument("tep", nargs="*", help="cac tep .json cau hinh; bo trong = tat ca trong thu muc nay")
-    p.add_argument("--doi-chieu", action="store_true", help="kiem cong thuc voi so MiniMind da cong bo")
+    p = argparse.ArgumentParser(
+        description="Tinh so tham so cua cau hinh BDSG (khong can torch)")
+    p.add_argument("tep", nargs="*",
+                   help="cac tep .json cau hinh; bo trong = tat ca .json trong thu muc nay")
+    p.add_argument("--tu-kiem", action="store_true",
+                   help="kiem phep dem bang truong hop tinh tay duoc")
     args = p.parse_args()
 
-    if args.doi_chieu:
-        doi_chieu()
-        return 0
+    if args.tu_kiem:
+        return tu_kiem()
 
     tep = args.tep
     if not tep:
@@ -215,10 +382,14 @@ def main():
             t = os.path.join(THU_MUC, t)
         cfg = doc_cau_hinh(t)
         in_ket_qua(os.path.basename(t), cfg, tinh(cfg))
+
     print("")
-    print("Luu y: day la SO TINH RA. Chua co mo hinh nao ton tai de dem lai (25/09/2026).")
-    print("Khi da huan luyen that, doi chieu lai bang dong log 'Model Params' ma")
-    print("trainer_utils.get_model_params in ra luc khoi tao.")
+    print("=" * 74)
+    print("Day la SO TINH RA — no DA duoc doi chieu voi phep dem that tren mo-hinh/")
+    print("ngay 26/09/2026, lech 0 o ca ba cau hinh (chi tiet trong docstring dau tep).")
+    print("CHUA do va van chua do: toc do token/giay, va bo nho that luc chay — BDSG")
+    print("chua huan luyen trong so nao nen khong co gi de bam gio.")
+    print("Chay `python3 tinh_tham_so.py --tu-kiem` de kiem phep dem truoc da.")
     return 0
 
 

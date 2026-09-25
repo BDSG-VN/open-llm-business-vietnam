@@ -19,7 +19,7 @@ một dòng hỏng không làm hỏng cả tệp.
 | `ma` | chuỗi | ✔ | Định danh duy nhất, không dấu. Quy ước: `TK-` trong kho, `NK-` ngoài kho, `BY-` bẫy, `TV-` tiếng Việt tổng quát |
 | `nguon` | chuỗi | ✔ | **Luôn là `bo-de-danh-gia`.** Trường này tồn tại vì ràng buộc R8: cổng dữ liệu đòi MỌI tệp `.jsonl` trong kho phải tự khai nguồn, không miễn trừ theo thư mục |
 | `nhom` | chuỗi | ✔ | Một trong: `trong-kho`, `ngoai-kho`, `bay-chong-bia`, `tieng-viet-tong-quat` |
-| `ngon_ngu` | chuỗi | ✔ | `vi`, `en` hoặc `zh`. Toàn bộ bộ hiện tại là `vi`; hai giá trị kia có mặt để mở rộng, **chưa có câu nào** |
+| `ngon_ngu` | chuỗi | ✔ | `vi` hoặc `en`. Toàn bộ bộ hiện tại là `vi`; `en` có mặt để mở rộng, **chưa có câu nào**. Lược đồ không định nghĩa giá trị nào khác — phạm vi ngôn ngữ của dự án là đúng hai, chốt 26/09/2026 |
 | `cau_hoi` | chuỗi | ✔ | Nguyên văn câu hỏi đưa cho mô hình |
 | `hanh_vi_mong_doi` | chuỗi | ✔ | `tra-loi` hoặc `tu-choi`. Nhóm bẫy **luôn** là `tu-choi` |
 | `dap_an_tham_chieu` | chuỗi hoặc `null` | ✔ | Câu trả lời đúng. **Phải là `null`** khi `hanh_vi_mong_doi` = `tu-choi`: câu hỏi về thứ không tồn tại thì không có đáp án đúng để đối chiếu |
@@ -161,5 +161,7 @@ phạt nhầm.
 - **Bộ 227 câu.** Chưa nằm trong kho.
 - **Bộ kiểm hợp lệ** cho R1–R8. Chưa viết. Không có nó thì tám ràng buộc trên chỉ là lời
   khuyên, và lời khuyên thì không chặn được ai.
-- **Câu hỏi tiếng Anh và tiếng Trung.** Trường `ngon_ngu` đã chừa chỗ, nhưng số câu hiện tại
-  cho cả hai là **0**. Chưa đo, nên không có gì để công bố.
+- **Câu hỏi tiếng Anh.** Trường `ngon_ngu` đã chừa chỗ giá trị `en`, nhưng số câu hiện tại
+  là **0**. Chưa đo, nên không có gì để công bố — dù đã có bằng chứng gián tiếp rằng năng
+  lực tiếng Anh sẽ thay đổi (tokenizer tệ đi 22,0%, đo 25/09/2026), và bằng chứng gián tiếp
+  không thay được nhóm câu.

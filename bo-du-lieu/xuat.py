@@ -630,8 +630,9 @@ def lay_lop3(conn, ngay_do: str) -> list:
 
     KHONG co truong `text`, va do la quyet dinh co ly do: mot danh muc 11.927 cai ten
     khong phai van xuoi. Do vao tien huan luyen la day mo hinh LAP DANH SACH - dung kieu
-    hong lam diem danh gia dep len ma nang luc that di xuong. Khong co `text` thi trinh nap
-    tien huan luyen cua MiniMind se LOI NGAY khi nap nham tep nay, thay vi am tham hoc sai.
+    hong lam diem danh gia dep len ma nang luc that di xuong. Khong co `text` thi bo nap
+    tien huan luyen se LOI NGAY khi nap nham tep nay - loi vi thieu khoa bat buoc - thay vi
+    am tham hoc sai. Mot loi on ao re hon mot loi im lang.
 
     COT `description` BI LOAI: 696.890 ky tu nhung chi 58 GIA TRI KHAC NHAU tren 11.927
     dong => la chuoi xuat xu do ETL lap lai, khong phai mo ta. Dem ky tu khong phai dem
@@ -660,12 +661,20 @@ def lay_lop3(conn, ngay_do: str) -> list:
                 "giay_phep": GIAY_PHEP,
                 "ngay_do": ngay_do,
                 "muc_tin_cay": "cao",
-                # Day la vat lieu SONG NGU duy nhat trong ca bo. Thu tu uu tien cua du an la
-                # tieng Viet (1) -> tieng Anh (2) -> tieng Trung (3); truong `ngon_ngu` ton
-                # tai de thu tu ay DO DUOC chu khong chi duoc tuyen bo.
-                # `zh` hop le trong lược đồ nhung co 0 ban ghi o ban nay: bo du lieu BDSG
-                # khong chua ngu lieu tieng Trung nao - tieng Trung vao du an qua ngu lieu
-                # goc cua MiniMind, o tang huan luyen, khong o day.
+                # Day la vat lieu SONG NGU duy nhat trong ca bo. Pham vi ngon ngu cua du an
+                # la DUNG HAI, chot ngay 26/09/2026: tieng Viet (1) la chinh, tieng Anh (2)
+                # la phu. Truong `ngon_ngu` ton tai de ti le ay DEM DUOC chu khong chi duoc
+                # tuyen bo.
+                #
+                # Ham nay chi sinh dung hai gia tri: "vi+en" va "vi" (dong ngay duoi). Luoc
+                # do o bo-du-lieu/luoc-do.md muc 5 dinh nghia dung ba: "vi", "vi+en" va
+                # "en"; "en" chua co ban ghi nao o ban phat hanh nay.
+                #
+                # Chu thich cu o cho nay mo ta mot ngon ngu thu ba va mot gia tri enum cho
+                # no. Ca hai da bi go khoi luoc do ngay 26/09/2026, nen chu thich ay khong
+                # chi loi thoi ma SAI: no mo ta mot luoc do khong con ton tai, ngay tren
+                # dong ma sinh gia tri. Chu thich sai nguy hon chu thich thieu, vi nguoi doc
+                # tin no thay vi doc ma.
                 "ngon_ngu": "vi+en" if ten_en else "vi",
                 "ten": ten,
                 "ten_en": ten_en or None,

@@ -2,19 +2,20 @@
 # cong/chay-tat-ca.sh — chạy TẤT CẢ các cổng trước khi đẩy lên kho công khai.
 #
 # VÌ SAO KỊCH BẢN NÀY TỒN TẠI
-#   Bốn cổng chạy riêng lẻ thì sớm muộn có cái bị quên. Ở đây có đúng một cửa ra, và cửa
-#   ấy đóng nếu BẤT KỲ cổng nào hỏng.
+#   Các cổng chạy riêng lẻ thì sớm muộn có cái bị quên. Ở đây có đúng một cửa ra, và cửa
+#   ấy đóng nếu BẤT KỲ cổng nào hỏng. Số cổng khai ở CONG_MONG_DOI bên dưới, không khai ở
+#   dòng chú thích này — một con số viết trong chú thích sẽ lạc hậu ngay lần thêm cổng sau.
 #
 # HAI QUYẾT ĐỊNH CÓ CHỦ Ý, GHI RA ĐỂ NGƯỜI SAU ĐỪNG "SỬA" NHẦM:
 #
 #   1. LUÔN chạy bài tự kiểm TRƯỚC khi quét thật, không phải chỉ khi được yêu cầu.
 #      Một cổng luôn trả "sạch" thì nhìn y hệt một cổng hỏng. Trước khi tin câu "kho sạch",
-#      phải bắt cổng chứng minh nó CẮN được chuỗi cố tình cài vào. Toàn bộ bốn bài tự kiểm
+#      phải bắt cổng chứng minh nó CẮN được chuỗi cố tình cài vào. Toàn bộ các bài tự kiểm
 #      chạy hết dưới một giây — không có lý do gì để bỏ.
 #
 #   2. KHÔNG dùng `set -e`, và KHÔNG dùng `|| true` ở bất cứ đâu.
-#      `set -e` sẽ thoát ngay ở cổng hỏng đầu tiên, giấu mất ba cổng còn lại — người sửa
-#      phải chạy lại bốn lần để thấy hết. Còn `|| true` thì nuốt mã lỗi và biến cổng thành
+#      `set -e` sẽ thoát ngay ở cổng hỏng đầu tiên, giấu mất các cổng còn lại — người sửa
+#      phải chạy lại nhiều lần để thấy hết. Còn `|| true` thì nuốt mã lỗi và biến cổng thành
 #      đồ trang trí: nó vẫn chạy, vẫn in, và không bao giờ chặn được gì. Đây là họ lỗi
 #      "hỏng mà không báo" đã gặp thật ở dự án này. Mã thoát được bắt tường minh từng cái.
 #
@@ -74,10 +75,16 @@ fi
 # Cố ý KHÔNG dùng glob *.py. Glob im lặng bỏ qua cổng bị xoá: kho mất một cổng mà bảng
 # tổng kết vẫn "toàn ĐẠT". Khai tên ra thì thiếu tệp là HỎNG, thấy ngay.
 CONG_MONG_DOI=(khong-bi-mat.py khong-ha-tang.py khong-du-lieu-cam.py khong-lo-hong.py \
-                khong-danh-tinh.py)
+                khong-danh-tinh.py khong-tham-chieu-ngoai.py)
 # khong-danh-tinh.py thêm 26/09/2026: bốn cổng trên ĐẠT toàn kho, rồi một lượt soát
 # TAY độc lập vẫn tìm ra họ tên thật của chủ dự án. Thứ soát tay tìm được phải trở
 # thành cổng, nếu không lần sau nó lọt.
+#
+# khong-tham-chieu-ngoai.py thêm 26/09/2026, và nó chặn một họ lỗi KHÁC hẳn năm cổng trên:
+# năm cổng kia chặn thứ LỌT RA (bí mật, hạ tầng, dữ liệu người khác, đường khai thác, danh
+# tính). Cổng này chặn một LỜI KHAI SAI ở lại trong kho — tài liệu nói sai về nguồn gốc của
+# chính mã trong kho, và nói sai về phạm vi ngôn ngữ của dự án. Không có gì rò rỉ, nhưng
+# người đọc bị dẫn sai, mà kho này thì tồn tại để nói đúng chỗ khó.
 
 echo "════════════════════════════════════════════════════════════════════════════"
 echo " CỔNG KIỂM TRƯỚC KHI ĐẨY — Open LLM Business Việt Nam"
@@ -161,12 +168,12 @@ done
 # ── Bảng tổng kết ────────────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════════════════════════════════════════"
-printf " %s%s%s\n" "$(o "CỔNG" 22)" "$(o "TỰ KIỂM" 14)" "$(o "QUÉT KHO" 14)"
+printf " %s%s%s\n" "$(o "CỔNG" 26)" "$(o "TỰ KIỂM" 14)" "$(o "QUÉT KHO" 14)"
 echo "────────────────────────────────────────────────────────────────────────────"
 CHI_SO=0
 while [ $CHI_SO -lt ${#TEN_CONG[@]} ]; do
   printf " %s%s%s\n" \
-    "$(o "${TEN_CONG[$CHI_SO]}" 22)" "$(o "${KQ_TU_KIEM[$CHI_SO]}" 14)" "$(o "${KQ_QUET[$CHI_SO]}" 14)"
+    "$(o "${TEN_CONG[$CHI_SO]}" 26)" "$(o "${KQ_TU_KIEM[$CHI_SO]}" 14)" "$(o "${KQ_QUET[$CHI_SO]}" 14)"
   CHI_SO=$((CHI_SO + 1))
 done
 echo "────────────────────────────────────────────────────────────────────────────"
@@ -193,7 +200,7 @@ fi
 
 echo ""
 if [ $CHI_TU_KIEM -eq 1 ]; then
-  echo " KẾT LUẬN: bốn cổng đều CHỨNG MINH ĐƯỢC là chúng cắn. Chưa quét kho (--chi-tu-kiem)."
+  echo " KẾT LUẬN: mọi cổng đều CHỨNG MINH ĐƯỢC là chúng cắn. Chưa quét kho (--chi-tu-kiem)."
 else
   echo " KẾT LUẬN: mọi cổng ĐẠT trong phạm vi đã khai."
 fi

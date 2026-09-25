@@ -32,7 +32,7 @@ không nói được nó từ đâu ra thì không được phép nằm trong b�
 | `giay_phep` | string | **Có** | Giấy phép phát hành của bản ghi. Bản phát hành này: luôn `CC-BY-4.0`. |
 | `ngay_do` | string | **Có** | Ngày đo/trích nguồn, `YYYY-MM-DD`. Bản phát hành này: luôn `2026-09-25`. |
 | `muc_tin_cay` | string | **Có** | `cao` \| `trung-binh` \| `thap` — quy tắc gán ở mục 3. |
-| `ngon_ngu` | string | **Có** | `vi` \| `en` \| `zh` \| `vi+en` — xem mục 5. |
+| `ngon_ngu` | string | **Có** | `vi` \| `en` \| `vi+en` — xem mục 5. |
 
 ### Vì sao `giay_phep` và `ngay_do` nằm trong TỪNG BẢN GHI, không chỉ trong README
 
@@ -45,10 +45,10 @@ lỗi im lặng điển hình: dữ liệu vẫn chạy, chỉ là không ai cò
 Trường có thể **vắng giá trị** nhưng **không được vắng khoá**: ghi `null`, không bỏ khoá đi.
 Và một trường **không được lúc là số lúc là chuỗi**.
 
-Lý do thực dụng: trình nạp của MiniMind dùng `load_dataset('json', ...)` của thư viện
-`datasets`, vốn **suy lược đồ từ dữ liệu**. Một trường lúc `123` lúc `"123"` sẽ làm bước
-suy lược đồ hỏng giữa chừng — và hỏng ở bước nạp dữ liệu thì thông báo lỗi chẳng liên quan
-gì tới cái sai thật. Giữ kiểu cố định là cách rẻ nhất để không phải đi tìm.
+Lý do thực dụng: cách nạp JSONL phổ biến nhất — `load_dataset('json', ...)` của thư viện
+`datasets` — **suy lược đồ từ dữ liệu**. Một trường lúc `123` lúc `"123"` sẽ làm bước suy
+lược đồ hỏng giữa chừng, và hỏng ở bước nạp dữ liệu thì thông báo lỗi chẳng liên quan gì
+tới cái sai thật. Giữ kiểu cố định là cách rẻ nhất để không phải đi tìm.
 
 ---
 
@@ -106,9 +106,9 @@ Prefix `ma`: **`tvb-`**. 11.733 bản ghi.
 | `co_rac_web` | bool | **Có** | `true` cho bản ghi dính rác cào web (menu/CSS/JS/URL ngoài). Phép đo 25/09/2026 đếm được **110** đoạn; nhưng cờ này do **bộ dò của `xuat.py`** gắn, mà đó **không phải bộ dò đã tạo ra con số 110**. Hai bộ dò khác nhau có thể ra hai con số khác nhau, nên số bản ghi `true` thực tế **chưa đo** — `xuat.py` in cả hai để đối chiếu. |
 | `ma_nguon_goc` | string \| null | Không | Khoá của đoạn trong `bdsg_chat.doan_tri_thuc`, để truy ngược. |
 
-**Vì sao tên trường là `text`:** trình nạp tiền huấn luyện của MiniMind đọc đúng khoá
-`sample['text']` (`dataset/lm_dataset.py`, lớp `PretrainDataset`). Đặt tên khác thì phải sửa
-mã của họ — việc không cần thiết.
+**Vì sao tên trường là `text`:** `text` là khoá quy ước mà hầu hết bộ nạp dữ liệu tiền
+huấn luyện đọc mặc định. Đặt tên khác thì mọi công cụ hạ nguồn đều phải sửa để dùng được
+bộ này — cái giá ấy đổ lên người dùng, chỉ để đổi lấy một cái tên đẹp hơn trong lược đồ.
 
 **Vì sao `so_ky_tu` đếm ký tự chứ không đếm byte:** để đối chiếu được với các số đo trong
 README, vốn đo bằng ký tự. Muốn biết dung lượng byte thật thì đo tệp, và `xuat.py` in ra
@@ -162,8 +162,9 @@ Prefix `ma`: **`nlc-`**. 11.927 bản ghi.
 
 Một danh mục 11.927 cái tên không phải văn xuôi. Đổ nó vào tiền huấn luyện là dạy mô hình
 **lặp danh sách** — đúng kiểu hỏng làm điểm đánh giá đẹp lên mà năng lực thật đi xuống.
-Không có `text` nghĩa là trình nạp tiền huấn luyện của MiniMind **không nạp nhầm** tệp này:
-nó sẽ lỗi ngay thay vì âm thầm học sai.
+Không có `text` nghĩa là bộ nạp tiền huấn luyện **không nạp nhầm** tệp này: nó sẽ lỗi ngay
+vì thiếu khoá bắt buộc, thay vì âm thầm học sai. Thiếu một khoá là một lỗi ồn ào, và lỗi
+ồn ào thì rẻ hơn lỗi im lặng.
 
 Lớp 3 dùng cho hai việc: **huấn luyện bộ từ vựng** (BPE mức byte cần thấy thuật ngữ chuyên
 ngành để không cắt vụn chúng) và **tra thuật ngữ vi↔en**.
@@ -173,27 +174,31 @@ ngành để không cắt vụn chúng) và **tra thuật ngữ vi↔en**.
 
 ---
 
-## 5. `ngon_ngu` — dấu vết của thứ tự tiếng Việt → tiếng Anh → tiếng Trung
+## 5. `ngon_ngu` — dấu vết đo được của "Việt chính, Anh phụ"
 
-Thứ tự ưu tiên của dự án: **tiếng Việt (1) → tiếng Anh (2) → tiếng Trung (3)**. Trường
-`ngon_ngu` tồn tại để thứ tự ấy **đo được**, thay vì chỉ được tuyên bố trong tài liệu.
+Phạm vi ngôn ngữ của dự án là **đúng hai**: tiếng Việt (1) là chính, tiếng Anh (2) là phụ.
+Trường `ngon_ngu` tồn tại để tỉ lệ ấy **đếm được**, thay vì chỉ được tuyên bố trong tài liệu.
 
 | Giá trị | Nghĩa | Xuất hiện ở đâu trong bản phát hành này |
 |---|---|---|
 | `vi` | Tiếng Việt | Lớp 1, lớp 2; lớp 3 khi `ten_en` là null |
 | `vi+en` | Song ngữ trong cùng bản ghi | Lớp 3 khi `ten_en` khác rỗng |
 | `en` | Chỉ tiếng Anh | Hợp lệ trong lược đồ, **0 bản ghi** trong bản này |
-| `zh` | Tiếng Trung | Hợp lệ trong lược đồ, **0 bản ghi** trong bản này |
 
-**Tiếng Trung không có mặt trong bộ dữ liệu BDSG.** Nó vào dự án ở tầng khác: ngữ liệu gốc
-của MiniMind (Apache-2.0) là tiếng Trung + tiếng Anh, và bộ từ vựng phải chừa chỗ cho cả ba
-thứ tiếng. Việc ấy thuộc `huan-luyen/`, không thuộc thư mục này.
+Ba giá trị, hết. Lược đồ **không** định nghĩa sẵn giá trị nào cho một ngôn ngữ thứ ba.
 
-Giá trị `zh` được **định nghĩa trước** dù chưa dùng, để khi trộn ngữ liệu MiniMind vào thì
-các dòng tiếng Trung có sẵn chỗ mang nhãn — thay vì phải đổi lược đồ giữa chừng và làm hỏng
-các tệp đã phát hành.
+Đó là một thay đổi có chủ ý ngày 26/09/2026, và lý do đáng ghi lại vì nó đi ngược trực
+giác quen thuộc *"cứ định nghĩa sẵn cho khỏi phải đổi lược đồ sau"*: một giá trị enum được
+định nghĩa mà **0 bản ghi** dùng không phải là chỗ trống vô hại. Nó là một lời hứa nằm
+trong lược đồ — bộ kiểm hợp lệ chấp nhận nó, tài liệu phải giải thích nó, và người đọc suy
+ra rằng dự án có kế hoạch cho nó. Khi kế hoạch ấy không còn, giữ lại giá trị là giữ lại
+lời hứa đã hết hiệu lực.
 
-Tỉ lệ trộn ba ngôn ngữ khi tiền huấn luyện: **chưa quyết, chưa đo.**
+Giá trị `en` thì khác, và khác ở chỗ kiểm được: nó có **0 bản ghi độc lập** nhưng tiếng
+Anh **có thật** trong bộ này qua `vi+en` (cột `name_en` của lớp 3). Nó là chỗ chừa cho một
+thứ đã có mặt, không phải cho một thứ chưa từng có.
+
+Tỉ lệ trộn hai ngôn ngữ khi tiền huấn luyện: **chưa quyết, chưa đo.**
 
 ---
 

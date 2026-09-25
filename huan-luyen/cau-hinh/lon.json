@@ -1,0 +1,68 @@
+{
+  "hidden_size": 1024,
+  "num_hidden_layers": 24,
+  "num_attention_heads": 16,
+  "num_key_value_heads": 4,
+  "head_dim": 64,
+  "intermediate_size": 2816,
+  "vocab_size": 24576,
+  "hidden_act": "silu",
+  "max_position_embeddings": 2048,
+  "rope_theta": 10000.0,
+  "rms_norm_eps": 1e-06,
+  "tie_word_embeddings": true,
+  "attention_dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "pad_token_id": 0,
+
+  "bdsg": {
+    "ten": "bdsg-lon",
+    "ngay_viet": "26/09/2026",
+    "muc_dich": "Tran tren cua ho mo hinh nay. Chi co nghia khi da co tang nen tieng Viet quy mo GB — huan luyen 295M tham so tren it du lieu chi ton tien de duoc mot mo hinh hoc thuoc.",
+
+    "ten_truong_theo_chuan_nao": "Ten cac truong o tren la CHUAN TRANSFORMERS — quy uoc chung cua he sinh thai mo hinh mo, khong phai cua rieng du an nao. Khoa 'bdsg' la ghi chu, phai bo truoc khi goi CauHinhBDSG(**cfg).",
+
+    "tham_so": {
+      "tong": 295748608,
+      "tong_trieu": 295.75,
+      "trang_thai": "TINH RA, CHUA DEM TREN MO HINH THAT (26/09/2026).",
+      "cong_thuc": "Xem huan-luyen/cau-hinh/tinh_tham_so.py. Chay `python3 tinh_tham_so.py lon.json`.",
+      "cong_thuc_so_hoc": "embedding 24576*1024 = 25.165.824 (8,5% tong so) + 24 lop * 11.274.240 = 270.581.760 + norm cuoi 1.024 = 295.748.608. Mot lop = attn 2.621.440 + norm 2.048 + ffn 8.650.752.",
+      "embedding_chiem_phan_tram": 8.5
+    },
+
+    "bo_nho": {
+      "don_vi_ghi_chu": "MiB = 1024^2 byte, GiB = 1024^3, KiB = 1024. Kho tinh theo luy thua 2 vi cau hoi thuc te la co vua RAM/VRAM khong, ma RAM va VRAM deu dem theo luy thua 2. mo-hinh/cau_hinh.py in CUNG cac dai luong nay theo MB THAP PHAN (1e6 byte) nen so ben do lon hon 4,86%: hai don vi, khong phai hai ket qua. Khoa trong_so_fp16_MB_thap_phan ben duoi la cung luong byte ay doi sang MB thap phan, vi kich thuoc tep tai ve thi the gioi quen doc theo don vi do.",
+      "trong_so_fp16_MiB": 564.1,
+      "trong_so_fp16_MB_thap_phan": 591.5,
+      "trong_so_fp32_MiB": 1128.2,
+      "huan_luyen_adamw_fp32_GiB": 4.41,
+      "huan_luyen_tinh_ra_sao": "295.748.608 * 16 byte / 1024^3 = 4,41 GiB trang thai toi uu. CHUA co activation.",
+      "kv_moi_token_fp16_KiB": 24.0,
+      "kv_day_ngu_canh_2048_MiB": 48.0,
+      "bang_rope_luc_chay_MiB": 1.0
+    },
+
+    "phan_cung_that": {
+      "suy_luan": "May ca nhan tu 8 GB RAM o fp32 (1,1 GiB trong so), hoac tu 4 GB o fp16 (564 MiB = 591,5 MB thap phan). TINH RA, chua do.",
+      "huan_luyen": "Mot GPU 24 GB (RTX 3090 / 4090 / A5000): 4,41 GiB trang thai toi uu con lai ~19 GB cho activation. Tren GPU 16 GB thi con phai giam batch va co the phai bat gradient checkpointing — CHUA DO nen khong khang dinh duoc.",
+      "toc_do": "CHUA DO.",
+      "dieu_kien_tien_quyet": "Cau hinh nay CHUA NEN CHAY. Theo ti le kinh nghiem ~20 token du lieu cho moi tham so (Chinchilla, arXiv:2203.15556 — quy tac kinh nghiem chu KHONG phai dinh luat), 295,75 M tham so can khoang 5,9 ty token. Ngu lieu nghiep vu cua BDSG do duoc 26/09/2026 la 7.474.485 ky tu. Voi tokenizer tieng Viet cua BDSG (3,59 ky tu/token, do 25/09/2026) do la khoang 2,08 trieu token — tuc 0,035% cho so can. Ngu lieu tieng Viet mo quy mo GB la dieu kien tien quyet, va no CHUA duoc tai ve."
+    },
+
+    "vi_sao_chon_so_nay": [
+      "hidden 1024 / 24 lop: buoc nhay deu tiep theo trong ho (512/8 -> 768/16 -> 1024/24). Tang ca be rong lan chieu sau de ti le giua chung khong lech han so voi hai ban duoi.",
+      "num_attention_heads=16 voi head_dim=64: 16 * 64 = 1024 = hidden_size. Giu head_dim=64 xuyen suot ca ba ban.",
+      "num_key_value_heads=4 tren 16 query head: ti le GQA 4:1. Bo dem KV con 1/4 so voi MHA — 24 KiB thay vi 96 KiB moi token. O quy mo nay bo dem KV bat dau lon that: 48 MiB cho ngu canh 2048.",
+      "intermediate_size=2816 = 8/3 * 1024 = 2730,67 lam tron len boi so 128 (22 * 128).",
+      "vocab_size, max_position_embeddings, rope_theta, tie_word_embeddings: GIU Y HET hai ban kia. Cung mot ho mo hinh."
+    ],
+
+    "canh_bao": [
+      "Cau hinh nay la mot CHO DANH SAN, khong phai mot loi hua. Truoc khi chay no phai co tang nen tieng Viet quy mo GB. Chay no tren 7 MB ngu lieu nghiep vu thi ket qua khong phai mot mo hinh yeu — ma la mot mo hinh hoc thuoc 11.699 doan ho so va tra loi moi cau hoi bang cach ghep manh ho so lai.",
+      "Ap dung nguyen canh bao vocab_size o nho.json.",
+      "So tham so la SO TINH RA, doi chieu voi phep dem that khi da co mo-hinh/."
+    ]
+  }
+}

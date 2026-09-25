@@ -1,235 +1,284 @@
-# Chạy mô hình trên máy của bạn
+# Chạy mô hình BDSG trên máy của bạn
 
-Cập nhật 25/09/2026.
+Cập nhật 26/09/2026.
 
-## Điều phải nói trước
+Trang này viết cho **người dùng cuối**: người muốn tải mô hình về máy cá nhân và
+chạy, không cần khoá API của ai. Nó nói thật máy cần gì, lệnh nào, và chỗ nào
+hôm nay còn chưa có.
 
-**Hôm nay chưa có trọng số nào để tải về.** BDSG chưa huấn luyện mô hình nào —
-API tại `llm.bdsg.vn` tự khai `bdsg_la_trong_so_bdsg=false` cho **mọi** mô hình.
-Thứ đang chạy ở đó là **truy hồi** (pg_trgm + tsvector — không phải vector, vì
-cổng LiteLLM không có mô hình nhúng nào) đặt trước một mô hình của bên thứ ba.
+---
 
-Vậy tài liệu này để làm gì: nó là **hợp đồng kỹ thuật viết trước**. Nó nói rõ
-máy cần gì, lệnh chạy ra sao, và **đã biết trước những chỗ nào sẽ vướng** — để
-khi có trọng số thật thì không phải dò lại từ đầu. Mọi con số bộ nhớ dưới đây
-là **tính ra** (`huan-luyen/cau-hinh/tinh_tham_so.py`), **chưa đo trên máy thật**.
-Chỗ nào chưa đo đều được ghi là chưa đo.
+## 0. Điều phải nói trước: hôm nay chưa có gì để tải
+
+**BDSG chưa huấn luyện trọng số nào.** Không có tệp mô hình để tải về, không có
+điểm đánh giá của mô hình BDSG, không có tốc độ sinh chữ đã đo.
+
+Dịch vụ đang chạy tại `llm.bdsg.vn` tự khai `bdsg_la_trong_so_bdsg = false` cho
+**mọi** mã mô hình. Thứ chạy ở đó là **truy hồi** (`pg_trgm` + `tsvector` —
+*không phải* vector, vì cổng mô hình nội bộ không có mô hình nhúng nào) đặt
+trước một mô hình của bên thứ ba. Hai mã công khai: `openbiz-vn-chat` và
+`openbiz-vn-reasoner`; `bdsg-ai-v1` và `bdsg-ai-v1-suy-luan` là tên cũ, vẫn
+nhận vĩnh viễn như bí danh.
+
+Vậy trang này để làm gì: nó là **hợp đồng kỹ thuật viết trước**. Máy cần gì,
+lệnh ra sao, và những chỗ đã biết trước là sẽ vướng — để khi có trọng số thật
+thì không phải dò lại từ đầu.
+
+Mọi con số bộ nhớ dưới đây là **tính ra** từ kiến trúc
+(`huan-luyen/cau-hinh/tinh_tham_so.py`), **chưa đo trên máy thật**. Chỗ nào
+chưa đo đều ghi rõ là chưa đo.
 
 ---
 
 ## 1. Máy cần gì
 
-Ba cấu hình trong `huan-luyen/cau-hinh/`. Số tham số và bộ nhớ trọng số tính từ
-kiến trúc; xem cách tính trong `tinh_tham_so.py`.
+Ba cấu hình trong `huan-luyen/cau-hinh/`. Tất cả dùng chung một từ vựng
+24.576 và cùng trần ngữ cảnh 2.048 token.
 
-| | `nho.json` | `vua.json` | `moe.json` |
-|---|---|---|---|
-| Tham số | 39,33 M | 136,87 M | 212,38 M (kích hoạt 77,90 M) |
-| hidden / lớp | 512 / 8 | 768 / 16 | 768 / 8, 4 chuyên gia top-1 |
-| Trọng số fp16 | **75,0 MB** | **261,1 MB** | **405,1 MB** |
-| Trọng số fp32 | 150,0 MB | 522,1 MB | 810,1 MB |
-| Bộ đệm KV mỗi token (fp16) | 8 KB | 24 KB | 12 KB |
-| Bộ đệm KV cho 2.048 token | 16 MB | 48 MB | 24 MB |
-| Bộ đệm RoPE lúc khởi tạo | ~16,8 MB | ~25,2 MB | ~25,2 MB |
-| **RAM tối thiểu ước tính** | **~1 GB** | **~1,5 GB** | **~2 GB** |
+| | `nho.json` | `vua.json` | `lon.json` |
+|---|---:|---:|---:|
+| Tham số | **36,18 M** | 119,56 M | 295,75 M |
+| hidden / lớp | 512 / 8 | 768 / 16 | 1024 / 24 |
+| đầu q / đầu kv | 8 / 4 | 12 / 4 | 16 / 4 |
+| Trọng số fp16 | **69,0 MiB** | 228,0 MiB | 564,1 MiB |
+| Trọng số fp16, đọc theo MB thập phân | **72,4 MB** | 239,1 MB | 591,5 MB |
+| Trọng số fp32 | 138,0 MiB | 456,1 MiB | 1.128,2 MiB |
+| Bộ đệm KV mỗi token (fp16) | 8,0 KiB | 16,0 KiB | 24,0 KiB |
+| Bộ đệm KV ở 2.048 token | 16,0 MiB | 32,0 MiB | 48,0 MiB |
+| Bảng cos/sin RoPE lúc chạy | 1,0 MiB | 1,0 MiB | 1,0 MiB |
+| **RAM để CHẠY (fp32)** | **~1 GB** | ~1,5 GB | ~2,5 GB |
+| **RAM/VRAM để HUẤN LUYỆN** | ~1,5 GB | ~4 GB | ~10 GB |
 
-Cách tính bộ đệm KV: `2 (K và V) × số_lớp × num_key_value_heads × head_dim ×
-2 byte`. Với `nho`: `2 × 8 × 4 × 64 × 2 = 8.192` byte mỗi token.
+**Đơn vị trong bảng**: MiB = 1024² byte, KiB = 1024, GiB = 1024³. Kho tính theo
+luỹ thừa 2 vì câu hỏi thật là *có vừa RAM/VRAM không*. Hàng “đọc theo MB thập
+phân” có mặt vì **kích thước tệp tải về** thì quen đọc theo 1e6 byte — cùng một
+lượng byte, hai cách đọc. `mo-hinh/cau_hinh.py` in theo MB thập phân, nên số
+bên đó lớn hơn 4,86 %; đó **không** phải hai kết quả khác nhau.
 
-Cách tính bộ đệm RoPE: `MiniMindModel.__init__` gọi `precompute_freqs_cis(dim=head_dim,
-end=max_position_embeddings)` với `max_position_embeddings = 32768`, tạo hai
-tensor float32 cỡ `(32768, head_dim)`. Với `nho` đó là `32768 × 64 × 4 × 2 =
-16,8 MB` — **nhiều hơn 1/5 kích thước trọng số**, trên một mô hình 39M. Bộ đệm
-này là `persistent=False` nên không nằm trong tệp `.pth`, chỉ chiếm RAM lúc chạy.
-Con số này hay làm người ta bất ngờ nên ghi ra đây.
+**Cách tính bộ đệm KV**: `2 (K và V) × số_lớp × num_key_value_heads × head_dim ×
+2 byte`. Với `nho`: `2 × 8 × 4 × 64 × 2 = 8.192` byte mỗi token. Đây là chỗ
+**GQA trả công**: `nho` có 8 đầu truy vấn nhưng chỉ 4 đầu khoá/giá trị, nên bộ
+đệm còn một nửa so với kiểu chú ý đầy đủ.
 
-Cột "RAM tối thiểu" đã cộng thêm phần dôi cho PyTorch và activation, nhưng
-**chưa đo** — activation phụ thuộc độ dài đầu vào. Coi nó là mức sàn để loại
-trừ, không phải mức đảm bảo.
+**Cách tính cột huấn luyện**: AdamW giữ 16 byte mỗi tham số (bản trọng số fp32 4
++ gradient 4 + hai moment 4+4). Với `nho` đó là 0,54 GiB. Cột trên đã cộng thêm
+phần dôi cho activation và cho chính PyTorch, nhưng **phần dôi ấy là ước lượng,
+chưa đo** — activation phụ thuộc kích thước lô và độ dài chuỗi. Coi cột này là
+**mức sàn để loại trừ**, không phải mức bảo đảm.
 
-### GPU có cần không
+### Có cần GPU không
 
-Không, với `nho`. 75 MB trọng số chạy được trên CPU của máy tính xách tay thông
-thường. **Tốc độ sinh chữ thì chưa đo** — không hứa số token/giây nào cho đến
-khi có mô hình thật để bấm giờ.
+**Không, với `nho`.** 138 MiB trọng số fp32 chạy được trên CPU của máy tính xách
+tay thông thường, và huấn luyện nó cũng vừa trên máy 8 GB RAM.
 
-Kinh nghiệm hạ tầng BDSG có liên quan: trên VPS, mô hình 7B chạy được **0,3
-token/giây** vì nghẽn băng thông RAM (~1,4 GB/s). Mô hình ở đây nhỏ hơn 7B
-khoảng 180 lần, nên tình huống đó không lặp lại — nhưng con số cụ thể vẫn phải
-đo, không suy ra.
+**Tốc độ sinh chữ thì chưa đo.** Không hứa số token/giây nào cho đến khi có
+trọng số thật để bấm giờ.
+
+Một kinh nghiệm hạ tầng của BDSG có liên quan, nhưng **không suy ra được**: trên
+VPS của BDSG, mô hình 7B chạy **0,3 token/giây** vì nghẽn băng thông RAM
+(~1,4 GB/s). `nho` nhỏ hơn 7B khoảng **190 lần**, nên tình huống ấy không lặp
+lại — nhưng con số cụ thể vẫn phải đo, không được suy.
 
 ---
 
 ## 2. Cài đặt
 
 ```bash
-git clone https://github.com/jingyaogong/minimind.git
-cd minimind
+git clone <kho BDSG>
+cd open-llm-business-vietnam
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install tokenizers
 ```
 
-**Bẫy 1 — `requirements.txt` KHÔNG cài torch.** Bốn dòng cuối tệp đó bị chú
-thích lại:
+Đến đây đã đủ để chạy **toàn bộ khâu chuẩn bị dữ liệu và từ vựng**: chúng dùng
+Python thuần + `tokenizers`, không cần torch.
 
-```
-# torch==2.6.0
-# torchvision==0.21.0
-# peft==0.7.1
-# matplotlib==3.10.0
-```
-
-Cài riêng, chọn đúng bản cho máy mình (CPU hay CUDA) theo hướng dẫn trên
-pytorch.org:
+Muốn **huấn luyện** hoặc **chạy mô hình**, cài thêm PyTorch:
 
 ```bash
 pip install torch          # bản CPU cho máy cá nhân
 ```
 
----
-
-## 3. Đặt trọng số và từ vựng vào đúng chỗ
-
-```
-minimind/
-├── model/
-│   ├── tokenizer.json           <-- THAY bằng từ vựng BDSG
-│   ├── tokenizer_config.json    <-- THAY bằng từ vựng BDSG
-│   └── model_minimind.py
-├── out/
-│   └── full_sft_512.pth         <-- trọng số BDSG tải về
-└── scripts/
-    └── serve_openai_api.py
-```
-
-**Bẫy 2 — từ vựng bắt buộc nằm ở `model/`.** `trainer_utils.init_model` (dòng
-121-122) có tham số `tokenizer_path='../model'` **cố định trong chữ ký hàm**, và
-`train_pretrain.py` dòng 126 gọi nó mà không truyền đường dẫn khác. Để từ vựng
-BDSG ở chỗ khác thì mô hình sẽ lặng lẽ dùng từ vựng tiếng Trung của MiniMind.
-
-**Bẫy 3 — tên tệp trọng số được ghép theo `hidden_size`, không theo tên cấu
-hình.** `train_pretrain.py` đặt tên là
-`{save_dir}/{save_weight}_{hidden_size}{'_moe' nếu MoE}.pth`. Nghĩa là:
-
-| Cấu hình | Tên tệp |
-|---|---|
-| `nho` (512) | `full_sft_512.pth` |
-| `vua` (768, 16 lớp) | `full_sft_768.pth` |
-| `moe` (768, 8 lớp, MoE) | `full_sft_768_moe.pth` |
-
-Hai mô hình **khác số lớp nhưng cùng `hidden_size`** sẽ ghi đè lên nhau. Ở ba
-cấu hình BDSG thì không đụng, nhưng ai thêm cấu hình thứ tư phải nhớ điều này.
+**Vì sao kho này cố ý KHÔNG ghi `torch` vào danh sách phụ thuộc chung:** bản
+torch cho CPU, cho GPU NVIDIA và cho Apple Silicon là ba gói khác nhau. Ghi cứng
+một bản là chọn thay cho người dùng, và chọn sai. Chọn bản đúng máy mình theo
+hướng dẫn ở pytorch.org.
 
 ---
 
-## 4. Chạy máy chủ tương thích OpenAI
+## 3. Chạy: chọn một trong hai đường
 
-```bash
-cd scripts
-python serve_openai_api.py \
-    --load_from ../model \
-    --save_dir out \
-    --weight full_sft \
-    --hidden_size 512 \
-    --num_hidden_layers 8 \
-    --device cpu
-```
+Khi đã có trọng số, có hai đường, và chúng phục vụ hai nhu cầu khác nhau.
 
-Máy chủ lắng nghe ở **cổng 8998**.
+### 3.1. Đường A — chạy thẳng bằng mã của kho này
 
-**Bẫy 4 — phải chạy từ trong thư mục `scripts/`.** Bên trong, đường dẫn trọng số
-được ghép cứng là `f'../{args.save_dir}/…'` (dòng 32). Chạy từ thư mục gốc dự án
-sẽ tìm trọng số ở `../out` — tức là **bên ngoài** cả kho mã.
-
-**Bẫy 5 — `--load_from` được xét bằng phép tìm chuỗi con.** Dòng 30:
+Không cần công cụ ngoài. Kiến trúc trong `mo-hinh/` có sẵn phương thức sinh chữ:
 
 ```python
-if 'model' in args.load_from:
+import importlib.util, sys, torch
+from tokenizers import Tokenizer
+
+spec = importlib.util.spec_from_file_location(
+    "mo_hinh", "mo-hinh/__init__.py", submodule_search_locations=["mo-hinh"])
+mh = importlib.util.module_from_spec(spec)
+sys.modules["mo_hinh"] = mh
+spec.loader.exec_module(mh)
+
+cfg = mh.CauHinhBDSG.tu_json("huan-luyen/cau-hinh/nho.json")
+mo_hinh = mh.BDSGChoNgonNgu(cfg)
+mo_hinh.load_state_dict(torch.load("diem-dung.pt", map_location="cpu")["trong_so"])
+mo_hinh.eval()
+
+tok = Tokenizer.from_file("tu-vung/tokenizer.json")
+loi_nhac = "<|mo-luot|>nguoi\nNgành nghề kinh doanh chính là gì?<|dong-luot|>\n<|mo-luot|>tro-ly\n"
+ids = torch.tensor([tok.encode(loi_nhac).ids])
+ra = mo_hinh.sinh(ids, so_token_moi=200, nhiet_do=0.7, top_p=0.9,
+                  eos_token_id=tok.token_to_id("<|dong-luot|>"))
+print(tok.decode(ra[0].tolist()))
 ```
 
-Nếu bạn để mô hình định dạng transformers ở thư mục tên `bdsg-model-v1`, chuỗi
-`'model'` nằm trong đó, nên nó nhảy vào nhánh "trọng số torch thuần" và đi tìm
-tệp `.pth` không tồn tại. Đổi tên thư mục là xong, nhưng lỗi báo ra sẽ chẳng nói
-gì về nguyên nhân thật.
+**Chuỗi lời nhắc phải đúng định dạng hội thoại của BDSG** — xem mục 4. Sai định
+dạng thì mô hình vẫn trả lời, chỉ là trả lời kém, và không có lỗi nào báo.
 
-**Bẫy 6 — trên CPU, `.half()` là sai.** Dòng 47:
+**Giới hạn đã biết, ghi ở chính mã của `mo-hinh/`:** `sinh()` yêu cầu các chuỗi
+trong một lô phải **cùng độ dài**, vì kiến trúc chưa có mặt nạ đệm. Sinh từng
+chuỗi một thì không vướng.
 
-```python
-return model.half().eval().to(device)
+### 3.2. Đường B — xuất ra định dạng công cụ suy luận đọc được
+
+Đây là đường dành cho người muốn chạy bằng công cụ cục bộ quen thuộc.
+`mo-hinh/xuat_hf.py` ghi ra `config.json` + `model.safetensors` theo bố cục
+trọng số phổ biến, để bộ chuyển đổi sang GGUF đọc được:
+
+```bash
+python3 mo-hinh/xuat_hf.py \
+    --cau-hinh huan-luyen/cau-hinh/nho.json \
+    --diem-dung out/tinh-chinh-nho/diem-dung.pt \
+    --ra ./bdsg-nho-xuat
 ```
 
-fp16 được ép **không điều kiện**, kể cả khi `--device cpu`. PyTorch trên CPU
-chạy fp16 rất chậm và một số phép còn chưa hỗ trợ. Với máy cá nhân, sửa dòng đó
-thành:
+Sau đó dùng bộ chuyển đổi GGUF của công cụ suy luận bạn chọn, rồi nạp tệp GGUF
+ấy như mọi mô hình khác.
 
-```python
-return (model.eval().to(device) if device == 'cpu'
-        else model.half().eval().to(device))
-```
-
-Đổi lại là trọng số chiếm gấp đôi RAM (`nho`: 150 MB thay vì 75 MB) — vẫn thoải
-mái trên máy cá nhân. **Chưa đo** chênh lệch tốc độ cụ thể trên máy thật.
-
-**Bẫy 7 — `host="0.0.0.0"` (dòng 252) mở ra toàn bộ card mạng.** Ở quán cà phê
-hay mạng công ty, ai trong cùng mạng cũng gọi được mô hình của bạn. Muốn chỉ máy
-mình dùng thì sửa thành `host="127.0.0.1"`.
+**Trường `architectures` trong `config.json` là khai báo về CÁCH SẮP XẾP TRỌNG
+SỐ, không phải khai báo về tác giả.** Nó nói "trọng số của tôi nằm theo bố cục
+đã biết này" để công cụ khác đọc được. Mã trong kho này do BDSG viết; bố cục
+trọng số thì cố ý làm cho trùng một bố cục phổ biến, vì đó là điều kiện để bạn
+chạy được. Chi tiết và ba chỗ hỏng-mà-không-báo của bước xuất nằm ở đầu
+`mo-hinh/xuat_hf.py`.
 
 ---
 
-## 5. Gọi thử
+## 4. Định dạng hội thoại — phải đúng, không có lỗi nào báo nếu sai
 
-```bash
-curl http://127.0.0.1:8998/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "bdsg",
-    "messages": [{"role": "user", "content": "Ngành nghề kinh doanh chính là gì?"}],
-    "stream": false
-  }'
+Mô hình được tinh chỉnh trên đúng một khuôn. Ba token đặc biệt:
+
+| id | token | việc |
+|---:|---|---|
+| 0 | `<\|het-van-ban\|>` | ngăn hai văn bản khác nhau, và làm token đệm |
+| 1 | `<\|mo-luot\|>` | mở một lượt nói |
+| 2 | `<\|dong-luot\|>` | đóng một lượt nói |
+
+Hai vai hợp lệ, **và chỉ hai**: `nguoi` và `tro-ly`. Không có vai hệ thống.
+
+Một lượt hỏi–đáp đầy đủ:
+
+```
+<|mo-luot|>nguoi\n{câu hỏi}<|dong-luot|>\n<|mo-luot|>tro-ly\n{trả lời}<|dong-luot|>\n
 ```
 
-Vì đây là API tương thích OpenAI, mọi thư viện khách nói chuyện được với OpenAI
-đều dùng được — chỉ cần đổi `base_url` sang `http://127.0.0.1:8998/v1`.
+Khi **hỏi**, bạn dừng ở `<|mo-luot|>tro-ly\n` và để mô hình viết tiếp. Đặt
+`eos_token_id` là id của `<|dong-luot|>` để nó dừng đúng chỗ.
 
-**Bẫy 8 — `scripts/chat_api.py` đi kèm KHÔNG trỏ vào máy chủ này.** Tệp đó đặt
-`base_url="http://localhost:11434/v1"` (cổng của Ollama) và `model=
-"minimind-local:latest"`. Nó được viết cho một cách triển khai khác. Muốn dùng
-với `serve_openai_api.py` thì sửa hai dòng đó thành cổng `8998`.
-
-Bật chế độ suy luận (mô hình sinh phần `<think>…</think>` trước khi trả lời):
-
-```json
-{"chat_template_kwargs": {"open_thinking": true}}
-```
-
-hoặc `{"open_thinking": true}` — máy chủ chấp nhận cả hai (xem
-`ChatRequest.get_open_thinking`).
+**Vì sao phải kỹ:** mô hình chỉ được tính mất mát trên phần trả lời của `tro-ly`
+và trên chính token `<|dong-luot|>` kết thúc lượt ấy (xem
+`huan-luyen/tinh_chinh.py`). Đưa vào một khuôn khác thì bạn đang hỏi mô hình ở
+một phân bố nó chưa từng học. Nó vẫn trả lời. Chỉ là trả lời kém hơn, và không
+có ngoại lệ nào được ném ra.
 
 ---
 
-## 6. Trò chuyện thẳng trong terminal, không cần máy chủ
+## 5. Tự huấn luyện, nếu bạn muốn
+
+Cả hai bước đều chạy được trên máy cá nhân với cấu hình `nho`.
 
 ```bash
-python eval_llm.py --load_from model --weight full_sft --hidden_size 512 --device cpu
+# 1. Tiền huấn luyện
+python3 huan-luyen/huan_luyen.py \
+    --du-lieu  duong/dan/pretrain.jsonl \
+    --cau-hinh huan-luyen/cau-hinh/nho.json \
+    --tu-vung  duong/dan/tu-vung \
+    --thu-muc-ra out \
+    --max-seq-len 512 --batch 8 --tich-luy 4 --ky 1
+
+# 2. Tinh chỉnh theo chỉ dẫn
+python3 huan-luyen/tinh_chinh.py \
+    --du-lieu  duong/dan/sft.jsonl \
+    --cau-hinh huan-luyen/cau-hinh/nho.json \
+    --tu-vung  duong/dan/tu-vung \
+    --tu-diem-dung out/tien-huan-luyen-nho/diem-dung.pt \
+    --thu-muc-ra out --ky 2
 ```
 
-Chạy từ **thư mục gốc** của MiniMind (khác với `serve_openai_api.py` — cái đó
-phải chạy từ `scripts/`). `eval_llm.py` dòng 14 có **đúng cái bẫy chuỗi con**
-như bẫy 5, và dòng 30 có **đúng cái `.half()`** như bẫy 6.
+Cả hai **tự chọn thiết bị**: CUDA nếu có, rồi MPS (Apple Silicon), rồi CPU. Ép
+tay bằng `--thiet-bi cpu|cuda|mps`.
+
+Cả hai **lưu điểm dừng định kỳ và tiếp tục được**: thêm `--tiep-tuc` vào đúng
+lệnh cũ. Bấm Ctrl-C giữa chừng cũng lưu trước khi thoát.
+
+### Ba lệnh nên chạy TRƯỚC khi tiêu một giây GPU nào
+
+```bash
+# a. Phép đếm tham số có đúng số học không
+python3 huan-luyen/cau-hinh/tinh_tham_so.py --tu-kiem
+
+# b. Lề một bước giữa bộ huấn luyện và kiến trúc có khớp không
+python3 huan-luyen/huan_luyen.py --tu-kiem-dich --cau-hinh huan-luyen/cau-hinh/nho.json
+
+# c. Mặt nạ mất mát có phủ đúng phần trả lời không — NHÌN BẰNG MẮT
+python3 huan-luyen/tinh_chinh.py --du-lieu sft.jsonl --tu-vung tu-vung \
+    --cau-hinh huan-luyen/cau-hinh/nho.json --xem-mat-na 3
+```
+
+Lệnh (b) và (c) tồn tại vì hai lỗi chúng bắt đều thuộc họ **hỏng mà không báo**:
+lệch lề một bước, hoặc mặt nạ phủ sai chỗ, đều làm mất mát giảm đều và đồ thị
+đẹp, chỉ có kết quả là hỏng.
+
+---
+
+## 6. Bốn chỗ đã biết trước là sẽ vướng
+
+**1. `vocab_size` trong cấu hình phải khớp tuyệt đối với từ vựng thật.**
+Lệch kiểu "cấu hình lớn hơn từ vựng" **không báo lỗi gì cả** — nó chỉ tạo một
+mảng embedding chết, không bao giờ được học. Cả `huan_luyen.py` lẫn
+`tinh_chinh.py` đều kiểm và **dừng hẳn** nếu lệch.
+
+**2. Thư mục `mo-hinh` có dấu gạch ngang nên không `import` thẳng được.**
+Tên mô-đun Python không được chứa gạch ngang. Phải nạp bằng `importlib` theo
+đường dẫn tệp — xem đoạn mã ở mục 3.1. Bộ huấn luyện đã làm sẵn việc này.
+
+**3. Trên CPU, đừng ép fp16.** PyTorch chạy fp16 trên CPU rất chậm và một số
+phép chưa hỗ trợ. Bộ huấn luyện **mặc định tắt** autocast trên CPU và trên MPS,
+và chỉ bật trên CUDA khi bạn thêm `--amp`. Đổi lại là trọng số chiếm gấp đôi RAM
+(`nho`: 138 MiB thay vì 69 MiB) — vẫn thoải mái trên máy cá nhân.
+
+**4. Đừng mở cổng ra toàn bộ card mạng.** Nếu bạn bọc mô hình sau một máy chủ
+HTTP, đặt `host="127.0.0.1"` chứ đừng `0.0.0.0`. Ở quán cà phê hay mạng công ty,
+ai cùng mạng cũng gọi được mô hình của bạn.
 
 ---
 
 ## 7. Đặt kỳ vọng cho đúng
 
-Mô hình cỡ 39M–212M **không phải** trợ lý đa năng. MiniMind tự ghi trong tài
-liệu của họ hai hạn chế, và chúng áp nguyên cho mô hình BDSG vì cùng kiến trúc,
-cùng quy mô:
+Mô hình 36 M–296 M tham số **không phải** trợ lý đa năng. Hai hạn chế đã biết
+trước, và chúng thuộc về quy mô chứ không thuộc về mã:
 
 - **mô hình bịa ra kiến thức nó không có**;
-- **độ ổn định về sự thật giảm sau khi học tăng cường**.
+- kiến thức càng xa lĩnh vực đã tinh chỉnh thì càng không đáng tin.
 
-Đường cơ sở BDSG đo được (bộ M3, 227 câu, 22/09/2026) — đây là số của **hệ truy
-hồi + mô hình bên thứ ba** đang chạy, **không phải** của mô hình sẽ huấn luyện:
+Đường cơ sở BDSG **đo được** (bộ M3, 227 câu, 22/09/2026). Đây là điểm của **hệ
+truy hồi + mô hình bên thứ ba** đang chạy, **không phải** của mô hình sẽ huấn
+luyện:
 
 | Nhóm câu | Điểm | Số câu |
 |---|---:|---:|
@@ -239,10 +288,11 @@ hồi + mô hình bên thứ ba** đang chạy, **không phải** của mô hìn
 | Câu bẫy chống bịa | 0,953 | 60 |
 | Tiếng Việt tổng quát | 0,908 | 25 |
 
-Mô hình 39M huấn luyện từ đầu **gần như chắc chắn sẽ thấp hơn các số này** ở
-giai đoạn đầu. Đó không phải thất bại — đó là điều đã biết trước khi bắt đầu.
+Một mô hình 36 M huấn luyện từ đầu **gần như chắc chắn sẽ thấp hơn các số này**
+ở giai đoạn đầu. Đó không phải thất bại — đó là điều đã biết trước khi bắt đầu.
+
 Giá trị của mô hình nhỏ chạy cục bộ nằm ở chỗ **dữ liệu không rời khỏi máy** và
 **không tốn tiền gọi API**, không nằm ở chỗ nó khôn hơn.
 
-Khi có trọng số thật, mọi con số ở trang này phải được **đo lại và thay**, kèm
+Khi có trọng số thật, **mọi con số ở trang này phải được đo lại và thay**, kèm
 ngày đo.

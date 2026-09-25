@@ -199,3 +199,38 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+================================================================================
+
+   GHI CHU CUA BDSG — VI SAO CHON APACHE-2.0
+   (Ghi chu nay dat SAU toan van giay phep, co y: cong cu nhan dien giay phep doc
+   tu dau tep, nen de toan van dung nguyen ven o tren thi chung van nhan ra dung
+   Apache-2.0. Toan van o tren KHONG bi sua mot chu nao.)
+
+   Apache-2.0 la LUA CHON CUA BDSG, khong phai rang buoc ke thua.
+
+   Ban truoc cua tai lieu kho nay ghi ly do chon Apache-2.0 la "de khop voi giay
+   phep cua thuong nguon". Ly do do KHONG CON DUNG, va viec sua no lai la mot phan
+   cua dot ra soat ngay 26/09/2026: kien truc va bo huan luyen trong kho nay do BDSG
+   viet doc lap, dung tu ky thuat da cong bo trong cac bai bao (arXiv:1706.03762,
+   arXiv:2002.04745, arXiv:1910.07467, arXiv:2104.09864, arXiv:2305.13245,
+   arXiv:2002.05202). Khong co ma nao duoc dan xuat tu mot kho ma nao khac, nen
+   khong co giay phep thuong nguon nao phai khop.
+
+   BDSG van chon Apache-2.0, vi hai ly do cua chinh BDSG:
+
+     1. Cho phep dung thuong mai va phan phoi lai, ke ca ban da sua. Muc tieu cua
+        du an la nguoi dung TAI VE MAY CA NHAN chay duoc; mot giay phep han che
+        dung thuong mai se chan dung nhom nguoi dung do.
+
+     2. Dieu 3 cap phep sang che tuong minh, kem dieu khoan cham dut khi co kien
+        tung sang che. Nguoi dung doanh nghiep phai tra loi duoc cau hoi sang che
+        TRUOC khi dua mo hinh vao san pham; giay phep kieu MIT khong tra loi cau
+        do bang van ban.
+
+   Dieu 4 cua giay phep nay (giu thong bao ban quyen, neu ro cho da sua) van ap
+   day du cho BAT KY AI phan phoi lai kho nay hoac ban dan xuat tu no.
+
+   Pham vi: giay phep nay ap cho MA NGUON. Du lieu trong bo-du-lieu/ theo CC BY 4.0,
+   xem LICENSE-DATA. Trong so: CHUA CO (26/09/2026) — khi co se cap phep rieng va
+   ghi ro trong MODEL-CARD.md.

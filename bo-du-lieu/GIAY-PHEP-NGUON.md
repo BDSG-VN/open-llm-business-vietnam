@@ -30,8 +30,18 @@ gì lẽ ra phải lấy mà không lấy, hoặc lẽ ra phải bỏ mà vẫn 
 | 11 | `bai-dang` | Nền tảng BDSG | Số đoạn **chưa đo** | Người dùng đăng bài | Chưa có đồng ý cho huấn luyện | **LOẠI** · chưa có đồng ý |
 | 12 | `nao-agent` | `bdsg_chat.doan_tri_thuc` | **116 đoạn** | Máy sinh qua LiteLLM | Điều khoản nhà cung cấp + bí mật thương mại | **LOẠI** · máy sinh |
 | 13 | `bai-dang-bds` | `bdsg_chat.doan_tri_thuc` | **5.939 đoạn** | Máy sinh qua LiteLLM | Điều khoản nhà cung cấp | **LOẠI** · máy sinh |
-| 14 | MiniMind (mã nguồn) | github.com/jingyaogong/minimind | Mã nguồn, không phải dữ liệu | jingyaogong | **Apache-2.0** | **DÙNG MÃ** · không trộn vào bộ này |
-| 15 | MiniMind (bộ dữ liệu của họ) | Kho của MiniMind | pretrain_t2t ~10GB · sft_t2t ~14GB (bản mini 1,2GB/1,6GB) | Thượng nguồn | Chưa rà điều khoản | **KHÔNG TRỘN** vào bộ này · xem mục 4.2 |
+
+> **Bảng này chỉ có 13 dòng, và đó là toàn bộ nguồn DỮ LIỆU của dự án.** Bản trước có thêm
+> hai dòng cho mã nguồn và bộ dữ liệu của một dự án ngoài. Cả hai dòng đã bị gỡ ngày
+> 26/09/2026 vì hai lý do khác nhau, nói rõ cả hai:
+>
+> - **Dòng mã nguồn** không còn đúng: kiến trúc và bộ huấn luyện của kho này do BDSG viết
+>   độc lập, dựng từ kỹ thuật đã công bố trong bài báo (xem mục 4). Không có mã nào được
+>   dẫn xuất, nên không có giấy phép thượng nguồn nào để ghi.
+> - **Dòng bộ dữ liệu** không thuộc bảng này ngay từ đầu: nó chưa bao giờ được trộn vào bộ
+>   này, nên nó không phải một nguồn đã dùng mà là một nguồn đã không dùng — và bảng này
+>   liệt kê nguồn BDSG **có trong tay** và đã quyết định giữ hay loại, không liệt kê mọi bộ
+>   dữ liệu tồn tại trên đời.
 
 Kiểm được bằng phép cộng: **5.192 + 6.434 + 107 = 11.733** (phát hành) và
 **11.733 + 116 + 5.939 = 17.788** (toàn bảng `doan_tri_thuc`). Không còn chỗ cho nguồn nào
@@ -226,72 +236,99 @@ một `nguon` nào khác 5 giá trị trên.
 
 ---
 
-## 4. MiniMind — phân biệt MÃ NGUỒN với BỘ DỮ LIỆU
+## 4. Mã nguồn của kho này — viết độc lập, không có nguồn dữ liệu nào đi kèm
 
-Đây là chỗ dễ nhầm nhất trong cả bảng, nên tách riêng.
+Mục này tách riêng vì đây là chỗ dễ nhầm nhất khi đọc bảng ở mục 1: bảng ấy liệt kê nguồn
+**DỮ LIỆU**, còn mã nguồn thì theo một giấy phép khác và có một câu chuyện xuất xứ khác.
 
-### 4.1. Mã nguồn MiniMind — Apache-2.0 — DÙNG ĐƯỢC
+### 4.1. Kiến trúc và bộ huấn luyện do BDSG viết
 
-Kho: github.com/jingyaogong/minimind. Giấy phép: **Apache-2.0** — cho phép dùng, sửa, phân
-phối lại, dùng thương mại, với điều kiện giữ thông báo bản quyền và ghi rõ chỗ đã sửa.
+Kiến trúc mô hình (`mo-hinh/`) và bộ huấn luyện (`huan-luyen/`) do BDSG viết. Từng khối
+được viết lại từ **mô tả toán học trong bài báo gốc**:
 
-Dự án **sẽ dùng** mã huấn luyện của họ (chưa chạy huấn luyện lần nào — xem 4.3). Các tệp
-liên quan: `trainer/train_tokenizer.py`,
-`train_pretrain.py`, `train_full_sft.py`, `train_dpo.py`, `train_lora.py`, `train_ppo.py`,
-`train_grpo.py`, `train_distillation.py`, `train_agent.py`, `model/model_minimind.py`,
-`model/model_lora.py`, `dataset/lm_dataset.py`, `scripts/serve_openai_api.py`,
-`scripts/convert_model.py`, `scripts/web_demo.py`, `eval_llm.py`.
+| Khối | Bài báo | Mã arXiv |
+|---|---|---|
+| Transformer | Vaswani và cộng sự, 2017 | arXiv:1706.03762 |
+| Xếp chuẩn trước khối (pre-norm) | Xiong và cộng sự, 2020 | arXiv:2002.04745 |
+| RMSNorm | Zhang và Sennrich, 2019 | arXiv:1910.07467 |
+| RoPE | Su và cộng sự, 2021 | arXiv:2104.09864 |
+| GQA | Ainslie và cộng sự, 2023 | arXiv:2305.13245 |
+| SwiGLU | Shazeer, 2020 | arXiv:2002.05202 |
+| Buộc trọng số vào/ra (`tie_word_embeddings`) | Press và Wolf, 2017 | arXiv:1608.05859 |
+| BPE (thuật toán từ vựng) | Sennrich và cộng sự, 2016 | arXiv:1508.07909 |
 
-Việc dùng mã của họ **không kéo theo** ràng buộc gì lên bộ dữ liệu này: Apache-2.0 áp cho
-mã, CC-BY-4.0 áp cho dữ liệu. Hai thứ độc lập.
+Dòng **buộc trọng số vào/ra** được thêm ngày 26/09/2026 sau một lượt soát lại bảng này.
+Nó từng bị sót, và chỗ sót ấy đáng ghi lại: `tie_word_embeddings` trông như một *tên trường
+cấu hình* nên dễ bị xếp nhầm vào nhóm "quy ước đặt tên của hệ sinh thái" — trong khi nó là
+một **kỹ thuật lấy từ bài báo**, và là kỹ thuật đổi hẳn số tham số của mô hình (lớp nhúng
+đầu vào và lớp chiếu đầu ra dùng chung một ma trận, nên chỉ đếm một lần). Tên trường thì
+không cần ghi công; kỹ thuật thì cần. Bảng này liệt kê **kỹ thuật**, không liệt kê tên
+trường — đọc nhầm ranh giới ấy là cách một khoản ghi công biến mất mà không ai thấy.
 
-### 4.2. Bộ dữ liệu của MiniMind — KHÔNG trộn vào bộ này
+**Vì sao điều này thuộc về một tệp về GIẤY PHÉP NGUỒN.** Vì nó là một khai báo xuất xứ, và
+khai sai xuất xứ mã cũng nghiêm trọng đúng như khai sai xuất xứ dữ liệu — chỉ là ít người
+soi hơn. Hai cách làm sai, cả hai đều phải tránh:
 
-Họ có bộ dữ liệu riêng: `pretrain_t2t` ~10GB, `sft_t2t` ~14GB (bản mini 1,2GB/1,6GB). Ngữ
-liệu gốc là **tiếng Trung + tiếng Anh**; `requirements.txt` của họ có `jieba` (tách từ
-tiếng Trung).
+1. **Dẫn xuất mà không ghi công.** Nếu BDSG lấy mã của người khác, sửa vài chỗ rồi xoá tên
+   họ đi, thì vi phạm chính giấy phép cho phép mình dùng — Apache-2.0 điều 4 buộc giữ thông
+   báo bản quyền và **nêu rõ chỗ đã sửa**. Đó là vi phạm pháp lý.
+2. **Khai là của mình thứ mình không viết.** Nặng hơn vế trên, vì nó là lời khai sai về
+   nguồn gốc mô hình — đúng thứ mà cả kho này tồn tại để chống. Bảng trạng thái trong README
+   ghi thẳng `bdsg_la_trong_so_bdsg = false`; một kho khai thật ở chỗ khó như thế thì không
+   được khai dối ở chỗ dễ.
 
-**Bộ dữ liệu ấy không được trộn vào bộ này**, vì hai lý do:
+Cách tránh cả hai không phải là viết cẩn thận hơn, mà là **viết thật từ đầu từ bài báo**,
+rồi khoá lại bằng cổng `cong/khong-tham-chieu-ngoai.py` để một cái tên không lặng lẽ quay
+về qua một lần sao chép tài liệu.
 
-1. **Điều khoản của ngữ liệu họ dùng chưa được BDSG rà.** Apache-2.0 là giấy phép của **mã**
-   họ viết, **không** tự động phủ lên dữ liệu họ thu thập từ nơi khác. Chưa rà thì chưa
-   phát hành lại.
-2. **Trộn vào sẽ làm hỏng chính điều bộ này muốn nói.** Bộ này là **ngữ liệu doanh nghiệp
-   Việt Nam do BDSG tạo ra**. Trộn ~24GB tiếng Trung + tiếng Anh vào thì phần Việt Nam chìm
-   xuống dưới 0,1% và thẻ dữ liệu mất nghĩa.
+**Ranh giới của cổng ấy, nói trước:** nó chứng minh được *tài liệu không còn khai sai
+nguồn*, nó **không** chứng minh được *mã là viết độc lập*. Việc thứ hai chỉ có người đọc mã
+mới làm được. Đừng đọc một dòng "cổng ĐẠT" thành nhiều hơn thế.
 
-**Tiếng Trung vẫn ở lại dự án, ở tầng khác và ở vị trí thứ ba.** Thứ tự ưu tiên do chủ dự
-án chốt là **tiếng Việt (1) → tiếng Anh (2) → tiếng Trung (3)**. Ngữ liệu MiniMind được
-dùng ở **bước huấn luyện** (`huan-luyen/`), nơi người huấn luyện tự chọn tỉ lệ trộn — chứ
-không được đóng gói vào **bộ dữ liệu phát hành** này. Ranh giới ấy giữ cho mỗi bộ có một
-giấy phép rõ ràng thay vì một mớ pha trộn không ai truy được nguồn.
+### 4.2. Không có bộ dữ liệu bên ngoài nào được trộn vào bộ này
 
-Trong lược đồ JSONL, giá trị `ngon_ngu = "zh"` **đã được định nghĩa sẵn nhưng có 0 bản ghi**
-ở bản phát hành này — để khi trộn ngữ liệu tiếng Trung ở bước huấn luyện thì các dòng ấy có
-sẵn chỗ mang nhãn, không phải đổi lược đồ giữa chừng.
+Bộ dữ liệu phát hành ở đây gồm **đúng 5 nguồn** ở dòng 1–5 của bảng mục 1, tất cả đều là
+dữ liệu của BDSG. Không có ngữ liệu bên ngoài nào được trộn vào.
 
-### 4.3. Bộ từ vựng — vì sao BDSG phải huấn luyện lại, dù chính họ khuyên đừng
+Ranh giới ấy được giữ để mỗi bộ có **một giấy phép rõ ràng**, thay vì một mớ pha trộn
+không ai truy được nguồn. Nếu sau này BDSG có trộn thêm ngữ liệu mở của bên khác ở bước
+huấn luyện, thì việc ấy thuộc `huan-luyen/`, phải khai xuất xứ tại đó, và **vẫn không**
+được đóng gói vào bộ dữ liệu phát hành này.
 
-Trong script của MiniMind có cảnh báo: **"không khuyến nghị huấn luyện lại tokenizer"**.
+Hệ quả phải nói thẳng: **7,16 MB là nhỏ**, nhỏ hơn ngữ liệu tiền huấn luyện thông thường
+vài bậc độ lớn. Đó là cái giá của việc chỉ phát hành thứ mình chứng minh được nguồn.
 
-Cảnh báo ấy **dành cho người dùng lại trọng số đã phát hành của MiniMind**: đổi bộ từ vựng
-thì trọng số cũ vô dụng, vì mỗi số hiệu token không còn trỏ vào cùng một mẩu chữ nữa.
+### 4.3. Vì sao BDSG phải tự huấn luyện bộ từ vựng
 
-**BDSG dự định huấn luyện TỪ ĐẦU, không dùng lại trọng số của họ.** Nên trường hợp mà cảnh
-báo ấy nói tới không xảy ra ở đây. (Nói cho rõ kẻo đọc nhầm thì tệ: đây là **kế hoạch**.
-Tính đến 25/09/2026 **BDSG chưa huấn luyện trọng số nào** — xem README mục 1.1.) Và ở chiều ngược lại, **bắt buộc** phải có bộ từ vựng riêng:
-bộ từ vựng 6.400 token của MiniMind được luyện trên ngữ liệu tiếng Trung + tiếng Anh, sẽ
-cắt vụn chữ tiếng Việt có dấu thành nhiều token mỗi chữ. Điều đó làm câu tiếng Việt dài ra
-theo token, tốn cửa sổ ngữ cảnh và học kém.
+Lập luận đứng một mình, không cần so với ai:
 
-Đây là ví dụ vì sao **đọc mã nguồn thật quan trọng hơn đọc lời khuyên**: cùng một câu cảnh
-báo, áp đúng hoàn cảnh thì phải nghe, áp sai hoàn cảnh thì dẫn tới quyết định tệ.
+Một bộ **BPE mức byte** (arXiv:1508.07909) không được luyện trên tiếng Việt sẽ đẩy chữ có
+dấu xuống tận từng byte UTF-8 thô. Chữ tiếng Việt có dấu chiếm 2–3 byte trong UTF-8, nên
+mỗi chữ như thế tốn nhiều token hơn mức cần. Hệ quả kép, cả hai đều đắt: phí **độ dài ngữ
+cảnh** và phí **thời gian GPU** (chi phí huấn luyện tính theo token, không theo chữ).
 
-### 4.4. Hạn chế MiniMind tự ghi — chép lại nguyên vẹn
+Phép đo ngày 25/09/2026 (chi tiết ở `huan-luyen/tu-vung/ket-qua/`): so cùng cỡ từ vựng
+**6.400**, bản học tiếng Việt dùng **289.266** token cho phần giữ lại, bản không học tiếng
+Việt dùng **852.285** — **giảm 66,1%**. Đổi lại, tiếng Anh **tệ đi 22,0%**. Con số thứ hai
+phải công bố cùng, và nó là lý do bản phát hành phải trộn hai thứ tiếng theo trọng số chứ
+không đổi hẳn sang tiếng Việt.
 
-Tài liệu của họ tự nêu: **mô hình bịa kiến thức**, và **độ ổn định sự thật giảm sau khi học
-tăng cường (RL)**. Ghi lại ở đây vì hai hạn chế ấy sẽ đi theo mọi mô hình huấn luyện bằng
-mã của họ, kể cả mô hình của BDSG.
+**Hệ quả phải chấp nhận:** trọng số luôn gắn chặt với đúng bộ từ vựng đã huấn luyện cùng
+nó. Mô hình của kho này không dùng lẫn được với mô hình dựng trên từ vựng khác, theo cả hai
+chiều.
+
+### 4.4. Hạn chế dự báo trước của mô hình nhỏ — và vì sao nó CHƯA phải số đo
+
+**Mô hình ngôn ngữ nhỏ bịa kiến thức.** Đây là giới hạn của cỡ mô hình, không phải lỗi cấu
+hình. Rủi ro thứ hai: **độ ổn định sự thật thường giảm sau các giai đoạn tinh chỉnh theo sở
+thích (RLHF/DPO)** — mô hình học cách trả lời dễ nghe hơn, và dễ nghe đôi khi trái với đúng.
+
+Ghi hai điều này ở đây vì chúng ảnh hưởng trực tiếp tới cách bộ dữ liệu được dùng: nhóm câu
+bẫy chống bịa trong `danh-gia/` phải được đo lại sau **mỗi** giai đoạn tinh chỉnh, không
+phải đo một lần ở cuối.
+
+**Cả hai là dự báo dựa trên hiểu biết chung về mô hình nhỏ, KHÔNG phải số đo của BDSG.**
+BDSG chưa có trọng số nào để đo (26/09/2026).
 
 ---
 
@@ -301,7 +338,12 @@ mã của họ, kể cả mô hình của BDSG.
 
 Áp cho **dòng 1–5** ở bảng mục 1, tức ba tệp JSONL trong bộ. **Không** cấp quyền nào đối
 với các nguồn ở dòng 6–13: những nguồn ấy không nằm trong bộ, nên cũng không nằm trong giấy
-phép. Dòng 14–15 (MiniMind) theo giấy phép riêng của thượng nguồn.
+phép.
+
+**MÃ NGUỒN theo giấy phép khác: Apache-2.0** (xem `LICENSE-CODE` ở gốc kho, kèm ghi chú vì
+sao BDSG chọn giấy phép ấy). Hai phạm vi độc lập nhau — CC-BY-4.0 cho dữ liệu, Apache-2.0
+cho mã — và đó là chủ ý: trộn chung một giấy phép cho hai loại tài sản khác nhau là cách
+nhanh nhất để người dùng hạ nguồn không biết mình được phép làm gì.
 
 Cách trích dẫn: xem README mục 11.
 
@@ -319,7 +361,11 @@ Nói thẳng, để người đọc biết ranh giới của bảng trên:
   dựa trên *quy tắc chung* của ngành ("thường cấm"), **không** dựa trên việc đã đọc từng
   bản điều khoản cụ thể và đối chiếu ngày hiệu lực. Kết luận loại trừ không đổi — nhưng
   căn cứ thì đúng ra phải chắc hơn thế.
-- **Chưa rà điều khoản ngữ liệu của MiniMind** (mục 4.2). Đó chính là lý do chưa trộn.
+- **Chưa có ai đọc lại toàn bộ mã trong `mo-hinh/` và `huan-luyen/` để xác nhận tính độc
+  lập bằng mắt người.** Cổng `cong/khong-tham-chieu-ngoai.py` chỉ chứng minh tài liệu không
+  còn khai sai nguồn; nó không chứng minh được mã là viết độc lập. Khẳng định ở mục 4.1
+  dựa trên lời khai của người viết và trên các trích dẫn bài báo có trong mã, **chưa** dựa
+  trên một lượt soát đối kháng độc lập.
 - **Chưa có ai đọc mẫu ngẫu nhiên** trong 11.733 đoạn để xác nhận không lẫn nguồn lạ. Mọi
   khẳng định về xuất xứ trong tệp này dựa trên **trường `nguon` trong CSDL**, tức là tin
   vào bước gán nguồn lúc nạp dữ liệu.

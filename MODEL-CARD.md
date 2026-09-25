@@ -24,38 +24,59 @@ Viết theo khuôn thẻ mô hình (model card) của Hugging Face.
 |---|---|
 | Tên | Open LLM Business Việt Nam |
 | Đơn vị phát triển | BDSG |
-| Loại mô hình | mô hình ngôn ngữ nhân quả (decoder-only), kiến trúc MiniMind |
-| Ngôn ngữ | **1. Tiếng Việt · 2. Tiếng Anh · 3. Tiếng Trung** |
+| Loại mô hình | mô hình ngôn ngữ nhân quả (decoder-only), pre-norm, kiến trúc do BDSG viết |
+| Ngôn ngữ | **1. Tiếng Việt (chính) · 2. Tiếng Anh (phụ)** |
 | Giấy phép mã | Apache License 2.0 — xem [LICENSE-CODE](LICENSE-CODE) |
 | Giấy phép dữ liệu | CC BY 4.0, chỉ cho `bo-du-lieu/` — xem [LICENSE-DATA](LICENSE-DATA) |
-| Mô hình gốc được tinh chỉnh từ | **không có** — dự kiến huấn luyện từ đầu, không nạp trọng số MiniMind |
+| Mô hình gốc được tinh chỉnh từ | **không có** — huấn luyện từ đầu, không nạp trọng số của ai |
 | Trọng số phát hành | **chưa có** (25/09/2026) |
 | Kho mã | thư mục này |
 | Điểm cuối API đang sống | `https://llm.bdsg.vn` — **không phục vụ trọng số của BDSG** |
 
-### 1.2 Kiến trúc dự kiến
+### 1.2 Kiến trúc
 
-Đọc trực tiếp từ `model/model_minimind.py` của MiniMind (nhánh `f659b55`, 23/09/2026):
+**Kiến trúc do BDSG viết.** Không dẫn xuất từ mã của dự án nào khác. Từng khối được viết
+lại từ **mô tả toán học trong bài báo gốc**; trích dẫn dưới đây là trích **bài báo**:
 
-| Tham số | Giá trị mặc định |
-|---|---|
-| `hidden_size` | 768 |
-| `num_hidden_layers` | 8 |
-| `num_attention_heads` | 8 |
-| `num_key_value_heads` | 4 (GQA) |
-| `vocab_size` | 6400 |
-| `hidden_act` | `silu` |
-| `max_position_embeddings` | 32768 |
-| `rope_theta` | 1e6 |
-| `tie_word_embeddings` | `True` |
-| `use_moe` | `False` |
-| `intermediate_size` | `ceil(hidden_size * pi / 64) * 64` = 2432 khi `hidden_size = 768` |
+| Khối | Bài báo gốc | Mã arXiv |
+|---|---|---|
+| Transformer | Vaswani và cộng sự, 2017 | arXiv:1706.03762 |
+| Xếp chuẩn trước khối (pre-norm) | Xiong và cộng sự, 2020 | arXiv:2002.04745 |
+| RMSNorm | Zhang và Sennrich, 2019 | arXiv:1910.07467 |
+| RoPE | Su và cộng sự, 2021 | arXiv:2104.09864 |
+| GQA | Ainslie và cộng sự, 2023 | arXiv:2305.13245 |
+| SwiGLU | Shazeer, 2020 | arXiv:2002.05202 |
+| Buộc trọng số vào/ra (`tie_word_embeddings`) | Press và Wolf, 2017 | arXiv:1608.05859 |
 
-Dải cỡ trong họ MiniMind: **26M** (`minimind2-small`) đến **198M-A64M** (`minimind-3-moe`).
+**Tên trường cấu hình theo chuẩn `transformers`** — `hidden_size`, `num_hidden_layers`,
+`num_attention_heads`, `num_key_value_heads`, `intermediate_size`, `vocab_size`,
+`rms_norm_eps`, `rope_theta`, `tie_word_embeddings`. Đó là quy ước chung của cả hệ sinh
+thái mô hình mở (Llama, Mistral, Qwen, Gemma đều dùng), không phải tên riêng của ai. Giữ
+nguyên bộ tên ấy là điều kiện để trọng số của BDSG nạp được ở công cụ khác; đổi tên là tự
+cắt đường ra của chính mình. Trường nào là phát minh riêng của BDSG thì mang tiền tố
+`bdsg_`.
+
+**Giá trị cụ thể không ghi ở thẻ này.** Mã kiến trúc ở `mo-hinh/`; các cấu hình (số lớp,
+bề rộng, số đầu, cỡ từ vựng, số tham số, ước tính bộ nhớ) ở `huan-luyen/cau-hinh/`, mỗi
+giá trị kèm lý do chọn. Chép số vào thẻ này chỉ tạo một bản sao sẽ lệch — đọc tại chỗ.
 
 **Cỡ mà BDSG sẽ huấn luyện: chưa chốt.** Đây là quyết định của M7 và phụ thuộc vào lượng
-ngữ liệu thật đang có (7,16 MB), một con số nhỏ so với ngữ liệu tiền huấn luyện của
-MiniMind (~10 GB). Không ghi con số nào ở đây cho tới khi chốt.
+ngữ liệu thật đang có (7,16 MB). Không ghi con số nào ở đây cho tới khi chốt.
+
+**Số tham số trong các tệp cấu hình là số TÍNH RA từ công thức, không phải số ĐẾM.** Hai
+con số ấy phải khớp **tuyệt đối**; lệch thì một bên hiểu sai kiến trúc.
+
+Phép đối chiếu ấy **không chờ trọng số**. Đếm tham số chỉ cần dựng mô hình với khởi tạo
+ngẫu nhiên rồi cộng `p.numel()` trên `model.parameters()` — không cần huấn luyện, không cần
+GPU, không cần một byte trọng số nào. "Đếm được tham số" **không** có nghĩa là "đã có trọng
+số đã huấn luyện"; thẻ này giữ nguyên khẳng định ở mục 1.1 rằng trọng số **chưa có**
+(25/09/2026). Phép đối chiếu thuộc mã kiến trúc ở `mo-hinh/` — kết quả đọc tại đó, thẻ này
+không khẳng định thay.
+
+Lý do phải làm ngay chứ không hẹn tới M7: mọi ước tính bộ nhớ và mọi dự toán giờ GPU đều
+bắt đầu từ con số tham số. Công thức sai ở đây làm sai toàn bộ dự toán mà **không báo lỗi
+gì**, và nếu hoãn phép đối chiếu tới lúc có trọng số thì sai lầm chỉ lộ ra sau khi đã trả
+tiền thuê GPU.
 
 ### 1.3 Từ vựng (tokenizer)
 
@@ -64,31 +85,35 @@ thư viện `tokenizers` (Hugging Face).
 
 **Trạng thái: bản THỬ NGHIỆM đã huấn luyện và đã đo (25/09/2026); bản PHÁT HÀNH chưa có.**
 
-Bản thử nghiệm giữ nguyên cỡ từ vựng **6.400 — đúng bằng MiniMind**, để so sánh công bằng.
-Đo trên phần giữ lại chưa từng thấy lúc huấn luyện (1.199 đoạn · 1.037.113 ký tự):
+Bản thử nghiệm giữ nguyên cỡ từ vựng **6.400** và so với **một từ vựng cùng cỡ 6.400 nhưng
+KHÔNG học tiếng Việt**, để so sánh công bằng (tăng cỡ từ vựng rồi khoe số token giảm là so
+sánh gian). Đo trên phần giữ lại chưa từng thấy lúc huấn luyện (1.199 đoạn · 1.037.113 ký tự):
 
-| Từ vựng | Token (tiếng Việt) | ký tự/token | Token (tiếng Anh) | ký tự/token |
+| Từ vựng, cùng cỡ 6.400 | Token (tiếng Việt) | ký tự/token | Token (tiếng Anh) | ký tự/token |
 |---|---:|---:|---:|---:|
-| MiniMind gốc (Trung–Anh) | 852.285 | 1,22 | 2.001 | 3,18 |
-| BDSG, học trên tiếng Việt | 289.266 | 3,59 | 2.441 | 2,61 |
+| **KHÔNG** học tiếng Việt | 852.285 | 1,22 | 2.001 | 3,18 |
+| BDSG, **CÓ** học tiếng Việt | 289.266 | 3,59 | 2.441 | 2,61 |
 
 Tiếng Việt **giảm 66,1% số token** (gấp 2,95 lần chữ trên cùng ngân sách ngữ cảnh); tiếng
-Anh **tệ đi 22,0%**. Con số thứ hai là lý do bản phát hành phải **trộn ba thứ tiếng theo
+Anh **tệ đi 22,0%**. Con số thứ hai là lý do bản phát hành phải **trộn hai thứ tiếng theo
 trọng số** chứ không phải đổi hẳn sang tiếng Việt.
+
+Cơ chế nhìn thấy được: chữ "Công" ở bản **không** học tiếng Việt tốn **4 token** vì dấu
+tiếng Việt bị đẩy xuống từng byte UTF-8 thô; ở bản **có** học tiếng Việt nó gộp thành **1
+token**. Cả một câu thử: **72 token xuống 21 token**.
 
 **Cỡ từ vựng của bản phát hành: chưa chốt.** Cấu hình trong `huan-luyen/cau-hinh/` do nhóm
 cấu hình giữ — đọc tại đó, đừng suy từ thẻ này.
 
-**Vì sao vẫn huấn luyện lại dù MiniMind khuyên đừng.** Dòng đầu tệp
-`trainer/train_tokenizer.py` của MiniMind ghi rõ là không khuyến nghị huấn luyện lại
-tokenizer. Cảnh báo ấy nhắm vào người **dùng lại trọng số đã phát hành của MiniMind**:
-đổi từ điển mà giữ trọng số cũ thì trọng số mất nghĩa. BDSG huấn luyện **từ đầu**, không
-nạp trọng số nào của họ, nên tình huống ấy không xảy ra — và ngược lại, từ vựng 6.400 token
-dựng trên ngữ liệu Trung–Anh sẽ băm chữ tiếng Việt có dấu thành nhiều byte-token hơn mức
-cần, phí cả ngữ cảnh lẫn thời gian GPU.
+**Vì sao BDSG phải tự huấn luyện từ vựng.** Một bộ BPE mức byte không được luyện trên tiếng
+Việt sẽ đẩy chữ có dấu xuống tận từng byte UTF-8 thô. Chữ có dấu chiếm 2–3 byte trong
+UTF-8, nên mỗi chữ tốn nhiều token hơn mức cần — phí cả **độ dài ngữ cảnh** lẫn **thời gian
+GPU** (chi phí huấn luyện tính theo token, không theo chữ). Muốn tiếng Việt đứng thứ nhất
+thì từ vựng phải dựng trên ngữ liệu tiếng Việt; không có đường vòng.
 
-**Hệ quả phải chấp nhận:** trọng số của dự án này sẽ **không tương thích** với tokenizer
-của MiniMind, và ngược lại.
+**Hệ quả phải chấp nhận:** trọng số luôn gắn chặt với đúng bộ từ vựng đã huấn luyện cùng
+nó. Mô hình của dự án này **không dùng lẫn được** với mô hình dựng trên từ vựng khác, theo
+cả hai chiều. Đó là cái giá của việc đặt tiếng Việt lên đầu, không phải khiếm khuyết vá được.
 
 ---
 
@@ -178,9 +203,11 @@ huấn luyện **16.151** · kiểm tra **835** · thẩm định **802**.
 
 | Thứ tự | Ngôn ngữ | Dung lượng đã đo |
 |---|---|---|
-| 1 | Tiếng Việt | 7.509.969 ký tự |
-| 2 | Tiếng Anh | **chưa tách đo riêng** (346.704 ký tự là tổng `name` + `name_en`) |
-| 3 | Tiếng Trung | **chưa đo** — chưa chọn được nguồn có giấy phép cho phép tái phát hành |
+| 1 | Tiếng Việt (chính) | 7.509.969 ký tự |
+| 2 | Tiếng Anh (phụ) | **chưa tách đo riêng** (346.704 ký tự là tổng `name` + `name_en`) |
+
+Không có ngôn ngữ nào khác trong bộ này. Phạm vi ngôn ngữ của dự án là đúng hai, chốt ngày
+26/09/2026.
 
 ### 4.4 Tiền xử lý và kiểm tra dữ liệu cá nhân
 
@@ -233,16 +260,17 @@ Các trường sau **không có giá trị** vì chưa có lần chạy nào:
 | Thời gian huấn luyện | chưa đo |
 | Mất mát cuối cùng | chưa đo |
 
-Dây chuyền **dự kiến** dùng (các tệp đã kiểm tra là có thật trong bản MiniMind tham chiếu):
-`train_tokenizer.py` → `train_pretrain.py` → `train_full_sft.py`, tuỳ chọn thêm
-`train_dpo.py` / `train_lora.py` / `train_ppo.py` / `train_grpo.py` /
-`train_distillation.py` / `train_agent.py`.
+Trình tự **dự kiến**: huấn luyện từ vựng → tiền huấn luyện → tinh chỉnh có giám sát. Mã của
+từng bước do BDSG viết và nằm ở `huan-luyen/`; trạng thái từng bước do nhóm ấy ghi tại đó.
 
-Số liệu MiniMind tự công bố, để tham khảo mức chi phí — **đây là số của họ, trên phần cứng
-và ngữ liệu của họ, không phải số của BDSG**: 1× RTX 3090, ~2,31 giờ cho 1 epoch, ~3 nhân
-dân tệ (giá thuê 3090 họ ghi ~1,3 ¥/giờ); trên 8× H100 rút xuống cỡ phút. Con số 2,31 giờ
-là cho `minimind-3` cỡ 64M trên **bộ rút gọn** `pretrain_t2t_mini` + `sft_t2t_mini`, không
-phải bộ đầy đủ.
+**Không có số chi phí nào để trích, và ô này cố ý để trống.** BDSG chưa thuê GPU lần nào,
+nên không có giờ máy, không có đơn giá, không có hoá đơn. Ước tính **bộ nhớ** theo số tham
+số thì có, trong `huan-luyen/cau-hinh/` — nhưng ước tính bộ nhớ không phải phép đo tốc độ,
+và hai thứ ấy không suy ra nhau.
+
+Mượn số đo trên phần cứng và ngữ liệu của người khác để lấp ô "chi phí của BDSG" là làm hỏng
+chính điều thẻ này tồn tại để làm: một con số như thế sẽ được đọc như một lời hứa mà BDSG
+chưa có cơ sở nào để giữ.
 
 ---
 
@@ -287,23 +315,36 @@ sau còn so được với lần này.
 
 ### 7.1 Giới hạn do dữ liệu (đo được)
 
-- **Ngữ liệu nhỏ: 7,16 MB.** Ngữ liệu tiền huấn luyện của MiniMind là ~10 GB. Chênh lệch
-  cỡ ba bậc độ lớn. Mô hình huấn luyện trên 7,16 MB sẽ **không** có kiến thức tổng quát;
-  tốt nhất nó chỉ thạo miền doanh nghiệp Việt Nam trong ngữ liệu.
+- **Ngữ liệu nhỏ: 7,16 MB.** Ngữ liệu tiền huấn luyện của các mô hình ngôn ngữ mở thường
+  tính bằng **GB trở lên**, tức lớn hơn con số này nhiều bậc độ lớn. (Đây là nhận định về
+  mặt bằng chung của lĩnh vực, **không phải một phép đo của BDSG**; BDSG không đo ngữ liệu
+  của ai khác.) Mô hình huấn luyện trên 7,16 MB sẽ **không** có kiến thức tổng quát; tốt
+  nhất nó chỉ thạo miền doanh nghiệp Việt Nam trong ngữ liệu. Đây là giới hạn lớn nhất của
+  dự án, và nó là giới hạn về **dữ liệu**, không phải về kiến trúc hay phần cứng.
 - **2,3% ngữ liệu còn dính rác cào web** (110 đoạn, 0,17 MB), chưa lọc.
 - **Thiên lệch về doanh nghiệp niêm yết và doanh nghiệp có hồ sơ trên nền tảng BDSG.**
   `ho-so-niem-yet` chiếm 4,20/7,16 MB = 59% dung lượng. Doanh nghiệp nhỏ, hộ kinh doanh,
   doanh nghiệp không có hồ sơ số gần như vắng mặt.
 - **Thiên lệch địa lý chưa đo.** Có 5.952 hồ sơ mang mã tỉnh, nhưng **phân bố theo tỉnh
   chưa được đo** — không kết luận gì về độ phủ vùng miền.
-- **Tiếng Anh chưa tách đo, tiếng Trung chưa có.** Mọi tuyên bố về năng lực hai ngôn ngữ
-  này đều chưa có cơ sở đo lường.
+- **Tiếng Anh chưa tách đo.** Mọi tuyên bố về năng lực tiếng Anh đều chưa có cơ sở đo lường;
+  con số duy nhất đã đo là tokenizer **tệ đi 22,0%** khi chỉ học tiếng Việt (25/09/2026).
 
-### 7.2 Giới hạn do kiến trúc
+### 7.2 Giới hạn do cỡ mô hình
 
-Chính MiniMind ghi trong tài liệu của họ: **mô hình bịa kiến thức**, và **độ ổn định sự
-thật giảm sau giai đoạn học tăng cường (RL)**. Ở cỡ 26M–198M, đây là giới hạn của cỡ mô
-hình chứ không phải lỗi cấu hình, và không có cách điều chỉnh tham số nào làm nó biến mất.
+**Mô hình ngôn ngữ nhỏ bịa kiến thức.** Đây là giới hạn của cỡ mô hình, không phải lỗi cấu
+hình, và không có cách điều chỉnh tham số nào làm nó biến mất. Một mô hình vài chục đến vài
+trăm triệu tham số không có đủ chỗ để nhớ sự kiện, nên khi bị hỏi thứ nó không biết, đầu ra
+trông trôi chảy vẫn là đầu ra bịa.
+
+Rủi ro thứ hai phải cảnh báo trước: **độ ổn định sự thật thường giảm sau các giai đoạn tinh
+chỉnh theo sở thích (RLHF/DPO)** — mô hình học cách trả lời *dễ nghe* hơn, và "dễ nghe" đôi
+khi trái với "đúng". Đây là lý do nhóm câu bẫy chống bịa phải được đo lại sau **mỗi** giai
+đoạn tinh chỉnh, chứ không chỉ đo một lần ở cuối.
+
+**Cả hai điều trên là dự báo dựa trên hiểu biết chung về mô hình nhỏ, KHÔNG phải số đo của
+BDSG.** BDSG chưa có trọng số nào để đo. Đường cơ sở 0,953 ở mục 6.2 là điểm của hệ đang
+chạy (truy hồi + mô hình bên thứ ba), không phải của mô hình này.
 
 ### 7.3 Khuyến nghị
 
@@ -357,13 +398,16 @@ chạy thật. Không điền số của thượng nguồn vào ô của mình.
   author       = {BDSG},
   year         = {2026},
   note         = {Chưa có trọng số; phát hành dữ liệu, mã và bộ đánh giá trước.
-                  Dây chuyền huấn luyện dựa trên MiniMind (Apache-2.0).},
+                  Kiến trúc và bộ huấn luyện do BDSG viết, dựng từ kỹ thuật đã
+                  công bố trong bài báo (arXiv:1706.03762, arXiv:2002.04745,
+                  arXiv:1910.07467, arXiv:2104.09864, arXiv:2305.13245,
+                  arXiv:2002.05202).},
   howpublished = {\url{https://llm.bdsg.vn}}
 }
 ```
 
-Thượng nguồn: [MiniMind](https://github.com/jingyaogong/minimind) của Jingyao Gong,
-Apache-2.0.
+Nếu bạn trích dẫn **kỹ thuật** chứ không trích kho này, xin trích thẳng các bài báo ở mục
+1.2. Công của các tác giả ấy thuộc về họ, và một kho mã đứng giữa không được nhận thay.
 
 ---
 
@@ -371,8 +415,9 @@ Apache-2.0.
 
 | Trường | Giá trị |
 |---|---|
-| Phiên bản thẻ | 1 |
-| Ngày viết | 25/09/2026 |
+| Phiên bản thẻ | 2 |
+| Ngày viết | 25/09/2026 · sửa 26/09/2026 |
+| Sửa gì ở bản 2 | Thu phạm vi ngôn ngữ về đúng hai (Việt chính, Anh phụ); ghi lại đúng nguồn gốc kiến trúc — do BDSG viết từ kỹ thuật đã công bố trong bài báo. **Không số đo nào bị sửa theo.** |
 | Ngày số liệu ngữ liệu được đo | 25/09/2026 |
 | Ngày số liệu đánh giá được đo | 22/09/2026 |
 | Phiên bản mô hình được mô tả | **chưa có** |

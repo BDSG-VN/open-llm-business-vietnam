@@ -4,40 +4,68 @@
   "num_attention_heads": 8,
   "num_key_value_heads": 4,
   "head_dim": 64,
-  "intermediate_size": 1664,
+  "intermediate_size": 1408,
   "vocab_size": 24576,
   "hidden_act": "silu",
-  "max_position_embeddings": 32768,
-  "rope_theta": 1000000.0,
+  "max_position_embeddings": 2048,
+  "rope_theta": 10000.0,
   "rms_norm_eps": 1e-06,
   "tie_word_embeddings": true,
-  "flash_attn": true,
-  "dropout": 0.0,
+  "attention_dropout": 0.0,
   "bos_token_id": 1,
   "eos_token_id": 2,
-  "use_moe": false,
+  "pad_token_id": 0,
 
   "bdsg": {
     "ten": "bdsg-nho",
-    "muc_dich": "Chay tren may ca nhan, CPU. Day la cau hinh mac dinh de nguoi dung tai ve.",
-    "tham_so_uoc_tinh": {
-      "tong": 39331328,
-      "tong_trieu": 39.33,
-      "kich_hoat_trieu": 39.33,
-      "trang_thai": "TINH TOAN, CHUA DO. Chua co trong so nao ton tai (25/09/2026).",
-      "cach_tinh": "Xem huan-luyen/cau-hinh/tinh_tham_so.py. Cong thuc doi chieu voi bang tham so trong README_en.md cua MiniMind: cau hinh 768/8/kv4/vocab6400 ra 63.91M, ho ghi 64M; cau hinh MoE 4 chuyen gia ra 198.42M-A63.94M, ho ghi 198M-A64M. Sai so duoi 0.2% nen cong thuc duoc coi la dung.",
-      "bo_nho_trong_so_fp16_MB": 75.0,
-      "bo_nho_trong_so_fp32_MB": 150.0
+    "ngay_viet": "26/09/2026",
+    "muc_dich": "Cau hinh MAC DINH de nguoi dung tai ve chay tren may ca nhan khong co GPU roi. Day cung la cau hinh duy nhat BDSG dinh phat hanh truoc.",
+
+    "ten_truong_theo_chuan_nao": "Ten cac truong o tren la CHUAN TRANSFORMERS — quy uoc chung cua ca he sinh thai mo hinh mo (Llama, Mistral, Qwen deu dung dung nhung ten nay). Giu dung ten khong phai de giong ai, ma de trong so BDSG nap duoc o noi khac ma khong phai viet lop chuyen doi. Khoa 'bdsg' nay la ghi chu cua BDSG, KHONG phai tham so kien truc: phai bo no truoc khi goi CauHinhBDSG(**cfg).",
+
+    "tham_so": {
+      "tong": 36184576,
+      "tong_trieu": 36.18,
+      "trang_thai": "TINH RA, CHUA DEM TREN MO HINH THAT. Ngay 26/09/2026 BDSG chua huan luyen trong so nao, nen khong co mo hinh de dem.",
+      "cong_thuc": "tong = V*h + L*(4*h*h_kv_q + 2*h + 3*h*inter) + h, tach tung dong trong huan-luyen/cau-hinh/tinh_tham_so.py. Chay `python3 tinh_tham_so.py nho.json` de in lai; chay `python3 tinh_tham_so.py --tu-kiem` de kiem chinh phep dem bang mot truong hop tinh tay duoc.",
+      "cong_thuc_so_hoc": "embedding 24576*512 = 12.582.912 (34,8% tong so) + 8 lop * 2.950.144 = 23.601.152 + norm cuoi 512 = 36.184.576. Mot lop = attn 786.432 + norm 1.024 + ffn 2.162.688.",
+      "embedding_chiem_phan_tram": 34.8
     },
+
+    "bo_nho": {
+      "don_vi_ghi_chu": "MiB = 1024^2 byte, GiB = 1024^3, KiB = 1024. Kho tinh theo luy thua 2 vi cau hoi thuc te la co vua RAM/VRAM khong, ma RAM va VRAM deu dem theo luy thua 2. mo-hinh/cau_hinh.py in CUNG cac dai luong nay theo MB THAP PHAN (1e6 byte) nen so ben do lon hon 4,86%: hai don vi, khong phai hai ket qua. Khoa trong_so_fp16_MB_thap_phan ben duoi la cung luong byte ay doi sang MB thap phan, vi kich thuoc tep tai ve thi the gioi quen doc theo don vi do.",
+      "trong_so_fp16_MiB": 69.0,
+      "trong_so_fp16_MB_thap_phan": 72.4,
+      "trong_so_fp32_MiB": 138.0,
+      "huan_luyen_adamw_fp32_GiB": 0.54,
+      "huan_luyen_tinh_ra_sao": "AdamW giu 16 byte moi tham so khi huan luyen fp32: ban trong so 4 + gradient 4 + moment bac mot 4 + moment bac hai 4. 36.184.576 * 16 / 1024^3 = 0,54 GiB. Con so nay CHUA co activation — activation phu thuoc batch_size, do dai chuoi va gradient checkpointing, khong doan truoc duoc va khong duoc doan bua.",
+      "kv_moi_token_fp16_KiB": 8.0,
+      "kv_day_ngu_canh_2048_MiB": 16.0,
+      "bang_rope_luc_chay_MiB": 1.0,
+      "bang_rope_ghi_chu": "Bang cos/sin cua RoPE la dai luong tinh ra tu vi tri, khong hoc. No phai la buffer persistent=False: chiem RAM luc chay nhung KHONG nam trong tep trong so."
+    },
+
+    "phan_cung_that": {
+      "suy_luan": "May ca nhan 8 GB RAM, khong GPU. Trong so fp32 138 MiB + bo dem KV 16 MiB o ngu canh day + bang RoPE 1 MiB. Day la SO TINH RA, la muc SAN de loai tru, khong phai muc bao dam.",
+      "huan_luyen": "Cung may do: 0,54 GiB trang thai toi uu + activation. Chay duoc ve mat BO NHO tren may 8 GB RAM.",
+      "toc_do": "CHUA DO. Khong hua token/giay nao cho den khi co trong so that de bam gio. Kinh nghiem ha tang BDSG co lien quan nhung khong suy ra duoc: mot mo hinh 7B tren VPS cua BDSG chay 0,3 token/giay vi nghen bang thong RAM (~1,4 GB/s); mo hinh nay nho hon 7B khoang 190 lan nen tinh huong do khong lap lai, nhung con so cu the van phai do."
+    },
+
     "vi_sao_chon_so_nay": [
-      "hidden_size=512 va 8 lop: dung lai dung kich thuoc minimind2-small (26M o vocab 6400) vi day la cau hinh duy nhat trong ho MiniMind da co bang chung chay duoc that. BDSG khong phat minh kich thuoc moi o ban dau.",
-      "intermediate_size=1664 la ket qua cong thuc mac dinh cua MiniMind: ceil(512*pi/64)*64. Ghi ro ra day de khong phu thuoc vao gia tri mac dinh cua thu vien.",
-      "head_dim=64 = hidden_size/num_attention_heads, dung mac dinh cua MiniMindConfig.",
-      "vocab_size=24576: BAT BUOC giong het hai cau hinh con lai. Ly do o README muc 3."
+      "hidden_size=512, 8 lop: day la nguong duoi de mot decoder-only pre-norm con hoc duoc cu phap. Chon nho nhat co the vi muc tieu so mot la NGUOI DUNG TAI VE MAY CA NHAN CHAY DUOC — 69,0 MiB fp16 (= 72,4 MB thap phan) tai ve duoc qua duong truyen thong thuong.",
+      "head_dim=64: kich thuoc dau chu y pho bien nhat trong cac mo hinh mo, va la kich thuoc ma cac nhan attention toi uu san. 8 dau * 64 = 512 = hidden_size, tuc khong phong to cung khong thu nho o lop chu y.",
+      "num_key_value_heads=4 tren 8 query head (GQA, arXiv:2305.13245): bo dem KV con mot nua so voi MHA — 8 KiB thay vi 16 KiB moi token. Tren may ca nhan thi bo dem KV, khong phai trong so, moi la cai gioi han do dai ngu canh.",
+      "intermediate_size=1408 = 8/3 * 512 lam tron len boi so 128. Vi sao 8/3 chu khong phai 4: SwiGLU (arXiv:2002.05202) dung BA ma tran chu khong phai hai, nen lay 8h/3 de giu nguyen ngan sach 8*h^2 tham so cho khoi FFN.",
+      "vocab_size=24576: PHAI khop voi tu vung that sinh ra tu huan-luyen/tu-vung/. Ca ba cau hinh dung CHUNG mot tu vung — tu vung khac nhau la ho mo hinh khac nhau, khong dung chung trong so va khong dung chung bo danh gia.",
+      "max_position_embeddings=2048 chu khong phai 32768: dat tran ngu canh cao hon muc thuc su huan luyen la mot loi hua khong giu duoc. 2048 la tran ma BDSG dinh huan luyen toi. Bang RoPE cung nho theo: 1,0 MiB thay vi 16,0 MiB (16,8 MB thap phan) o 32768 — tren mot mo hinh 36M thi 16 MiB la gan mot phan tu kich thuoc trong so fp16, khong phai chi tiet nho.",
+      "rope_theta=10000.0: gia tri goc trong bai RoPE (arXiv:2104.09864). Cac gia tri lon (1e6) sinh ra de keo dai ngu canh vuot 32k; o tran 2048 thi chung khong giai quyet van de nao ma chi lam giam do phan giai goc quay o cac vi tri gan.",
+      "tie_word_embeddings=true (arXiv:1608.05859): buoc bang embedding vao lop dau ra tiet kiem dung 12.582.912 tham so — bang 26% kich thuoc mo hinh khi da buoc. O quy mo nay khong buoc la lang phi."
     ],
+
     "canh_bao": [
-      "vocab_size PHAI khop voi tu vung that sinh ra tu huan-luyen/tu-vung/huan_luyen_tu_vung.py. Neu lech, embedding tra ve loi chi so ngay batch dau.",
-      "trainer/train_pretrain.py dong 108 va trainer/train_full_sft.py dong 109 KHONG truyen vocab_size vao MiniMindConfig, nen mo hinh se lang le lay mac dinh 6400. Phai va hai dong do. Xem README muc 6."
+      "vocab_size PHAI khop tuyet doi voi so tu that trong tokenizer.json. Lech ma van chay duoc la truong hop nguy hiem nhat: neu tu vung NHO hon vocab_size thi khong bao loi, chi co mot mang embedding khong bao gio duoc hoc; neu tu vung LON hon thi bao loi chi so ngay batch dau. huan-luyen/huan_luyen.py va tinh_chinh.py deu kiem lai dieu nay truoc khi bat dau va dung han neu lech.",
+      "So tham so o day la SO TINH RA. Khi mo-hinh/ co ma that, doi chieu voi sum(p.numel() for p in m.parameters()). Hai so phai khop TUYET DOI, khong phai xap xi. Lech thi mot ben hieu sai kien truc.",
+      "Cot bo nho khong tinh activation. Dung dung no de hua 'vua du RAM'."
     ]
   }
 }
