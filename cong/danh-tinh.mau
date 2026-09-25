@@ -1,0 +1,21 @@
+# MẪU cho cong/danh-tinh.local — chép tệp này rồi sửa:
+#
+#     cp cong/danh-tinh.mau cong/danh-tinh.local
+#
+# `danh-tinh.local` bị .gitignore chặn và KHÔNG BAO GIỜ được đẩy lên kho. Lý do
+# nằm ở đầu `cong/khong-danh-tinh.py`: một bộ dò mang theo danh sách thứ nó dò
+# thì chính nó là chỗ rò — bản đầu của cổng này đã mắc đúng lỗi ấy và đã phải gỡ
+# cả kho công khai để sửa.
+#
+# Cú pháp mỗi dòng:
+#
+#     <biểu thức chính quy><TAB hoặc 2 dấu cách><mô tả ngắn>
+#
+# Viết biểu thức CHỊU ĐƯỢC THIẾU DẤU — người ta hay gõ tên không dấu, và một bộ
+# dò chỉ bắt bản có dấu sẽ bỏ lọt đúng nửa số trường hợp.
+#
+# Ba dòng dưới đây là VÍ DỤ BỊA. Xoá chúng đi và khai danh tính thật của bạn.
+
+Nguy[eễ]n\s+V[aă]n\s+A  ví dụ: họ tên người chịu trách nhiệm
+[A-Za-z0-9._%+-]+@vidu-cong-ty\.test  ví dụ: hộp thư công ty
+0?9\d{8}  ví dụ: số điện thoại di động

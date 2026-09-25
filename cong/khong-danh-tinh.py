@@ -39,13 +39,6 @@ import pathlib
 
 TEP_DANH_SACH = pathlib.Path(__file__).resolve().parent / "danh-tinh.local"
 
-MAU_TEP = """\
-# Mỗi dòng: <biểu thức chính quy><TAB hoặc 2 dấu cách><mô tả ngắn>
-# Dòng trống và dòng bắt đầu bằng # bị bỏ qua.
-# Viết biểu thức chịu được thiếu dấu — người ta hay gõ tên không dấu.
-# TỆP NÀY BỊ .gitignore CHẶN. Đừng bỏ chặn.
-"""
-
 MIEN_TRU = re.compile(r"ly-do=")
 BO_QUA_THU_MUC = {".git", ".venv", "node_modules", "__pycache__"}
 BO_QUA_DUOI = {".json", ".jsonl", ".png", ".jpg", ".webp", ".pdf", ".safetensors", ".bin"}
@@ -154,9 +147,9 @@ def main() -> int:
     if not danh_sach:
         print(f"  KHÔNG CHẶN GÌ: thiếu {TEP_DANH_SACH.name} hoặc tệp rỗng.")
         print("  Cổng này chỉ có tác dụng khi người vận hành khai danh tính cần chặn.")
-        print("  Tạo tệp theo mẫu:")
-        for d in MAU_TEP.strip().splitlines():
-            print(f"    {d}")
+        print("  Sửa bằng một lệnh:")
+        print("    cp cong/danh-tinh.mau cong/danh-tinh.local")
+        print("  rồi thay ba dòng ví dụ bịa trong đó bằng danh tính thật của bạn.")
         print("  Thoát KHÁC 0 — vì 'không có danh sách' không phải là 'đã kiểm'.")
         return 2
 
