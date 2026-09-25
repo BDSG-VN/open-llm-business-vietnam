@@ -334,9 +334,24 @@ def main() -> int:
     cfg = mh.CauHinhBDSG.tu_json(pathlib.Path(t.cau_hinh).read_text(encoding="utf-8"))
     m = mh.BDSGChoNgonNgu(cfg)
     if t.diem_dung:
-        trang_thai = torch.load(t.diem_dung, map_location="cpu")
-        m.load_state_dict(trang_thai.get("mo_hinh", trang_thai))
-        print(f"da nap trong so tu {t.diem_dung}")
+        goi = torch.load(t.diem_dung, map_location="cpu", weights_only=False)
+        # Diem dung cua bo huan luyen boc trong so trong khoa `trong_so`, canh
+        # `toi_uu`, `trang_thai`, `cau_hinh`, `ngau_nhien`. Nhan ca dang boc lan
+        # dang phang — nhung KHONG doan mo ho: neu khong tim thay thi noi ro, chu
+        # khong nap mot phan roi xuat ra mot tep thieu trong so ma van hop le.
+        if isinstance(goi, dict) and "trong_so" in goi:
+            trong_so = goi["trong_so"]
+            b = goi.get("trang_thai", {})
+            print(f"da nap trong so tu {t.diem_dung} (buoc {b.get('buoc_toan_cuc', '?')})")
+        elif isinstance(goi, dict) and all(isinstance(v, torch.Tensor) for v in goi.values()):
+            trong_so = goi
+            print(f"da nap trong so tu {t.diem_dung} (dang phang)")
+        else:
+            raise SystemExit(
+                f"khong tim thay trong so trong {t.diem_dung}. "
+                f"Khoa cap cao: {list(goi.keys()) if isinstance(goi, dict) else type(goi)}"
+            )
+        m.load_state_dict(trong_so)
     else:
         print("KHONG co --diem-dung: dang xuat trong so KHOI TAO NGAU NHIEN.")
         print("Tep ra se hop le ve hinh dang nhung vo nghia ve noi dung.")

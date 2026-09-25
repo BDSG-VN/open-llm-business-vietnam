@@ -18,12 +18,16 @@ TEP NAY PHU THUOC GI
 =============================================================================
   torch        — BAT BUOC luc chay, KHONG bat buoc luc `python3 -m py_compile`.
                  Import duoc boc trong try/except de `--help` va py_compile chay
-                 duoc tren may chua cai torch (moi truong .venv cua kho nay ngay
-                 26/09/2026 chua co torch: co tokenizers 0.22.2, khong co torch).
-  tokenizers   — co san trong .venv cua kho.
-  mo-hinh/     — thu muc kien truc do NHOM KHAC dang viet. Ngay 26/09/2026 thu
-                 muc nay CHUA TON TAI. Cac ham o day nap no theo duong dan va
-                 bao loi ro rang neu chua co, chu khong im lang.
+                 duoc tren may CHUA cai torch. Do that trong .venv cua kho ngay
+                 26/09/2026: python 3.9.6 · torch 2.8.0 · tokenizers 0.22.2 —
+                 tuc o day torch DA CO. Boc try/except khong phai vi may nay
+                 thieu torch, ma vi khau chuan bi du lieu va tu vung co y chay
+                 duoc tren may khong co torch.
+  tokenizers   — co san trong .venv cua kho (0.22.2, do 26/09/2026).
+  mo-hinh/     — thu muc kien truc do NHOM KHAC giu. Ngay 26/09/2026 no DA CO MA
+                 (xem muc HOP DONG ngay ben duoi). Cac ham o day van nap no theo
+                 duong dan va bao loi ro rang neu khong thay, chu khong im lang —
+                 vi duong dan doi duoc bang --thu-muc-mo-hinh.
 
 =============================================================================
 HOP DONG VOI mo-hinh/ — DOC RA TU MA THAT NGAY 26/09/2026, KHONG PHAI GIA DINH
@@ -190,7 +194,11 @@ def kieu_du_lieu_tu_dong(thiet_bi, bat_amp):
 # Kien truc: nap tu thu muc mo-hinh/
 # ---------------------------------------------------------------------------
 def nap_kien_truc(thu_muc):
-    """Nap CauHinhBDSG va MoHinhBDSG tu thu muc mo-hinh/.
+    """Nap CauHinhBDSG va lop mo hinh (BDSGChoNgonNgu) tu thu muc mo-hinh/.
+
+    Ten lop chap nhan duoc liet o TEN_LOP_MO_HINH ben duoi: ten THAT la
+    BDSGChoNgonNgu; MoHinhBDSG chi la ten trong ban dac ta cu, giu lai de
+    khong vo ma neu ai do doi ten nguoc lai.
 
     VI SAO PHAI NAP BANG DUONG DAN CHU KHONG PHAI `import mo_hinh`:
     thu muc ten la 'mo-hinh', co dau gach ngang. Dinh danh module Python khong
@@ -209,10 +217,10 @@ def nap_kien_truc(thu_muc):
         raise SystemExit(
             "Khong thay thu muc kien truc: {}\n"
             "  Bo huan luyen nay PHU THUOC vao mo-hinh/ — noi dinh nghia CauHinhBDSG\n"
-            "  va MoHinhBDSG. Thu muc do do NHOM KHAC viet va ngay 26/09/2026 chua\n"
-            "  ton tai. Cac tep trong huan-luyen/ duoc viet truoc, co chu y, de khi\n"
-            "  mo-hinh/ xong thi khong phai viet lai gi.\n"
-            "  Doi duong dan bang --thu-muc-mo-hinh neu no nam cho khac.".format(thu_muc))
+            "  va lop mo hinh BDSGChoNgonNgu.\n"
+            "  Ngay 26/09/2026 thu muc do CO THAT o goc kho (mo-hinh/), nen bao nay\n"
+            "  hau nhu luon co nghia la DUONG DAN SAI, khong phai kien truc chua viet.\n"
+            "  Chay tu goc kho, hoac chi lai bang --thu-muc-mo-hinh.".format(thu_muc))
 
     ten_goi = "bdsg_kien_truc"
     duong_init = os.path.join(thu_muc, "__init__.py")
@@ -436,6 +444,11 @@ def dung_cau_hinh(CauHinhBDSG, cfg):
 # ---------------------------------------------------------------------------
 def he_so_hoc_suat(buoc, tong_buoc, buoc_ham_nong, ti_le_day=0.1):
     """He so nhan vao hoc suat goc: ham nong tuyen tinh roi giam theo cosine.
+
+    GHI CONG: phan giam theo cosine lay tu Loshchilov & Hutter, "SGDR: Stochastic
+    Gradient Descent with Warm Restarts", arXiv:1608.03983 — day dung mot chu ky,
+    khong khoi dong lai. Phan ham nong tuyen tinh la thuc hanh chung cua nganh,
+    khong co mot bai bao goc duy nhat de dan; ly do dung no ghi ngay ben duoi.
 
     buoc          : chi so buoc toi uu hien tai, dem tu 0
     tong_buoc     : tong so buoc toi uu cua ca lan chay

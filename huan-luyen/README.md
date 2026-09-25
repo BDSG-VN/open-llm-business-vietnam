@@ -49,6 +49,22 @@ mỗi khối dẫn về bài báo gốc theo mã arXiv:
 | BPE ở mức byte (từ vựng) | arXiv:1508.07909 và arXiv:1909.03341 |
 | Tỉ lệ dữ liệu trên tham số | arXiv:2203.15556 — quy tắc kinh nghiệm, **không phải định luật** |
 
+Bộ huấn luyện cũng là kỹ thuật đã công bố, nên nó phải có bảng dẫn nguồn riêng —
+mục 11 nói kiến trúc **và bộ huấn luyện** đều viết từ bài báo, và một lời như thế
+chỉ đứng được nếu cả hai nửa đều dẫn được nguồn:
+
+| Kỹ thuật trong `chung.py` / hai vòng huấn luyện | Bài báo |
+|---|---|
+| AdamW — suy giảm trọng số tách rời khỏi gradient | arXiv:1711.05101 — Loshchilov & Hutter, 2017 |
+| Lịch học suất cosine (phần giảm dần) | arXiv:1608.03983 — Loshchilov & Hutter, 2016 |
+| Cắt gradient theo chuẩn L2 toàn cục | arXiv:1211.5063 — Pascanu và cộng sự, 2012 |
+
+Ba kỹ thuật còn lại **không có một bài báo gốc duy nhất để dẫn**, và nói thẳng ra
+đây còn hơn gán bừa một mã arXiv: **hâm nóng học suất**, **đóng gói chuỗi liên
+tục** (mục 7.1), và **che mặt nhãn ở phần câu hỏi khi tinh chỉnh** (mục 7.2) là
+thực hành chung của ngành, mỗi cái xuất hiện rải rác ở nhiều báo cáo kỹ thuật
+chứ không khởi từ một bài. Lý do BDSG chọn từng cái ghi ngay tại chỗ dùng nó.
+
 **Tên các trường cấu hình theo chuẩn thư viện `transformers`** — `hidden_size`,
 `num_hidden_layers`, `num_attention_heads`, `num_key_value_heads`,
 `intermediate_size`, `vocab_size`, `rms_norm_eps`, `rope_theta`,
@@ -499,7 +515,8 @@ lại được bởi người ngoài.
 ## 11. Giấy phép và ghi công
 
 Mã trong thư mục này do **BDSG viết**. Kiến trúc và bộ huấn luyện được viết từ
-**kỹ thuật đã công bố trong bài báo** (bảng ở mục 1), không dẫn xuất từ kho mã
+**kỹ thuật đã công bố trong bài báo** (hai bảng ở mục 1 — một cho kiến trúc,
+một cho bộ huấn luyện), không dẫn xuất từ kho mã
 nào — đó là lý do mục 1 trích dẫn **bài báo theo mã arXiv** chứ không trích dẫn
 một kho mã.
 

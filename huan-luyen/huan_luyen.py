@@ -174,6 +174,11 @@ def chia_khoi(luong, do_dai_khoi):
 def nhom_tham_so(mo_hinh, weight_decay):
     """Chia tham so lam hai nhom: co suy giam trong so va khong.
 
+    GHI CONG: AdamW — suy giam trong so TACH ROI khoi buoc gradient — la cua
+    Loshchilov & Hutter, "Decoupled Weight Decay Regularization",
+    arXiv:1711.05101. torch.optim.AdamW cai dat no; ham nay chi chon xem
+    tham so nao duoc ap.
+
     VI SAO KHONG AP WEIGHT DECAY LEN MOI THU: he so cua RMSNorm la mot vector
     nhan, gia tri hop ly cua no quanh 1. Keo no ve 0 lam lop chuan hoa mat tac
     dung — va lam cham mot cach am tham chu khong bao loi. Quy uoc chung la: chi
@@ -566,6 +571,9 @@ def main(argv=None):
                     tong_loss_buoc += loss.item()
                     token_buoc += ids.numel()
 
+                # Cat gradient theo chuan L2 toan cuc — Pascanu, Mikolov & Bengio,
+                # "On the difficulty of training Recurrent Neural Networks",
+                # arXiv:1211.5063, muc 3.2.
                 if args.cat_gradient > 0:
                     if scaler is not None:
                         # Phai bo he so phong dai TRUOC khi cat, neu khong nguong

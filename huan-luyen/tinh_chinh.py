@@ -226,11 +226,18 @@ def cat_trai(ids, giam_sat, do_dai_toi_da):
 
 
 def nap_mau(cac_tep, tok, do_dai_toi_da, gioi_han=None, so_mau_kiem_ghep=200):
-    """Doc JSONL, rap tung mau. Tra ve (danh sach mau, thong ke).
+    """Doc JSONL, rap tung mau. Tra ve (danh sach mau, thong ke, ly do bo qua).
 
-    Moi mau la (ids, nhan) da DICH SAN:
-        ids  = chuoi[:-1]
-        nhan = chuoi[1:]  voi -100 o moi vi tri khong duoc giam sat
+    Moi mau la (ids, nhan) KHONG DICH — dung quy uoc cua mo-hinh/:
+        ids  = chuoi token day du
+        nhan = CHINH chuoi token do, dat -100 o moi vi tri khong duoc giam sat
+
+    CANH BAO CHO NGUOI SUA SAU: ban docstring truoc cua ham nay ta quy uoc NGUOC
+    lai (ids = chuoi[:-1], nhan = chuoi[1:], tuc ben goi dich san). Do la quy uoc
+    DA BI BO ngay 26/09/2026 khi doc ma that cua mo-hinh/: mo hinh TU dich ben
+    trong forward(). Ap ca hai = dich hai lan, va lop loi do khong nem ngoai le
+    nao — loss van giam deu, chi rieng sinh chu la hong. Xem muc 4 cua hop dong o
+    dau huan-luyen/chung.py, va cong `huan_luyen.py --tu-kiem-dich`.
     """
     mau = []
     tk = {"so_ban_ghi": 0, "so_bo_qua": 0, "so_cat": 0, "so_khong_con_nhan": 0,
@@ -340,7 +347,11 @@ def dung_tensor_lo(mau, chi_so_lo, pad_id, thiet_bi):
 
 
 def nhom_tham_so(mo_hinh, weight_decay):
-    """Giong huan_luyen.py: chi ap suy giam trong so cho tham so >= 2 chieu."""
+    """Giong huan_luyen.py: chi ap suy giam trong so cho tham so >= 2 chieu.
+
+    Ghi cong AdamW: arXiv:1711.05101 (Loshchilov & Hutter). Ly do day du o
+    docstring cua nhom_tham_so trong huan_luyen.py.
+    """
     co_giam, khong_giam = [], []
     for p in mo_hinh.parameters():
         if not p.requires_grad:
@@ -553,10 +564,13 @@ def main(argv=None):
             print("    {:>8,}  {}".format(so, ly_do))
     if ti_le_nhan < 0.05:
         print("")
-        print("  [CANH BAO] chi {:.1%} token duoc tinh mat mat. Voi hoi thoai hoi-dap "
-              "thong thuong, con so nay thuong o khoang 30-60%. Qua thap thuong nghia "
-              "la cau tra loi trong ngu lieu qua ngan so voi cau hoi, hoac vai bi ghi "
-              "sai. Xem lai bang --xem-mat-na.".format(ti_le_nhan))
+        print("  [CANH BAO] chi {:.1%} token duoc tinh mat mat. Duoi 5% thi gan nhu "
+              "chac chan la hong: cau tra loi trong ngu lieu qua ngan so voi cau hoi, "
+              "hoac vai bi ghi sai, hoac mat na phu nham cho. Xem lai bang --xem-mat-na."
+              .format(ti_le_nhan))
+        print("  (Nguong 5% la muc DAT de bat ca hong ro rang, KHONG phai mot khoang "
+              "lanh da do. BDSG chua do ti le nay tren ngu lieu SFT that — 26/09/2026 "
+              "ngu lieu do chua ton tai tren dia. Khi do roi thi ghi so do vao day.)")
 
     if args.xem_mat_na:
         in_mat_na(mau, tok, args.xem_mat_na)
@@ -691,6 +705,9 @@ def main(argv=None):
                     token_co_nhan += chung.dem_token_co_nhan(nhan)
                     token_da_tinh += ids.numel()
 
+                # Cat gradient theo chuan L2 toan cuc — Pascanu, Mikolov & Bengio,
+                # "On the difficulty of training Recurrent Neural Networks",
+                # arXiv:1211.5063, muc 3.2.
                 if args.cat_gradient > 0:
                     if scaler is not None:
                         scaler.unscale_(bo_toi_uu)

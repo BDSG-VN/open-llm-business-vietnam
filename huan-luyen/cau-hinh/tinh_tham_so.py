@@ -6,9 +6,14 @@
 VI SAO CO TEP NAY
 =============================================================================
 Cac con so "36,18M", "119,56M", "295,75M" ghi trong cac tep .json canh day la so
-TINH RA, khong phai so DO tren mo hinh that. Ngay 26/09/2026 BDSG chua huan luyen
-trong so nao, nen khong co mo hinh de dem. Mot con so tinh ra ma khong kem cach
-tinh thi khong ai kiem chung lai duoc — nen cach tinh nam o day, chay duoc.
+TINH RA tu cong thuc. Mot con so tinh ra ma khong kem cach tinh thi khong ai kiem
+chung lai duoc — nen cach tinh nam o day, chay duoc va khong can cai torch.
+
+Phan biet cho ro hai thu:
+  - so THAM SO: DA doi chieu voi phep dem that tren mo-hinh/ ngay 26/09/2026,
+    lech 0 o ca ba cau hinh (chi tiet o muc "SO TINH RA vs SO DEM DUOC" ben duoi).
+  - moi so BO NHO va TOC DO: van la so tinh ra, CHUA do tren may that, vi ngay
+    26/09/2026 BDSG chua huan luyen trong so nao nen khong co gi de bam gio.
 
 Tep nay KHONG tham chieu den kho ma nao khac. No dem theo kien truc ma BDSG
 chon, va kien truc do lay tu KY THUAT DA CONG BO trong cac bai bao:
