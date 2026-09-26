@@ -85,7 +85,7 @@ lại — nhưng con số cụ thể vẫn phải đo, không được suy.
 
 ```bash
 git clone <kho BDSG>
-cd open-llm-bdsg-business-park
+cd open-bdsg-os
 python3 -m venv .venv && source .venv/bin/activate
 pip install tokenizers
 ```

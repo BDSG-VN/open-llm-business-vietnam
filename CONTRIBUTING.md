@@ -1,4 +1,4 @@
-# Đóng góp cho Open LLM BDSG Business Park
+# Đóng góp cho Open BDSG OS
 
 Cảm ơn bạn đã quan tâm. Tài liệu này ngắn có chủ đích: chỉ nêu những điều mà nếu không biết
 trước thì đóng góp sẽ bị trả lại.
