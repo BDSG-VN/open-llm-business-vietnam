@@ -61,6 +61,7 @@ Viết ngày 26/09/2026.
 
 from __future__ import annotations
 
+import copy
 import re
 import time
 import traceback
@@ -265,13 +266,47 @@ class Nhan:
         tham_so = {} if tham_so is None else tham_so
         bat_dau = self._dong_ho()
 
+        # ── QUY DANH TÍNH LẠ VỀ None TRƯỚC KHI GHI BẤT CỨ THỨ GÌ ───────────
+        #   Sửa 26/09/2026. Trước bản vá: một đối tượng KHÔNG PHẢI DanhTinh
+        #   được chuyển thẳng xuống NhatKy.ghi(), hàm ấy gọi .tom_tat(), ném
+        #   AttributeError, và khối `except Exception` bên dưới biến nó thành
+        #   một chuỗi cảnh báo trả về cho NGƯỜI GỌI. Kết quả đo được: một lần
+        #   thử MẠO DANH để lại ĐÚNG 0 dòng nhật ký. Người gọi biết, còn người
+        #   vận hành thì không — tức kẻ dò tìm bằng danh tính giả đi qua không
+        #   để lại vết.
+        #
+        #   Một lần TỪ CHỐI không được ghi còn nặng hơn một lần cho phép không
+        #   được ghi: lần cho phép ít ra còn có hậu quả nhìn thấy được ở nơi
+        #   khác, còn lần từ chối thì không để lại gì hết.
+        sai_kieu = danh_tinh is not None and not isinstance(danh_tinh, DanhTinh)
+        if sai_kieu:
+            kieu_la = type(danh_tinh).__name__
+            danh_tinh = None      # từ đây trở xuống, nhật ký ghi được
+
+        # ── CHỤP THAM SỐ TRƯỚC KHI TRÌNH ĐIỀU KHIỂN CHẠM VÀO ───────────────
+        #   Sửa 26/09/2026. Trước bản vá, nhân truyền THẲNG dict của người gọi
+        #   cho hàm công cụ rồi mới ghi CÙNG dict ấy sau khi công cụ chạy xong.
+        #   Nên trình điều khiển có một cửa sổ để viết lại chính bằng chứng
+        #   chống lại nó: đo được cảnh nhân gửi {'pham_vi': 'toan-bo-CSDL'} mà
+        #   nhật ký ghi {'vo_hai': '...'}.
+        #
+        #   Quyết định kiến trúc số 2 nói NHÂN sở hữu nhật ký. Muốn điều đó
+        #   đúng thì nhân phải giữ bản chụp của riêng mình.
+        try:
+            tham_so_ghi = copy.deepcopy(tham_so)
+        except Exception:
+            # Không sao chép sâu được (đối tượng lạ, vòng tham chiếu) thì ghi
+            # dạng chữ. Thà một bản ghi kém chi tiết còn hơn một bản ghi mà
+            # trình điều khiển sửa được.
+            tham_so_ghi = {"khong_sao_chep_duoc": repr(tham_so)[:500]}
+
         def _ghi(ket_qua: str, ly_do: str, gia_tri=None, them=None) -> Optional[str]:
             """Ghi nhật ký. Trả None nếu ổn, hoặc chuỗi lý do nếu KHÔNG ghi được."""
             try:
                 self.nhat_ky.ghi(
                     danh_tinh=danh_tinh,
                     cong_cu=ten_cong_cu,
-                    tham_so=tham_so,
+                    tham_so=tham_so_ghi,   # BẢN CHỤP, không phải dict người gọi
                     ket_qua=ket_qua,
                     ly_do=ly_do,
                     mili_giay=(self._dong_ho() - bat_dau) * 1000.0,
@@ -300,6 +335,11 @@ class Nhan:
             return KetQuaGoi(ok=False, ma_theo_doi=ma, ten_cong_cu=ten_cong_cu, ly_do=ly_do)
 
         # 1. Danh tính ------------------------------------------------------
+        if sai_kieu:
+            return _tu_choi(
+                "từ chối: danh tính sai kiểu (%s, cần DanhTinh) — coi như MẠO DANH"
+                % (kieu_la,)
+            )
         if danh_tinh is None:
             return _tu_choi("từ chối: không có danh tính (nhân không có khách mặc định)")
         if not isinstance(danh_tinh, DanhTinh):
