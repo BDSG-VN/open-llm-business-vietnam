@@ -42,13 +42,19 @@ from typing import Any, Dict, Iterable, Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tri_nho import KhoTriNho, kiem_ma_agent  # noqa: E402
 
-TIEN_TO = "dn."
+TIEN_TO = "dn."   # mặc định; đổi bằng --tien-to cho loại thực thể khác
 
 
-def ma_agent_cua(ma_dn: str) -> str:
-    """Mã agent từ id doanh nghiệp. Chữ thường, chỉ số và dấu — hợp mẫu của kho."""
+def ma_agent_cua(ma_dn: str, tien_to: str = TIEN_TO) -> str:
+    """Mã agent từ id thực thể. Chữ thường, chỉ số và dấu — hợp mẫu của kho.
+
+    Tiền tố tách các HỌ thực thể ra khỏi nhau: `dn.` cho doanh nghiệp, `da.`
+    cho dự án. Không có nó thì doanh nghiệp id 89 và dự án id 89 thành CÙNG
+    một agent, và trí nhớ của hai thứ khác hẳn nhau trộn vào nhau — một kiểu
+    rò rỉ không ai nghĩ tới vì nó không đi qua phép kiểm quyền nào.
+    """
     sach = "".join(c if c.isalnum() else "-" for c in str(ma_dn).strip().lower())
-    return kiem_ma_agent(TIEN_TO + (sach or "0"))
+    return kiem_ma_agent(tien_to + (sach or "0"))
 
 
 def mau_cua(hang: Dict[str, str]) -> Iterable:
@@ -68,13 +74,24 @@ def mau_cua(hang: Dict[str, str]) -> Iterable:
     mt, mx = (hang.get("ma_tinh") or "").strip(), (hang.get("ma_xa") or "").strip()
     if mt or mx:
         yield ("hanh-chinh", "Mã hành chính: tỉnh %s, xã %s." % (mt or "—", mx or "—"))
+    # Địa chỉ dạng văn xuôi — dùng cho thực thể không có mã hành chính, ví dụ
+    # 5.683 dự án bất động sản: cột `province_id` của chúng RỖNG HOÀN TOÀN
+    # (đo 0/5.683), nhưng chuỗi địa chỉ thì có ở 89,5 % bản ghi. Không bịa mã
+    # tỉnh từ chuỗi ấy — để nguyên văn cho BM25 khớp.
+    dc = (hang.get("dia_chi") or "").strip()
+    if dc:
+        yield ("dia-chi", "Địa chỉ: %s" % dc)
+    tt = (hang.get("trang_thai") or "").strip()
+    if tt:
+        yield ("trang-thai", "Trạng thái: %s." % tt)
     ng = (hang.get("nguon") or "").strip()
     if ng:
         yield ("nguon", "Nguồn dữ liệu: %s." % ng)
 
 
 def nap(kho: KhoTriNho, dong: Iterable[Dict[str, str]],
-        in_moi: int = 20_000, gioi_han: Optional[int] = None) -> Dict[str, Any]:
+        in_moi: int = 20_000, gioi_han: Optional[int] = None,
+        tien_to: str = TIEN_TO) -> Dict[str, Any]:
     tk = {"dn": 0, "agent_moi": 0, "mau_moi": 0, "mau_bo_qua": 0, "hang_hong": 0}
     t0 = time.time()
     kho.db.execute("PRAGMA synchronous=OFF")
@@ -86,7 +103,7 @@ def nap(kho: KhoTriNho, dong: Iterable[Dict[str, str]],
             if not ma_dn:
                 tk["hang_hong"] += 1
                 continue
-            ma = ma_agent_cua(ma_dn)
+            ma = ma_agent_cua(ma_dn, tien_to)
         except Exception:
             tk["hang_hong"] += 1
             continue
@@ -115,6 +132,7 @@ if __name__ == "__main__":
     p.add_argument("--csdl", required=True, help="tệp SQLite chứa kho trí nhớ")
     p.add_argument("--gioi-han", type=int, default=None)
     p.add_argument("--phan-cach", default=",", help="mặc định ',' (psql --csv)")
+    p.add_argument("--tien-to", default=TIEN_TO, help="dn. cho doanh nghiệp, da. cho dự án")
     a = p.parse_args()
     kho = KhoTriNho(a.csdl)
     # Mặc định CSV, KHÔNG phải TSV. Lý do đã trả giá: truyền `-F$"\t"` cho psql
@@ -123,7 +141,7 @@ if __name__ == "__main__":
     # báo "50.000 hàng hỏng" — đúng, nhưng lý do thật nằm ở lớp vỏ shell.
     # `psql --csv` thì tự lo trích dẫn, không có gì để gõ nhầm.
     doc = csv.DictReader(sys.stdin, delimiter=a.phan_cach)
-    tk = nap(kho, doc, gioi_han=a.gioi_han)
+    tk = nap(kho, doc, gioi_han=a.gioi_han, tien_to=a.tien_to)
     print("")
     print("  ── KẾT QUẢ ──")
     for k, v in tk.items():

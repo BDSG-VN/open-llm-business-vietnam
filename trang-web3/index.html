@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BDSG Web3</title>
+<meta name="description" content="Lớp blockchain của Open BDSG OS. Đang dựng: tên miền đã trỏ, chưa có mã, chưa chọn chuỗi khối. Trang này nói thẳng trạng thái đó thay vì hứa trước.">
+<link rel="canonical" href="https://web3.bdsg.vn/">
+<meta property="og:title" content="BDSG Web3 — lớp blockchain của Open BDSG OS">
+<meta property="og:description" content="Đang dựng. Chưa có mã, chưa chọn chuỗi khối. Trang này nói rõ blockchain làm được gì trong một hệ điều hành doanh nghiệp, và chỗ nào nó chưa đáng dùng.">
+<meta property="og:url" content="https://web3.bdsg.vn/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap">
+<style>
+:root{
+  --muc:#041124; --muc2:#06203a; --muc3:#07213c;
+  --lam:#005CA6; --lam-sang:#92c1e9; --lam-hon:#3fa0e8;
+  --luc:#00573f; --luc-sang:#7fe3b0; --cam:#a34400; --cam-sang:#f0a878; --do:#A6192E;
+  --chu:#ffffff; --chu-mo:rgba(255,255,255,.80); --chu-mo2:rgba(255,255,255,.58);
+  --vien:rgba(146,193,233,.18);
+  --k3:22px; --k4:34px; --k5:56px; --k6:92px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--muc);color:var(--chu);
+  font-family:Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.khung{width:100%;max-width:1120px;margin:0 auto;padding-left:20px;padding-right:20px}
+a{color:var(--lam-sang)}
+h1,h2,h3{text-wrap:balance;margin:0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
+  padding:1px 5px;border-radius:5px;background:rgba(146,193,233,.12)}
+.nhan{margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--lam-sang)}
+.lede{max-width:66ch;color:var(--chu-mo);font-size:17px}
+.ghi{max-width:72ch;color:var(--chu-mo2);font-size:13.5px;line-height:1.65;margin-top:var(--k3)}
+
+/* thanh đầu */
+header.thanh{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:rgba(2,12,26,.88);backdrop-filter:saturate(1.2) blur(8px);
+  border-bottom:1px solid var(--vien)}
+.thanh .in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding-top:12px;padding-bottom:12px;font-size:13px}
+.cham{width:8px;height:8px;border-radius:50%;background:var(--cam-sang);flex:none}
+.thanh b{font-weight:600}
+.thanh em{font-style:normal;color:var(--cam-sang);font-size:12px}
+.thanh .nut{margin-left:auto;padding:8px 16px;border-radius:999px;
+  border:1px solid rgba(146,193,233,.45);text-decoration:none;color:#fff;font-size:13px}
+.thanh .nut:hover{background:rgba(146,193,233,.14)}
+
+/* mở đầu */
+.hero{padding:var(--k6) 0;background:
+  radial-gradient(120% 100% at 80% 24%,rgba(163,68,0,.38),transparent 64%),
+  linear-gradient(180deg,#041124,#06203a)}
+.hero h1{font-size:clamp(2.1rem,5.6vw,3.9rem);font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.hero .lede{margin-top:var(--k4)}
+.nut-hang{display:flex;flex-wrap:wrap;gap:12px;margin-top:var(--k4)}
+.nut-chinh,.nut-vien{display:inline-flex;align-items:center;gap:9px;padding:14px 26px;
+  border-radius:999px;text-decoration:none;font-size:15px;font-weight:500;border:1.5px solid transparent}
+.nut-chinh{background:var(--lam);color:#fff}
+.nut-chinh:hover{background:#0069bd}
+.nut-vien{border-color:rgba(146,193,233,.45);color:#fff}
+.nut-vien:hover{background:rgba(146,193,233,.14)}
+
+/* khối */
+/* Neo #hash: thanh dau la sticky, do that cao 101px o be ngang 400px (no xuong
+   2 dong). Khong chua cho thi bam "Trang nay chua co gi" se day nhan va dinh
+   h2 xuong duoi thanh. 116px > 101px do duoc. */
+section[id]{scroll-margin-top:116px}
+section.khoi{padding:var(--k6) 0;border-top:1px solid var(--vien)}
+.khoi--sang{background:var(--muc2)}
+.khoi--toi{background:linear-gradient(180deg,#05182c,#041124)}
+.khoi--trong{background:linear-gradient(180deg,#1d0f06,#0b1526);
+  border-top:1px solid rgba(240,168,120,.28);border-bottom:1px solid rgba(240,168,120,.28)}
+h2{font-size:clamp(1.6rem,3.4vw,2.5rem);font-weight:600;letter-spacing:-.01em;
+  line-height:1.2;margin-bottom:18px}
+
+/* thẻ */
+.the-luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+  gap:20px;margin-top:var(--k5)}
+.the{padding:28px 26px;border-radius:16px;background:rgba(255,255,255,.05);
+  border:1px solid var(--vien);border-left:4px solid var(--m,var(--lam))}
+.the h3{font-size:1.2rem;font-weight:600;margin:10px 0 0}
+.the p{margin:12px 0 0;font-size:14.5px;line-height:1.62;color:var(--chu-mo)}
+.the .do{margin-top:16px;padding-top:14px;border-top:1px solid var(--vien);
+  font-size:13px;line-height:1.55;color:var(--chu-mo2)}
+.the .do b{color:var(--m,var(--lam-sang));filter:brightness(1.7);font-weight:600}
+
+/* bảng */
+.bang{margin-top:var(--k4);overflow-x:auto;border:1px solid var(--vien);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:640px}
+th,td{padding:13px 18px;text-align:left;vertical-align:top;line-height:1.5}
+thead th{font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--lam-sang);background:rgba(255,255,255,.05)}
+tbody tr+tr{border-top:1px solid rgba(146,193,233,.12)}
+tbody td:first-child{color:#fff}
+tbody td{color:var(--chu-mo)}
+td b{color:var(--lam-sang)}
+
+/* cảnh báo */
+.canh{margin-top:var(--k4);padding:22px 24px;border-radius:14px;
+  background:rgba(166,25,46,.12);border:1px solid rgba(224,123,138,.34)}
+.canh b{color:#f2a4ae}
+.canh p{margin:10px 0 0;font-size:14.5px;line-height:1.62;color:var(--chu-mo)}
+
+/* danh sách */
+ul.y{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:10px;
+  font-size:14.5px;line-height:1.5;color:var(--chu-mo)}
+ul.y li{position:relative;padding-left:21px}
+ul.y li::before{content:"";position:absolute;left:2px;top:.56em;width:6px;height:6px;
+  border-radius:50%;background:var(--lam-sang)}
+ul.y.cam li::before{background:var(--cam-sang)}
+ol.so-thu-tu{margin:18px 0 0;padding-left:22px;display:grid;gap:12px;
+  font-size:14.5px;line-height:1.55;color:var(--chu-mo);max-width:76ch}
+ol.so-thu-tu li{padding-left:6px}
+ol.so-thu-tu b{color:#fff;font-weight:600}
+
+footer{padding:var(--k5) 0;border-top:1px solid var(--vien);background:#020c17}
+footer p{margin:0;font-size:13.5px;color:var(--chu-mo2);max-width:74ch}
+footer p+p{margin-top:12px}
+@media (max-width:760px){:root{--k5:40px;--k6:58px}}
+</style>
+</head>
+<body>
+
+<header class="thanh">
+  <div class="in khung">
+    <i class="cham" aria-hidden="true"></i>
+    <b>BDSG Web3</b>
+    <em>đang dựng · chưa có mã</em>
+    <a class="nut" href="https://github.com/BDSG-VN/open-bdsg-os" target="_blank" rel="noopener noreferrer">Mã nguồn →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="khung">
+    <p class="nhan">Lớp blockchain của Open BDSG OS</p>
+    <h1>Chỗ nào trong một hệ điều hành<br>doanh nghiệp cần một sổ cái chung.</h1>
+    <p class="lede">Open BDSG OS đã có nhân kiểm quyền, có nhật ký từng lời gọi công cụ, có trí nhớ riêng cho từng agent. Cả ba thứ ấy đều do <b>một bên</b> giữ — bên vận hành máy chủ. BDSG Web3 là câu hỏi: những việc nào thật sự cần nhiều bên cùng giữ, và những việc nào thì một chữ ký số đã đủ. Trang này đi tìm câu trả lời, chưa có câu trả lời.</p>
+    <div class="nut-hang">
+      <a class="nut-chinh" href="#chua-co-gi">Trang này chưa có gì ↓</a>
+      <a class="nut-vien" href="https://bdsg.vn/open-bdsg-os">Hệ điều hành Open BDSG OS →</a>
+    </div>
+  </div>
+</section>
+
+<section class="khoi khoi--trong" id="chua-co-gi">
+  <div class="khung">
+    <p class="nhan" style="color:var(--cam-sang)">Chưa có, nói thẳng</p>
+    <h2>Trang này chưa làm được gì</h2>
+    <p class="lede">Mục này đặt ngay sau phần mở đầu, không giấu xuống cuối. Đo ngày 26/09/2026:</p>
+    <ul class="y cam">
+      <li><b>Chưa có một dòng mã nào.</b> Tìm chữ <code>blockchain</code>, <code>web3</code>, <code>smart contract</code>, <code>hợp đồng thông minh</code> trong toàn bộ kho Open BDSG OS, bỏ chính thư mục của trang này: <b>khớp đúng 1 tệp</b>, và tệp ấy là bảng từ vựng của bộ tách từ tiếng Việt — “blockchain” nằm trong đó với tư cách một <b>từ</b>, cạnh “bưu” và “nóng”, chứ không phải một dòng mã.</li>
+      <li><b>Chưa chọn chuỗi khối nào.</b> Chưa chọn chuỗi công khai hay chuỗi cho phép, chưa chọn cơ chế đồng thuận, chưa chọn thư viện. Mục “Phải trả lời trước khi chọn” bên dưới liệt kê những câu còn treo.</li>
+      <li><b>Sau tên miền này chỉ có đúng một tệp HTML.</b> Tên miền trả HTTP 200 từ 20:13 ngày 26/09/2026, khi khối vhost được thêm vào tệp cấu hình Apache dùng chung. Nhưng đằng sau nó không có dịch vụ nào — không API, không cơ sở dữ liệu, không tiến trình, không cả một dòng JavaScript. Một tệp HTML tĩnh và một khối vhost, hết. Mã 200 ở đây chỉ chứng minh có một tệp được phục vụ, không chứng minh có thứ gì chạy — đó là chỗ người đọc dễ nhầm nhất, nên trang này nói trước.</li>
+      <li><b>Chưa có bên thứ hai.</b> Một sổ cái do đúng một tổ chức ghi và đúng tổ chức ấy vận hành thì không khác một cơ sở dữ liệu có thêm phí. Chừng nào chưa có tổ chức thứ hai cùng ghi, phần thuyết phục nhất của lớp này vẫn còn thiếu.</li>
+      <li><b>Chưa đo gì.</b> Không có số về thông lượng, độ trễ hay chi phí trên trang này, vì chưa có phép đo nào để trích.</li>
+    </ul>
+    <p class="ghi">Viết mục này trước phần giới thiệu tính năng là có chủ ý. Một trang sản phẩm mở đầu bằng lời hứa rồi nhắc đến chữ “sắp” ở cuối chân trang thì người đọc đã tin xong từ màn hình đầu tiên. Thứ tự là một lời khai.</p>
+  </div>
+</section>
+
+<section class="khoi khoi--sang">
+  <div class="khung">
+    <p class="nhan">Ba việc, và chỗ yếu của từng việc</p>
+    <h2>Blockchain làm gì trong một hệ điều hành doanh nghiệp</h2>
+    <p class="lede">Ba việc dưới đây là ba việc đang được cân nhắc. Mỗi thẻ ghi kèm phản biện — vì mỗi việc đều có một cách làm rẻ hơn, và nếu cách rẻ hơn đủ dùng thì lớp này không nên tồn tại.</p>
+    <div class="the-luoi">
+      <article class="the" style="--m:#a34400">
+        <p class="nhan" style="margin:0">Việc 1</p>
+        <h3>Nhật ký không sửa được</h3>
+        <p><code>nhan/nhat_ky.py</code> ghi mỗi lời gọi công cụ thành một dòng JSON. Bản ghi hiện có thời điểm, mã theo dõi, danh tính, tên công cụ, tham số đã làm mờ, kết quả — và <b>không có trường băm nào móc dòng này vào dòng trước</b>. Nghĩa là xoá một dòng, sửa một dòng, hay chèn một dòng lùi ngày đều không để lại dấu vết trong chính tệp. Ai ghi được tệp là sửa được sổ.</p>
+        <p class="do"><b>Phản biện:</b> móc nối bằng băm rồi ký từng khối là giải được đúng vấn đề ấy, không cần chuỗi khối. Blockchain chỉ hơn khi người kiểm <b>không tin</b> bên giữ tệp — lúc ấy mới cần một điểm neo nằm ngoài tầm với của bên ấy.</p>
+      </article>
+      <article class="the" style="--m:#005CA6">
+        <p class="nhan" style="margin:0">Việc 2</p>
+        <h3>Chứng thực nguồn gốc dữ liệu</h3>
+        <p>Dữ liệu trong hệ đi qua nhiều tay: một hồ sơ doanh nghiệp được nạp, được làm giàu bằng mô hình, được người sửa, rồi được một agent khác dùng làm căn cứ trả lời. Khi câu trả lời sai, câu hỏi đầu tiên là <b>sai từ khâu nào</b>. Một dấu neo công khai cho từng phiên bản dữ liệu trả lời được câu ấy mà không phải tin lời bên giữ dữ liệu.</p>
+        <p class="do"><b>Phản biện:</b> neo được <b>mã băm</b> thì chứng minh được dữ liệu không đổi kể từ lúc neo; nó không chứng minh dữ liệu <b>đúng</b>. Rác được neo vẫn là rác, chỉ thêm bằng chứng rằng rác ấy có từ hôm đó.</p>
+      </article>
+      <article class="the" style="--m:#00573f">
+        <p class="nhan" style="margin:0">Việc 3</p>
+        <h3>Giao dịch giữa các doanh nghiệp cùng chạy một hệ mở</h3>
+        <p>Open BDSG OS là mã nguồn mở: nhiều doanh nghiệp có thể tự dựng bản của mình. Khi hai bản ấy giao dịch với nhau — đặt hàng, xác nhận giao, đối soát — không bên nào chạy máy chủ của bên kia, và không có lý do gì để một bên làm trọng tài. Đây là chỗ hợp đồng thông minh có nghĩa: điều khoản chạy ở nơi cả hai cùng đọc được, cùng không sửa được.</p>
+        <p class="do"><b>Phản biện:</b> phần khó của giao dịch giữa hai doanh nghiệp không nằm ở chỗ thực thi điều khoản, mà ở chỗ <b>nối thế giới thật vào chuỗi</b>: ai khẳng định hàng đã giao. Câu ấy chuỗi khối không trả lời hộ được.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="khoi khoi--toi">
+  <div class="khung">
+    <p class="nhan">Đối chiếu</p>
+    <h2>Cách rẻ hơn đã có sẵn cho từng việc</h2>
+    <p class="lede">Bảng này tồn tại để chính BDSG khó tự thuyết phục mình. Cột cuối là điều kiện phải đúng thì lớp blockchain mới đáng dựng — chưa việc nào trong ba việc đã thoả điều kiện của nó.</p>
+    <div class="bang">
+      <table>
+        <thead><tr><th>Việc</th><th>Cách rẻ hơn, làm được ngay</th><th>Chuỗi khối chỉ hơn khi…</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Nhật ký không sửa được</td>
+            <td>Móc nối bằng băm trong chính tệp JSON Lines, cộng chữ ký số theo khối và một bản sao chỉ-ghi-thêm ở nơi khác.</td>
+            <td>người cần kiểm sổ <b>không tin</b> bên vận hành máy chủ, kể cả khi bên ấy đưa chữ ký.</td>
+          </tr>
+          <tr>
+            <td>Chứng thực nguồn gốc dữ liệu</td>
+            <td>Băm từng phiên bản bộ dữ liệu, công bố mã băm cạnh bản phát hành, giữ lịch sử trong kho mã.</td>
+            <td>cần chứng minh <b>thời điểm</b> công bố cho một bên không có mặt lúc công bố, và bên giữ kho mã cũng nằm trong diện nghi ngờ.</td>
+          </tr>
+          <tr>
+            <td>Giao dịch giữa các doanh nghiệp</td>
+            <td>Hợp đồng giấy, đối soát định kỳ, một API chung do một bên chạy và bên kia chấp nhận.</td>
+            <td>không bên nào chấp nhận bên kia làm trọng tài, và giá trị giao dịch đủ lớn để bõ chi phí vận hành một sổ cái chung.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ghi">Điểm chung của cả ba dòng: thứ quyết định không phải công nghệ, mà là <b>có hay không một bên thứ hai không tin bên thứ nhất</b>. Một tổ chức tự chạy sổ cái của chính mình thì đã trả lời “không”, và lúc ấy blockchain là một cơ sở dữ liệu chậm hơn.</p>
+  </div>
+</section>
+
+<section class="khoi">
+  <div class="khung">
+    <p class="nhan">Còn treo</p>
+    <h2>Phải trả lời trước khi chọn chuỗi khối</h2>
+    <p class="lede">Chọn nền tảng trước rồi mới tìm việc cho nó làm là thứ tự ngược, và là cách chắc chắn nhất để có một lớp không ai dùng. Sáu câu dưới đây phải có câu trả lời viết ra được, trước khi có dòng mã đầu tiên.</p>
+    <ol class="so-thu-tu">
+      <li><b>Ai là bên thứ hai?</b> Tên một tổ chức cụ thể ngoài BDSG sẵn sàng cùng ghi và cùng kiểm. Không có tên thì chưa có bài toán.</li>
+      <li><b>Chuỗi công khai hay chuỗi cho phép?</b> Chuỗi công khai cho tính kiểm chứng rộng nhất nhưng đưa siêu dữ liệu ra ngoài vĩnh viễn. Chuỗi cho phép giữ được kín nhưng lại quay về câu hỏi ai giữ nút.</li>
+      <li><b>Dữ liệu cá nhân đi đâu?</b> Quyền xoá dữ liệu theo NĐ 13/2023 và một sổ cái <b>không xoá được</b> là hai thứ chống nhau. Nguyên tắc đề xuất: chỉ neo mã băm lên chuỗi, dữ liệu gốc nằm ngoài và xoá được — nhưng cả thiết kế ấy cũng chưa được rà soát pháp lý.</li>
+      <li><b>Ai trả phí ghi, và trả bằng gì?</b> Một cơ chế phí mà kế toán doanh nghiệp không hạch toán được thì lớp này không qua được vòng phê duyệt nội bộ, dù kỹ thuật có chạy.</li>
+      <li><b>Chuỗi ngừng hoạt động thì hệ còn chạy không?</b> Nếu một lời gọi công cụ phải chờ xác nhận trên chuỗi mới hoàn tất, thì chuỗi tắc là hệ điều hành tắc. Lớp này phải nằm ngoài đường đi quan trọng, hoặc không nên có.</li>
+      <li><b>Việc này đo bằng gì?</b> Chưa có bộ tiêu chí nghiệm thu thì không có cách biết lúc nào xong. Kho Open BDSG OS có sẵn nếp chạy cổng trước khi đẩy; lớp này sẽ phải có cổng của nó.</li>
+    </ol>
+
+    <div class="canh">
+      <b>Trang này không nói về tiền ảo, phát hành mã thông báo hay đầu tư</b>
+      <p>BDSG Web3 là hạ tầng kỹ thuật cho phần mềm doanh nghiệp. Ở đây không có đồng tiền nào, không mời gọi góp vốn, không có gì để mua. Nếu một ngày trang này đổi ý về điều đó, nó sẽ nói thẳng ở chính chỗ này thay vì thêm một dòng nhỏ ở chân trang.</p>
+    </div>
+  </div>
+</section>
+
+<section class="khoi khoi--sang">
+  <div class="khung">
+    <p class="nhan">Cách làm</p>
+    <h2>Dựng ngược từ việc, không dựng xuôi từ công nghệ</h2>
+    <ul class="y">
+      <li>Việc nhỏ nhất trước: móc nối băm cho nhật ký — làm được ngay, <b>không cần chuỗi khối</b>, và đo được ngay là có sửa trộm được nữa không.</li>
+      <li>Chỉ khi có bên thứ hai thật mới neo ra ngoài. Đến lúc ấy mới bàn chuyện chọn chuỗi.</li>
+      <li>Hợp đồng thông minh là bước cuối, không phải bước đầu — nó cần cả hai bước trên đã chạy thật.</li>
+      <li>Mọi thứ dựng ra đều nằm trong kho mở, giấy phép Apache-2.0, cùng nếp cổng kiểm như phần còn lại của hệ.</li>
+    </ul>
+    <p class="ghi">Nếu bước một đủ dùng và không bao giờ cần tới bước hai, đó là một kết quả tốt, và trang này sẽ ghi lại đúng như vậy. Một lớp hạ tầng bị bỏ vì hoá ra không cần thì rẻ hơn nhiều so với một lớp được dựng vì đã lỡ đặt tên miền.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="khung">
+    <p><b>BDSG Web3</b> — một phần của <a href="https://bdsg.vn/open-bdsg-os">Open BDSG OS</a>, hệ điều hành doanh nghiệp mã nguồn mở. Mã nguồn Apache-2.0 tại <a href="https://github.com/BDSG-VN/open-bdsg-os" target="_blank" rel="noopener noreferrer">github.com/BDSG-VN/open-bdsg-os</a>.</p>
+    <p>Trang tĩnh, không một dòng JavaScript. Mọi khẳng định trên trang là phép đo có ngày, hoặc là một câu hỏi còn treo được ghi rõ là còn treo. Chỗ nào chưa làm thì trang nói là chưa làm.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -70,7 +70,16 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from .danh_tinh import BoXacThuc, DanhTinh
 from .han_muc import BoHanMuc, HanMuc
-from .nhat_ky import LOI, THANH_CONG, TU_CHOI, LoiNhatKy, NhatKy, lam_mo, ma_theo_doi_moi
+from .nhat_ky import (
+    LOI,
+    THANH_CONG,
+    TU_CHOI,
+    LoiNhatKy,
+    NhatKy,
+    che_chuoi_theo_hinh_dang,
+    lam_mo,
+    ma_theo_doi_moi,
+)
 from .quyen import ChinhSach, CongGhi
 
 # NEO CUỐI LÀ \Z, KHÔNG PHẢI $. Sửa 26/09/2026.
@@ -84,8 +93,22 @@ from .quyen import ChinhSach, CongGhi
 #   `\Z` chỉ khớp ở cuối chuỗi thật. Mọi mẫu KIỂM HỢP LỆ trong nhân dùng \Z.
 #   Các mẫu DÒ TÌM trong nhat_ky.py giữ `$`: ở đó khớp rộng hơn là làm mờ nhiều
 #   hơn, tức nghiêng về phía an toàn.
-MAU_TEN_TRINH = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}\Z")
-MAU_TEN_NGAN = re.compile(r"^[a-z0-9][a-z0-9_]{0,63}\Z")
+#
+# KÝ TỰ ĐẦU PHẢI LÀ CHỮ CÁI, KHÔNG PHẢI CHỮ SỐ. Sửa 26/09/2026.
+#
+#   Mẫu cũ mở đầu bằng `[a-z0-9]`, nên `1gia` và cả `123` là tên trình điều
+#   khiển HỢP LỆ. Hệ quả: tên công cụ đầy đủ có thể ra `123.45` — một chuỗi mà
+#   mọi bộ nạp cấu hình đều đọc thành SỐ. Một dòng chính sách viết
+#   `123.45: [doc]` trong YAML thành khoá float 123.45, `str(khoa)` không khớp
+#   lại chuỗi ban đầu, và dòng cấp quyền ấy im lặng không có tác dụng: đúng họ
+#   lỗi "hỏng mà không báo" mà kho này đặt tên riêng, lại nằm ngay trong tệp
+#   phân quyền.
+#
+#   Chữ cái mở đầu không mất gì của ai — chưa trình điều khiển nào trong kho
+#   mở đầu bằng chữ số — mà biến một tên như thế thành lỗi NỔ NGAY lúc đăng
+#   ký, chỗ rẻ nhất để sửa.
+MAU_TEN_TRINH = re.compile(r"^[a-z][a-z0-9_]{0,31}\Z")
+MAU_TEN_NGAN = re.compile(r"^[a-z][a-z0-9_]{0,63}\Z")
 
 
 class LoiDangKy(ValueError):
@@ -207,6 +230,26 @@ class Nhan:
         if not cac_ban_khai:
             raise LoiDangKy("trình điều khiển %r không khai công cụ nào" % (ten,))
 
+        # ── ĐĂNG KÝ LÀ MỘT PHÉP TOÀN PHẦN: hỏng thì không để lại gì ────────
+        #   Sửa 26/09/2026. Bản trước kiểm-và-ghi trong CÙNG một vòng lặp, nên
+        #   một trình điều khiển khai năm công cụ mà cái thứ ba méo sẽ để lại
+        #   HAI công cụ MỒ CÔI trong sổ: `_trinh` rỗng (lời gọi nào tới chúng
+        #   cũng bị từ chối "không có công cụ"), nhưng `chinh_sach` thì đã biết
+        #   chúng. Đo được ba hậu quả:
+        #     1. khai_vai() cấp quyền được cho một công cụ không có trình điều
+        #        khiển nào đứng sau — quyền câm.
+        #     2. danh_sach_cong_cu() quảng cáo chúng với người dùng, rồi mọi
+        #        lời gọi đều bị từ chối. Người dùng THẤY công cụ mà không bao
+        #        giờ gọi được.
+        #     3. Sửa trình điều khiển rồi đăng ký lại thì nổ VĨNH VIỄN với câu
+        #        "công cụ bị khai hai lần" — và câu ấy chỉ đúng nghĩa đen.
+        #
+        #   Nay chia hai pha. PHA 1 kiểm sạch, chưa chạm vào sổ nào. PHA 2 ghi,
+        #   và nếu chính sách vẫn nổ (nó có luật tên riêng, chặt hơn nhân) thì
+        #   hoàn nguyên đúng những gì pha này vừa ghi rồi ném lại lỗi GỐC.
+        #   Không nuốt lỗi: hỏng vẫn phải hỏng, chỉ là hỏng sạch.
+
+        # PHA 1 — kiểm, không ghi.
         ten_day_du: List[str] = []
         for bk in cac_ban_khai:
             if not isinstance(bk, BanKhaiCongCu):
@@ -217,9 +260,31 @@ class Nhan:
             day_du = "%s.%s" % (ten, bk.ten)
             if day_du in self._cong_cu:
                 raise LoiDangKy("công cụ %r bị khai hai lần" % (day_du,))
-            self.chinh_sach.khai_cong_cu(day_du, ghi=bk.ghi, mo_ta=bk.mo_ta)
-            self._cong_cu[day_du] = bk
+            if day_du in ten_day_du:
+                raise LoiDangKy(
+                    "công cụ %r bị khai hai lần trong cùng một trình điều khiển"
+                    % (day_du,)
+                )
             ten_day_du.append(day_du)
+
+        # PHA 2 — ghi, và hoàn nguyên nếu vẫn hỏng.
+        da_ghi: List[str] = []
+        try:
+            for bk, day_du in zip(cac_ban_khai, ten_day_du):
+                self.chinh_sach.khai_cong_cu(day_du, ghi=bk.ghi, mo_ta=bk.mo_ta)
+                da_ghi.append(day_du)
+                self._cong_cu[day_du] = bk
+        except Exception:
+            for day_du in da_ghi:
+                self._cong_cu.pop(day_du, None)
+                try:
+                    self.chinh_sach.hoan_nguyen_khai_cong_cu(day_du)
+                except Exception:
+                    # Hoàn nguyên hỏng thì vẫn phải để lỗi GỐC đi tiếp: đó là
+                    # lỗi người sửa cần đọc. Nuốt nó để báo lỗi dọn dẹp là đổi
+                    # một lỗi rõ ràng lấy một lỗi khó hiểu.
+                    pass
+            raise
 
         self._trinh[ten] = trinh_dieu_khien
         return ten_day_du
@@ -320,7 +385,17 @@ class Nhan:
             except Exception as loi:  # nhật ký hỏng kiểu khác cũng không được nuốt
                 return "%s: %s" % (type(loi).__name__, loi)
 
-        def _tu_choi(ly_do: str) -> KetQuaGoi:
+        def _tu_choi(ly_do: str, ly_do_ra: Optional[str] = None) -> KetQuaGoi:
+            """Từ chối. `ly_do` đi vào NHẬT KÝ; `ly_do_ra` đi ra NGƯỜI GỌI.
+
+            Hai chuỗi tách nhau vì hai người đọc khác nhau. Người vận hành đọc
+            nhật ký cần biết ĐÚNG chủ thể và ĐÚNG vai nào thiếu quyền — đó là
+            câu hỏi đầu tiên sau một sự cố. Người gọi thì không: câu trả lời
+            gửi ra ngoài đi tiếp vào ngữ cảnh của một mô hình ngôn ngữ, vào
+            nhật ký của bên thứ ba, vào ảnh chụp màn hình gửi qua chat. Xem
+            phép kiểm 23 trong `thu_dinh_tuyen.py`.
+            """
+            ra = ly_do if ly_do_ra is None else ly_do_ra
             loi_ghi = _ghi(TU_CHOI, ly_do)
             if loi_ghi:
                 # Không ghi được cả dòng TỪ CHỐI thì vẫn phải từ chối; chỉ nói
@@ -329,10 +404,10 @@ class Nhan:
                     ok=False,
                     ma_theo_doi=ma,
                     ten_cong_cu=ten_cong_cu,
-                    ly_do=ly_do + " | ⚠ nhật ký hỏng: " + loi_ghi,
+                    ly_do=ra + " | ⚠ nhật ký hỏng: " + loi_ghi,
                     loai_loi="LoiNhatKy",
                 )
-            return KetQuaGoi(ok=False, ma_theo_doi=ma, ten_cong_cu=ten_cong_cu, ly_do=ly_do)
+            return KetQuaGoi(ok=False, ma_theo_doi=ma, ten_cong_cu=ten_cong_cu, ly_do=ra)
 
         # 1. Danh tính ------------------------------------------------------
         if sai_kieu:
@@ -347,7 +422,10 @@ class Nhan:
                 "từ chối: đối tượng danh tính sai kiểu (%s)" % type(danh_tinh).__name__
             )
         if not danh_tinh.con_hieu_luc(time.time()):
-            return _tu_choi("từ chối: danh tính %r đã hết hạn" % (danh_tinh.ma,))
+            return _tu_choi(
+                "từ chối: danh tính %r đã hết hạn" % (danh_tinh.ma,),
+                "từ chối: danh tính đã hết hạn",
+            )
 
         # Tham số phải là ánh xạ — mọi lớp phía sau (làm mờ, lược đồ MCP) đều
         # giả định thế, và một chuỗi lọt vào đây sẽ lỗi ở chỗ rất xa.
@@ -371,14 +449,24 @@ class Nhan:
             return _tu_choi("từ chối: không có công cụ %r" % (ten_cong_cu,))
 
         # 3. Quyền -----------------------------------------------------------
+        # Lý do của lớp quyền NÊU TÊN VAI ("vai 'quan-tri' có quyền ĐỌC …") vì
+        # nhật ký cần đúng thế. Nhưng nó KHÔNG được đi ra ngoài: xem chú thích
+        # ở `_tu_choi`.
         duoc, ly_do_quyen = self.chinh_sach.duoc_goi(danh_tinh, ten_cong_cu)
         if not duoc:
-            return _tu_choi(ly_do_quyen)
+            return _tu_choi(
+                ly_do_quyen,
+                "từ chối: không đủ quyền gọi %r. Mã theo dõi: %s"
+                % (ten_cong_cu, ma),
+            )
 
         # 4. Hạn mức ---------------------------------------------------------
         trong_han, ly_do_han = self.bo_han_muc.kiem_va_ghi(danh_tinh, ten_cong_cu)
         if not trong_han:
-            return _tu_choi(ly_do_han)
+            return _tu_choi(
+                ly_do_han,
+                "từ chối: vượt hạn mức cho %r. Mã theo dõi: %s" % (ten_cong_cu, ma),
+            )
 
         # 5. Nhật ký Ý ĐỊNH cho công cụ GHI ----------------------------------
         # Ghi TRƯỚC khi chạy, vì với một lời gọi làm thay đổi dữ liệu thì bản ghi
@@ -412,7 +500,14 @@ class Nhan:
             # Thông điệp lỗi ĐI QUA hàm làm mờ: một ngoại lệ rất hay nhắc lại
             # chính tham số gây ra nó, và tham số ấy có thể là khoá của khách.
             thong_diep_mo, _ = lam_mo(str(loi))
-            vet = traceback.format_exc()
+            # VẾT NGĂN XẾP CŨNG PHẢI QUA LÀM MỜ. Sửa 26/09/2026.
+            #   Trước bản vá, `vet` được chép NGUYÊN VĂN vào trường
+            #   `them.vet_goi`. Mà vết ngăn xếp của Python in cả dòng mã nguồn
+            #   gây lỗi, và dòng ấy rất hay là dòng dựng một yêu cầu HTTP kèm
+            #   chứng thư. Dùng `che_chuoi_theo_hinh_dang` chứ không dùng
+            #   `lam_mo`: `lam_mo` sẽ cắt cả vết xuống 200 ký tự và mất hết
+            #   phần cần đọc, còn hàm này chỉ che đúng đoạn giống bí mật.
+            vet, _ = che_chuoi_theo_hinh_dang(traceback.format_exc())
             if len(vet) > 4000:
                 vet = vet[:4000] + "… (cắt)"
             _ghi(
@@ -462,5 +557,7 @@ class Nhan:
             ma_theo_doi=ma,
             ten_cong_cu=ten_cong_cu,
             ket_qua=gia_tri,
-            ly_do=ly_do_quyen,
+            # KHÔNG trả `ly_do_quyen` ra ngoài: nó nêu tên vai. Nhật ký ở trên
+            # đã giữ bản đầy đủ, ghép lại bằng mã theo dõi.
+            ly_do="cho phép: %s" % (ten_cong_cu,),
         )

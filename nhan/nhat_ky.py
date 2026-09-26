@@ -78,9 +78,9 @@ TU_NHAY_CAM = frozenset(
     {
         "mat_khau", "matkhau", "password", "passwd", "pwd", "pass",
         "token", "secret", "bi_mat", "bimat",
-        "khoa", "key", "apikey", "api_key",
+        "key", "apikey", "api_key",
         "authorization", "auth", "bearer",
-        "cookie", "session", "phien", "sid",
+        "cookie", "session", "sid",
         "chung_thu", "chungthu", "credential", "credentials",
         "private", "riengtu", "rieng_tu",
         "otp", "pin", "cvv", "cvc", "salt",
@@ -90,6 +90,75 @@ TU_NHAY_CAM = frozenset(
     }
 )
 CHUOI_CON_NHAY_CAM = ("password", "matkhau", "apikey", "secret", "token", "bimat")
+
+# ── Từ MƠ HỒ: nhạy cảm hay không tuỳ CẢ TÊN TRƯỜNG ───────────────────────────
+# Sửa 26/09/2026. "khoa" và "phien" trước đây nằm thẳng trong TU_NHAY_CAM, mà
+# `_ten_truong_nhay_cam` so khớp theo TỪ. Trong một kho viết bằng tiếng Việt
+# KHÔNG DẤU, hai từ ấy mang nhiều nghĩa vô hại hơn là nghĩa nhạy cảm:
+#
+#     phien_ban, so_phien_ban   → phiên bản phần mềm
+#     ma_khoa_hoc, ten_khoa     → khoá học, khoa phòng
+#
+# Đo được: cả bốn trường trên bị che thành vô nghĩa. Đầu tệp này đã tự cảnh báo
+# đúng nguy cơ ấy — nhật ký hết dùng được thì người ta TẮT, và nhật ký bị tắt
+# bảo vệ được 0 byte.
+#
+# CÁCH SỬA KHÔNG CHỌN: nhét bốn tên ấy vào MIEN_TRU_TRUONG. Đó là đập chuột
+# chũi: lần sau sẽ tới `khoa_dao_tao`, `phien_hop`, `truong_khoa`… và danh sách
+# miễn trừ dài ra mãi trong khi luật sinh ra lỗi thì vẫn nguyên.
+#
+# LUẬT THAY THẾ: một từ mơ hồ làm cả tên trường thành nhạy cảm, TRỪ KHI trong
+# tên có một từ VÔ HẠI khai bên dưới. `khoa`, `khoa_api`, `khoa_truy_cap`,
+# `ma_phien` → nhạy cảm. `ma_khoa_hoc`, `ten_khoa`, `phien_ban`, `tu_khoa` →
+# không.
+#
+# CHIỀU MẶC ĐỊNH LÀ CHE, KHÔNG PHẢI HIỆN. Sửa lại 26/09/2026, cùng ngày.
+#
+#   Bản đầu của luật này viết ngược: nhạy cảm chỉ khi MỌI từ trong tên đều là
+#   từ mơ hồ hoặc từ BỔ TRỢ. Nghe thì chặt, nhưng nó biến danh sách bổ trợ
+#   thành thứ phải KỂ ĐỦ mới che được, và một danh sách kể-đủ thì luôn thiếu.
+#   Đo được ngay trên chính kho này — sáu tên trường sau đi thẳng vào nhật ký
+#   NGUYÊN VĂN sau bản vá, trong khi trước bản vá chúng được che:
+#
+#       khoa_truy_cap   khoa_ma_hoa   ma_phien
+#       khoa_ky         khoa_cu       khoa_moi
+#
+#   `khoa_truy_cap` đúng là "access key" viết bằng tiếng Việt không dấu —
+#   danh sách bổ trợ có "access" mà không có "truy"/"cap", nên nó lọt. Đây là
+#   cùng một họ lỗi với thứ bản vá định chữa, chỉ đổi chiều: lần trước là che
+#   quá tay, lần này là hở. Hở thì im lặng, nên tệ hơn.
+#
+#   Nay mặc định của một từ mơ hồ là CHE. Muốn hiện thì phải nói ra bằng một từ
+#   VÔ HẠI, và danh sách vô hại có thiếu thì hậu quả là một trường vô hại bị
+#   che — thấy ngay, sửa được, không mất gì.
+TU_MO_HO = frozenset({"khoa", "phien"})
+
+# Từ BỔ TRỢ: đi kèm một từ mơ hồ thì XÁC NHẬN nghĩa nhạy cảm, và thắng cả từ vô
+# hại (`ten_khoa_api` là khoá, không phải tên khoa). Nay chỉ còn để phá hoà —
+# mặc định đã là che — nên thêm vào đây không nới quyền che của ai.
+TU_BO_TRO = frozenset(
+    {
+        "api", "llm", "secret", "private", "rieng", "bi", "mat",
+        "access", "refresh", "token", "bearer", "auth", "id",
+        "xac", "thuc", "truy", "cap", "ky",
+    }
+)
+
+# Từ VÔ HẠI: đi kèm một từ mơ hồ thì GỠ nghĩa nhạy cảm. Đây mới là danh sách
+# phải cân nhắc từng dòng — mỗi từ thêm vào là một lần NỚI CHỖ HỞ. Đổi lại,
+# thiếu một từ ở đây chỉ gây che quá tay, tức là hỏng mà KÊU.
+TU_VO_HAI = frozenset(
+    {
+        "ban",      # phien_ban — phiên bản
+        "hoc",      # khoa_hoc, ma_khoa_hoc — khoá học
+        "ten",      # ten_khoa — tên khoa
+        "truong",   # truong_khoa — trưởng khoa
+        "tu",       # tu_khoa — từ khoá
+        "dao", "tao",   # khoa_dao_tao
+        "hop",      # phien_hop — phiên họp
+        "mon", "lop", "vien", "sinh", "nganh", "phong",
+    }
+)
 
 # Những tên trường CHỨA chữ nhạy cảm nhưng vô hại. Danh sách này phải NGẮN và
 # phải khai từng cái — xem phần "làm mờ quá tay" ở đầu tệp.
@@ -112,17 +181,51 @@ MAU_TACH_TU = re.compile(r"[^a-z0-9]+")
 # ── Hướng 2: hình dạng giá trị ───────────────────────────────────────────────
 # Các mẫu dưới đây CỐ Ý không cố nhận diện nhà cung cấp cụ thể nào. Nhận diện
 # theo hình dạng chung thì bắt được cả khoá của nhà cung cấp chưa ai nghĩ tới.
+#
+# KHÔNG NEO BẰNG ^…$ NỮA. Sửa 26/09/2026.
+#
+#   Bản trước neo 5/6 mẫu bằng `^…$` trong khi chỗ dùng gọi `mau.search()`. Hệ
+#   quả: mẫu chỉ khớp khi bí mật là TOÀN BỘ giá trị chuỗi. Mà hình dạng hay gặp
+#   nhất ngoài đời lại là bí mật nằm GIỮA một câu — người dùng dán nguyên câu
+#   báo lỗi, nguyên lệnh curl, nguyên chuỗi kết nối vào tham số. Đo được: thẻ
+#   JWT, chuỗi kết nối có mật khẩu, khoá kiểu GitHub và chuỗi hex dài đều đi
+#   thẳng vào nhật ký NGUYÊN VĂN, và `so_truong_da_lam_mo` báo 0 nên không có
+#   dấu hiệu nào cho thấy vừa rò.
+#
+#   Nay mỗi mẫu dùng ranh giới nhìn-trước/nhìn-sau thay cho neo đầu-cuối: khớp
+#   được ở giữa câu, nhưng không cắt nửa chừng một chuỗi dài hơn. Chỗ dùng
+#   (`che_chuoi_theo_hinh_dang`) che ĐÚNG đoạn khớp và giữ lại phần còn lại của
+#   câu — che cả câu thì lại rơi vào lỗi "làm mờ quá tay" ở đầu tệp.
+_KY_TU_KHOA = r"A-Za-z0-9+/_\-"   # tập ký tự một chuỗi khoá/thẻ hay dùng
+
 MAU_GIA_TRI_NHAY_CAM: Tuple[Tuple[str, "re.Pattern"], ...] = (
-    ("kieu-bearer", re.compile(r"(?i)^\s*(?:bearer|basic|digest)\s+\S+")),
+    ("kieu-bearer", re.compile(r"(?i)\b(?:bearer|basic|digest)\s+[A-Za-z0-9+/=_.\-]{8,}")),
     ("khoi-khoa-pem", re.compile(r"-----BEGIN [A-Z ]*(?:PRIVATE KEY|CERTIFICATE)-----")),
     # Ba đoạn ngăn bằng dấu chấm, đoạn đầu mở bằng 'eyJ' — hình dạng thẻ JWT.
-    ("kieu-jwt", re.compile(r"^ey[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{4,}$")),
+    (
+        "kieu-jwt",
+        re.compile(
+            r"(?<![%s])ey[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{4,}"
+            r"(?![%s])" % (_KY_TU_KHOA, _KY_TU_KHOA)
+        ),
+    ),
     # Chuỗi hex dài: băm, khoá đối xứng, mã phiên.
-    ("hex-dai", re.compile(r"^[0-9a-fA-F]{32,}$")),
+    (
+        "hex-dai",
+        re.compile(r"(?<![%s])[0-9a-fA-F]{32,}(?![%s])" % (_KY_TU_KHOA, _KY_TU_KHOA)),
+    ),
     # Chuỗi base64url dài, không khoảng trắng: khoá hoặc thẻ.
-    ("chuoi-ngau-nhien-dai", re.compile(r"^[A-Za-z0-9+/_\-]{40,}={0,2}$")),
+    (
+        "chuoi-ngau-nhien-dai",
+        re.compile(
+            r"(?<![%s=])[%s]{40,}={0,2}(?![%s])" % (_KY_TU_KHOA, _KY_TU_KHOA, _KY_TU_KHOA)
+        ),
+    ),
     # Chuỗi kết nối có mật khẩu nhúng.
-    ("chuoi-ket-noi", re.compile(r"(?i)^[a-z][a-z0-9+.\-]*://[^\s:/@]+:[^\s@/]+@")),
+    (
+        "chuoi-ket-noi",
+        re.compile(r"(?i)(?<![a-z0-9+.\-])[a-z][a-z0-9+.\-]*://[^\s:/@]+:[^\s@/]+@"),
+    ),
 )
 
 MAU_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
@@ -139,14 +242,24 @@ DO_DAI_CHUOI_TOI_DA = 200
 
 
 def _bac_do_dai(n: int) -> str:
-    """Bậc độ dài thay cho số chính xác — xem phần đầu tệp."""
+    """Bậc độ dài thay cho số chính xác — xem phần đầu tệp.
+
+    Bậc cuối nói thêm "đã cắt". Lý do: một chuỗi 5.000 ký tự khớp mẫu bí mật
+    được thay bằng một nhãn ngắn, tức là trần chống bom nhật ký ĐÃ cắt nó —
+    nhưng nếu nhãn không nói gì thì người vận hành đọc nhật ký không phân biệt
+    được chuỗi 33 ký tự với chuỗi 5.000 ký tự, và một lần cắt IM LẶNG đúng là
+    họ lỗi mà kho này đặt tên riêng. Vẫn KHÔNG ghi số ký tự chính xác: độ dài
+    của một bí mật cũng là thông tin.
+    """
     if n == 0:
         return "rỗng"
     if n <= 8:
         return "ngắn"
     if n <= 32:
         return "vừa"
-    return "dài"
+    if n <= DO_DAI_CHUOI_TOI_DA:
+        return "dài"
+    return "dài, đã cắt"
 
 
 def _lam_mo_chuoi(gt: str, loai: str) -> str:
@@ -164,7 +277,16 @@ def _ten_truong_nhay_cam(ten: str) -> bool:
     cac_tu = [x for x in MAU_TACH_TU.split(t) if x]
     if t in TU_NHAY_CAM:
         return True
-    return any(tu in TU_NHAY_CAM for tu in cac_tu)
+    if any(tu in TU_NHAY_CAM for tu in cac_tu):
+        return True
+    # Từ MƠ HỒ ("khoa", "phien"): mặc định là CHE. Một từ BỔ TRỢ xác nhận nghĩa
+    # nhạy cảm; một từ VÔ HẠI gỡ nó. Bổ trợ thắng vô hại. Xem chú thích ở
+    # TU_MO_HO về vì sao chiều mặc định phải là che.
+    if any(tu in TU_MO_HO for tu in cac_tu):
+        if any(tu in TU_BO_TRO for tu in cac_tu):
+            return True
+        return not any(tu in TU_VO_HAI for tu in cac_tu)
+    return False
 
 
 def _lam_mo_email(gt: str) -> str:
@@ -177,6 +299,31 @@ def _lam_mo_dien_thoai(gt: str) -> str:
     so = [c for c in gt if c.isdigit()]
     duoi = "".join(so[-3:])
     return "*" * max(len(so) - 3, 0) + duoi
+
+
+def che_chuoi_theo_hinh_dang(gt: str) -> Tuple[str, int]:
+    """Che TỪNG ĐOẠN giống bí mật nằm bên trong một chuỗi. Trả (chuỗi, số đoạn).
+
+    Dùng khi bí mật NHÚNG giữa một câu — câu báo lỗi của nền tảng đích, lệnh
+    curl người dùng dán vào, vết ngăn xếp. Che đúng đoạn khớp chứ không che cả
+    câu: che cả câu thì nhật ký mất phần giải thích và rơi vào lỗi "làm mờ quá
+    tay" mà đầu tệp đã cảnh báo.
+
+    Công khai (không có gạch dưới) vì `nhan/dinh_tuyen.py` cần đúng phép này
+    cho thông điệp lỗi và vết ngăn xếp của trình điều khiển.
+    """
+    if not isinstance(gt, str) or not gt:
+        return gt, 0
+    dem = [0]
+
+    def _thay(m, nhan=""):
+        dem[0] += 1
+        return _lam_mo_chuoi(m.group(0), nhan)
+
+    ra = gt
+    for nhan, mau in MAU_GIA_TRI_NHAY_CAM:
+        ra = mau.sub(lambda m, n=nhan: _thay(m, n), ra)
+    return ra, dem[0]
 
 
 class _DemLamMo:
@@ -223,9 +370,22 @@ def _lam_mo_gia_tri(gt: Any, ten_truong: str, dem: _DemLamMo, do_sau: int) -> An
             dem.so += 1
             return _lam_mo_chuoi(gt, "truong-nhay-cam")
         for nhan, mau in MAU_GIA_TRI_NHAY_CAM:
-            if mau.search(gt):
-                dem.so += 1
-                return _lam_mo_chuoi(gt, nhan)
+            khop = mau.search(gt)
+            if khop:
+                if khop.group(0) == gt.strip():
+                    # Bí mật là TOÀN BỘ giá trị: thay cả trường bằng một nhãn,
+                    # kèm bậc độ dài — không có gì khác để giữ lại.
+                    dem.so += 1
+                    return _lam_mo_chuoi(gt, nhan)
+                # Bí mật NHÚNG giữa một câu: che đúng đoạn ấy, giữ phần còn lại
+                # để dòng nhật ký vẫn giải thích được chuyện gì đã xảy ra.
+                ra_che, so_che = che_chuoi_theo_hinh_dang(gt)
+                dem.so += so_che
+                if len(ra_che) > DO_DAI_CHUOI_TOI_DA:
+                    ra_che = ra_che[:DO_DAI_CHUOI_TOI_DA] + "… (cắt %d ký tự)" % (
+                        len(ra_che) - DO_DAI_CHUOI_TOI_DA
+                    )
+                return ra_che
         if MAU_EMAIL.match(gt):
             dem.so += 1
             return _lam_mo_email(gt)

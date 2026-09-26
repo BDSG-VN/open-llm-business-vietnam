@@ -35,10 +35,36 @@ BỐN CHỖ HỎNG MÀ KHÔNG TỰ BÁO, cả bốn đều có phép kiểm ở 
   4. GHI HỎNG MÀ NUỐT IM LẶNG. Một sổ sách có thể mất bản ghi mà không ai biết
      thì không phải sổ sách. Nhóm 5.
 
-HAI PHÉP KIỂM CUỐI (nhóm 6) ĐANG ĐỎ, VÀ ĐỎ ĐÚNG.
-Chúng thể hiện hai lỗi THẬT tìm thấy trong `nhan/nhat_ky.py` khi viết bài này.
-Chúng không được sửa ở đây: bài tự kiểm không sửa mã nguồn. Đọc phần in ra ở
-cuối để biết lỗi gì và hậu quả ra sao.
+HAI PHÉP KIỂM CUỐI (nhóm 6) TỪNG ĐỎ, VÀ ĐỎ ĐÚNG. ĐÃ SỬA 26/09/2026 trong
+`nhan/nhat_ky.py`; nhãn "LỖI THẬT" giữ nguyên để lần sau còn nhận ra chỗ đã
+từng thủng:
+
+  15. `lam_mo` chỉ bắt được bí mật khi bí mật là TOÀN BỘ giá trị, vì 5/6 mẫu
+      neo bằng `^…$` trong khi mã dò bằng `.search()`. Nay mẫu dùng ranh giới
+      nhìn-trước/nhìn-sau, và bí mật nhúng giữa câu bị che ĐÚNG ĐOẠN ấy —
+      phần còn lại của câu giữ nguyên để nhật ký vẫn giải thích được.
+  16. Làm mờ QUÁ TAY với tên trường tiếng Việt không dấu: `phien_ban`,
+      `ma_khoa_hoc`, `ten_khoa` bị che thành vô nghĩa. Nay "khoa" và "phien"
+      là từ MƠ HỒ — chỉ tính là nhạy cảm khi CẢ tên trường nói về khoá.
+
+Phép kiểm 6 (trần chống bom) cũng từng đỏ cùng đợt: một chuỗi 5.000 ký tự khớp
+mẫu bí mật bị thay bằng nhãn ngắn mà nhãn KHÔNG nói là đã cắt, nên đọc nhật ký
+không phân biệt được nó với một chuỗi 33 ký tự.
+
+Cả ba bản vá đã THỬ NGƯỢC: phá lại đúng một dòng, xác nhận ca kiểm ĐỎ, rồi
+phục hồi.
+
+★ LƯỢT SOÁT LẠI CÙNG NGÀY tìm ra bản vá 16 ĐÃ MỞ MỘT CHỖ HỞ THEO CHIỀU NGƯỢC.
+Luật đầu tiên viết "chỉ nhạy cảm khi MỌI từ là mơ hồ hoặc BỔ TRỢ", nên sáu tên
+trường sau đi ra NGUYÊN VĂN trong khi trước bản vá chúng được che:
+
+    khoa_truy_cap   khoa_ma_hoa   ma_phien   khoa_ky   khoa_cu   khoa_moi
+
+`khoa_truy_cap` đúng là "access key" viết bằng tiếng Việt không dấu. Luật nay
+đổi chiều mặc định thành CHE, và phép kiểm 17 khoá CẢ HAI chiều — 16 một mình
+vẫn XANH với một bản vá bỏ hẳn "khoa"/"phien" khỏi danh sách nhạy cảm.
+Phép kiểm 18 khoá thứ tự CHE-rồi-CẮT: một bí mật nằm sau trần cắt mà "biến mất"
+vì bị cắt chứ không vì bị che thì chỉ cần nâng trần là nó quay lại.
 
 MÃ THOÁT: 0 = mọi phép kiểm ĐẠT. 1 = có phép kiểm HỎNG.
 
@@ -679,6 +705,110 @@ def kiem_lam_mo_qua_tay_tieng_viet():
     return "4 trường vô hại giữ nguyên"
 
 
+@phep_kiem("17. Từ MƠ HỒ: bản vá 16 KHÔNG được mở chỗ hở theo chiều ngược lại")
+def kiem_tu_mo_ho_hai_chieu():
+    # Phép kiểm 16 chỉ đo MỘT chiều: trường vô hại phải giữ nguyên. Một bản vá
+    # thoả nó bằng cách bỏ hẳn "khoa"/"phien" khỏi danh sách nhạy cảm cũng sẽ
+    # XANH — và mở toang đúng thứ hàm này sinh ra để che. Ca kiểm này khoá chiều
+    # còn lại, và khoá bằng những tên tiếng Việt không dấu THẬT SỰ hay gặp.
+    #
+    # Chỗ hở đo được khi viết ca này: luật "chỉ nhạy cảm khi MỌI từ là mơ hồ
+    # hoặc bổ trợ" để `khoa_truy_cap` (đúng nghĩa access key), `khoa_ma_hoa`,
+    # `ma_phien`, `khoa_ky`, `khoa_cu`, `khoa_moi` đi ra NGUYÊN VĂN. Giá trị
+    # ngắn thì hình dạng không cứu được — chỉ tên trường cứu được.
+    PHAI_CHE = {
+        "khoa": "k-01",
+        "phien": "p-01",
+        "khoa_api": "k-02",
+        "khoa_truy_cap": "k-03",     # access key, viết bằng tiếng Việt
+        "khoa_ma_hoa": "k-04",
+        "khoa_ky": "k-05",
+        "khoa_cu": "k-06",
+        "khoa_moi": "k-07",
+        "ma_phien": "p-02",
+        "ma_khoa": "k-08",
+        "phien_lam_viec": "p-03",
+        "danh_sach_khoa": "k-09",
+        "ten_khoa_api": "k-10",      # bổ trợ THẮNG vô hại
+    }
+    PHAI_GIU = {
+        "phien_ban": "1.2.0",
+        "so_phien_ban": "3",
+        "ma_khoa_hoc": "KH-2026-017",
+        "ten_khoa": "Khoa Kiến trúc",
+        "khoa_hoc": "GDPT 2018",
+        "truong_khoa": "Người Bịa",
+        "khoa_dao_tao": "K12",
+        "phien_hop": "sáng thứ hai",
+        "tu_khoa": "nhà đất",
+        "khoa_chinh": "id",
+        "so_khoa": "4",
+    }
+
+    ra_che, _ = lam_mo(dict(PHAI_CHE))
+    lot = [t for t, gt in PHAI_CHE.items() if _con_nguyen_van(gt, ra_che[t])]
+    bang(
+        not lot,
+        "%d/%d tên trường NHẠY CẢM đi ra nguyên văn: %r. Đây là chiều mà phép "
+        "kiểm 16 KHÔNG đo — nới luật để `phien_ban` đọc được mà nới quá tay thì "
+        "`khoa_truy_cap` (access key) cũng đọc được, và lần này không ai kêu vì "
+        "nhật ký trông vẫn bình thường."
+        % (len(lot), len(PHAI_CHE), lot),
+    )
+
+    ra_giu, _ = lam_mo(dict(PHAI_GIU))
+    bi_che = [t for t, gt in PHAI_GIU.items() if ra_giu[t] != gt]
+    bang(
+        not bi_che,
+        "%d trường VÔ HẠI bị che: %r — xem phép kiểm 16." % (len(bi_che), bi_che),
+    )
+    return "%d tên phải che + %d tên phải giữ, cả hai chiều" % (
+        len(PHAI_CHE),
+        len(PHAI_GIU),
+    )
+
+
+@phep_kiem("18. Bí mật nằm SAU trần cắt chuỗi vẫn phải bị che, không chỉ bị cắt")
+def kiem_bi_mat_sau_tran_cat():
+    # Thứ tự giữa CHE và CẮT là một bẫy: nếu cắt trước rồi che sau, một bí mật ở
+    # vị trí 800 của chuỗi 1.000 ký tự "biến mất" khỏi bản ghi — trông như an
+    # toàn. Nhưng nó biến mất vì bị CẮT, không vì bị CHE, nên chỉ cần ai đó nâng
+    # trần lên là bí mật quay lại, im lặng. Ca này đòi bằng chứng CHE thật: bộ
+    # đếm phải tăng, và nhãn làm mờ phải có mặt trong phần còn giữ lại.
+    tran = _nhat_ky.DO_DAI_CHUOI_TOI_DA
+    cau_dai = "một câu rất dài để đẩy bí mật ra sau trần cắt. " * 30
+
+    # (a) Bí mật nằm TRƯỚC trần: nhãn làm mờ phải còn đọc được trong bản ghi.
+    som = "chứng thư: " + KHOA_KIEU_GITHUB + ". " + cau_dai
+    bang(len(som) > tran * 3, "chuỗi (a) phải dài hơn hẳn trần %d" % (tran,))
+    ra_som, dem_som = lam_mo({"mo_ta": som})
+    bang(not _con_nguyen_van(KHOA_KIEU_GITHUB, ra_som), "(a) bí mật đi ra nguyên văn")
+    bang(dem_som >= 1, "(a) bộ đếm làm mờ báo %d, phải ≥ 1" % (dem_som,))
+    bang(
+        DAU_LAM_MO in ra_som["mo_ta"],
+        "(a) không thấy nhãn làm mờ trong phần giữ lại: %r" % (ra_som["mo_ta"][:120],),
+    )
+
+    # (b) Bí mật nằm SAU trần. Thứ tự giữa CHE và CẮT là một bẫy: cắt trước rồi
+    # che sau thì bí mật "biến mất" vì bị CẮT, không vì bị CHE — chỉ cần ai đó
+    # nâng trần lên là nó quay lại, im lặng. Bằng chứng che thật là BỘ ĐẾM.
+    muon = cau_dai + " chứng thư: " + KHOA_KIEU_GITHUB + ". " + cau_dai
+    ra_muon, dem_muon = lam_mo({"mo_ta": muon})
+    bang(not _con_nguyen_van(KHOA_KIEU_GITHUB, ra_muon), "(b) bí mật đi ra nguyên văn")
+    bang(
+        dem_muon >= 1,
+        "(b) bộ đếm làm mờ báo %d: bí mật BIẾN MẤT vì bị CẮT chứ không vì bị CHE. "
+        "Nâng trần lên là nó quay lại, và không có dấu hiệu nào báo trước."
+        % (dem_muon,),
+    )
+    bang(
+        "cắt" in ra_muon["mo_ta"],
+        "(b) chuỗi bị cắt mà bản ghi KHÔNG nói là đã cắt: %r"
+        % (ra_muon["mo_ta"][-60:],),
+    )
+    return "che TRƯỚC khi cắt ở cả hai vị trí, bộ đếm làm chứng"
+
+
 CAC_PHEP_KIEM = [
     kiem_che_theo_ten_truong,
     kiem_che_theo_hinh_dang,
@@ -696,6 +826,8 @@ CAC_PHEP_KIEM = [
     kiem_mac_dinh_ra_stderr,
     kiem_bi_mat_nhung_trong_chuoi,
     kiem_lam_mo_qua_tay_tieng_viet,
+    kiem_tu_mo_ho_hai_chieu,
+    kiem_bi_mat_sau_tran_cat,
 ]
 
 
@@ -727,21 +859,21 @@ def main():
             if not dat:
                 print("  - {}: {}".format(ten, ghi_chu))
         print()
-        print("HAI PHÉP KIỂM CUỐI ĐỎ LÀ CÓ CHỦ Ý. Chúng thể hiện hai lỗi THẬT trong")
-        print("nhan/nhat_ky.py, phát hiện khi viết bài này, và CỐ Ý không sửa — bài tự")
-        print("kiểm không sửa mã nguồn, người điều phối quyết định sửa thế nào:")
+        print("CẢNH BÁO: các phép kiểm 6, 15 và 16 ĐÃ TỪNG ĐỎ và đã được vá ngày")
+        print("26/09/2026. Nếu một trong ba cái ấy đỏ lại thì đó là HỒI QUY, KHÔNG phải")
+        print("một ca đỏ có chủ ý — và ba chỗ hay bị 'sửa' nhầm là:")
         print()
-        print("  · Phép kiểm 15 (nặng): `lam_mo` chỉ bắt được bí mật khi bí mật là TOÀN BỘ")
-        print("    giá trị chuỗi. 5/6 mẫu trong MAU_GIA_TRI_NHAY_CAM neo bằng ^…$ trong khi")
-        print("    mã dò bằng `.search()`. Thẻ JWT, chuỗi kết nối có mật khẩu, khoá API nằm")
-        print("    GIỮA một câu — dạng hay gặp nhất trong thực tế, vì người dùng dán cả câu")
-        print("    báo lỗi hoặc cả lệnh curl vào tham số — đi thẳng vào nhật ký nguyên văn,")
-        print("    và `so_truong_da_lam_mo` báo 0 nên không có dấu hiệu nào cho thấy vừa rò.")
+        print("  · 15: mẫu trong MAU_GIA_TRI_NHAY_CAM PHẢI khớp được ở GIỮA chuỗi. Neo lại")
+        print("    bằng ^…$ là mở lại đúng lỗ cũ: thẻ JWT, chuỗi kết nối có mật khẩu, khoá")
+        print("    API dán giữa một câu báo lỗi sẽ đi thẳng vào nhật ký nguyên văn, mà")
+        print("    `so_truong_da_lam_mo` báo 0 nên không ai biết vừa rò.")
         print()
-        print("  · Phép kiểm 16 (vừa): làm mờ QUÁ TAY với tên trường tiếng Việt không dấu.")
-        print("    'khoa' và 'phien' nằm trong TU_NHAY_CAM, nên phien_ban, ma_khoa_hoc,")
-        print("    ten_khoa đều bị che. Đầu tệp nhat_ky.py tự cảnh báo đúng nguy cơ này:")
-        print("    nhật ký hết dùng được thì người ta TẮT, và nhật ký bị tắt bảo vệ 0 byte.")
+        print("  · 16: 'khoa' và 'phien' là từ MƠ HỒ (TU_MO_HO), KHÔNG được đưa thẳng về")
+        print("    TU_NHAY_CAM. Đưa về là che luôn phien_ban, ma_khoa_hoc, ten_khoa. Nhật")
+        print("    ký hết dùng được thì người ta TẮT, và nhật ký bị tắt bảo vệ 0 byte.")
+        print()
+        print("  · 6: bậc độ dài cuối phải NÓI RA là đã cắt. Cắt im lặng thì đọc nhật ký")
+        print("    không phân biệt được chuỗi 33 ký tự với chuỗi 5.000 ký tự.")
     print()
     print("Nghĩa là gì KHÔNG: bài này KHÔNG kiểm nhật ký dưới NHIỀU LUỒNG (một dòng có")
     print("thể xen vào giữa dòng khác — chưa đo), KHÔNG kiểm xoay vòng tệp hay giữ bao")

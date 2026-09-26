@@ -30,9 +30,29 @@ Kèm theo: mỗi lần TỪ CHỐI phải để lại một dòng nhật ký. M�
 được ghi còn nguy hiểm hơn một lần cho phép không được ghi — vì nó làm cuộc tấn
 công trở nên VÔ HÌNH.
 
-★ BA PHÉP KIỂM TRONG BÀI NÀY ĐANG HỎNG VÌ MÃ NGUỒN SAI, KHÔNG PHẢI VÌ BÀI SAI.
-Chúng được để nguyên trạng thái hỏng, cố ý, cho tới khi người điều phối quyết
-định sửa. Tìm chữ "LỖI THẬT" ở dưới.
+★ BỐN PHÉP KIỂM TRONG BÀI NÀY TỪNG HỎNG VÌ MÃ NGUỒN SAI. ĐÃ SỬA 26/09/2026,
+và nhãn "LỖI THẬT" được GIỮ NGUYÊN để lần sau ai làm hồi quy thì biết chỗ ấy
+đã từng thủng. Bốn lỗi, cả bốn đã vá trong `nhan/`:
+
+  3.  Tên trình điều khiển mở đầu bằng CHỮ SỐ đi lọt (`1gia`, `123`) — tên đầy
+      đủ ra `123.45`, mà mọi bộ nạp cấu hình đọc chuỗi ấy thành SỐ.
+  5.  `dang_ky` hỏng giữa chừng để lại công cụ MỒ CÔI trong chính sách: người
+      dùng THẤY công cụ trong `tools/list` và không bao giờ gọi được.
+  23. `KetQuaGoi.thanh_dict` mang tên VAI của người gọi ra ngoài, tức là vào
+      ngữ cảnh mô hình và nhật ký của bên thứ ba.
+  24. Chuỗi giống khoá nằm GIỮA một thông điệp lỗi không bị làm mờ, vì
+      `nhat_ky.lam_mo` neo mọi mẫu hình dạng bằng `^…$`.
+
+Mỗi bản vá đã THỬ NGƯỢC: phá lại đúng một dòng, xác nhận ca kiểm ĐỎ, rồi phục
+hồi. Một ca kiểm chưa thử ngược thì chưa biết nó có đo gì không.
+
+★ LƯỢT SOÁT LẠI 26/09/2026 (cùng ngày) tìm ra HAI CHỖ BẢN VÁ CHẠM TỚI MÀ KHÔNG
+CA KIỂM NÀO ĐO. Cả hai đo được bằng cách phá mã mà bộ kiểm vẫn 26/26 XANH:
+
+  · Nhánh HOÀN NGUYÊN của `dang_ky` (PHA 2) và `ChinhSach.hoan_nguyen_khai_cong_cu`
+    viết riêng cho nó. Phép kiểm 5 nổ ở PHA 1 nên không bao giờ tới đó. → 27.
+  · Làm mờ VẾT NGĂN XẾP. Phép kiểm 24 chỉ đọc `kq.ly_do`, trong khi câu báo lỗi
+    của chính nó nói tới `them.vet_goi`. → 28.
 
 MÃ THOÁT: 0 = mọi phép kiểm ĐẠT. 1 = có phép kiểm HỎNG.
 
@@ -65,7 +85,7 @@ from nhan.dinh_tuyen import (  # noqa: E402
 )
 from nhan.han_muc import BoHanMuc, HanMuc  # noqa: E402
 from nhan.nhat_ky import LOI, THANH_CONG, TU_CHOI, NhatKy  # noqa: E402
-from nhan.quyen import ChinhSach, CongGhi  # noqa: E402
+from nhan.quyen import ChinhSach, CongGhi, LoiChinhSach  # noqa: E402
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -354,7 +374,7 @@ def kiem_dang_ky_hong_giua_chung():
         "viễn với câu 'công cụ bị khai hai lần'. Đăng ký phải là một phép TOÀN "
         "PHẦN: hỏng thì hoàn nguyên sạch.",
     )
-    return "không tới đây"
+    return "đăng ký hỏng nửa chừng: sổ công cụ và sổ trình đều sạch"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -584,7 +604,7 @@ def kiem_danh_tinh_sai_kieu():
             len(bg)
         ),
     )
-    return "không tới đây"
+    return "danh tính sai kiểu để lại đúng 1 dòng TỪ CHỐI"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -620,7 +640,7 @@ def kiem_trinh_dieu_khien_sua_nhat_ky():
             {"ma_khach": "KH-999", "pham_vi": "toan-bo-CSDL"}, bg["tham_so"]
         ),
     )
-    return "không tới đây"
+    return "nhật ký giữ bản CHỤP, trình điều khiển sửa không tới"
 
 
 @phep_kiem("18. Nhật ký hỏng + công cụ GHI: KHÔNG CHẠY (fail-closed cố ý)")
@@ -768,7 +788,7 @@ def kiem_lo_chi_tiet_loi():
         "chép nguyên cả vết ngăn xếp, không qua làm mờ lần nào. Lý do trả về: "
         + kq.ly_do,
     )
-    return "không tới đây"
+    return "chuỗi giống khoá bị che, phần còn lại của câu vẫn đọc được"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -817,6 +837,135 @@ def kiem_danh_sach_theo_cong_ghi():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Nhóm 6 — Những chỗ bản vá 26/09/2026 CHẠM TỚI mà chưa ca kiểm nào đo
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@phep_kiem(
+    "27. Đăng ký hỏng ở PHA GHI: hoàn nguyên sạch cả trong CHÍNH SÁCH, "
+    "không riêng sổ của nhân"
+)
+def kiem_hoan_nguyen_pha_ghi():
+    # Phép kiểm 5 chỉ đi tới PHA 1: trình điều khiển của nó khai một thứ không
+    # phải BanKhaiCongCu, nên `dang_ky` nổ TRƯỚC khi ghi chữ nào. Nhánh hoàn
+    # nguyên của PHA 2 — và cả `ChinhSach.hoan_nguyen_khai_cong_cu` viết riêng
+    # cho nó — vì thế chưa từng chạy trong bài tự kiểm. Đo được: phá sạch nhánh
+    # ấy (`for day_du in []`) mà bộ kiểm vẫn 26/26 XANH.
+    #
+    # Ca này ép đúng nhánh ấy chạy: tên hợp lệ với nhân, nhưng chính sách đã
+    # biết `nuavoi.ghi` là công cụ GHI, còn trình điều khiển khai nó là ĐỌC.
+    # PHA 2 ghi lọt `nuavoi.doc` rồi mới nổ ở `nuavoi.ghi`.
+    cs = ChinhSach(cong_ghi=CongGhi(mo=False))
+    cs.khai_cong_cu("nuavoi.ghi", ghi=True, mo_ta="khai trước, kiểu GHI")
+    so = io.StringIO()
+    nhan = Nhan(chinh_sach=cs, nhat_ky=NhatKy(dong_ra=so))
+
+    class TrinhLechLoai(TrinhDieuKhien):
+        ten = "nuavoi"
+
+        def cong_cu(self):
+            return [
+                BanKhaiCongCu(ten="doc", ham=lambda ts: 1, ghi=False),
+                BanKhaiCongCu(ten="ghi", ham=lambda ts: 2, ghi=False),
+            ]
+
+    try:
+        nhan.dang_ky("nuavoi", TrinhLechLoai())
+    except LoiChinhSach:
+        pass
+    else:
+        raise AssertionError("khai lệch loại mà đăng ký lọt")
+
+    bao_dam(
+        nhan.ban_khai("nuavoi.doc") is None,
+        "SỔ CỦA NHÂN CÒN RÁC: 'nuavoi.doc' đã ghi ở PHA 2 và không được gỡ.",
+    )
+    bao_dam(
+        nhan.cac_trinh_dieu_khien() == [],
+        "trình điều khiển không được vào sổ khi đăng ký hỏng",
+    )
+    da_khai = cs.cong_cu_da_khai()
+    bao_dam(
+        "nuavoi.doc" not in da_khai,
+        "CHÍNH SÁCH CÒN CÔNG CỤ MỒ CÔI: %r. Không có trình điều khiển nào đứng "
+        "sau nó, nhưng khai_vai() vẫn cấp quyền được cho nó và người vận hành "
+        "đọc chính sách sẽ tưởng công cụ ấy có thật." % (da_khai,),
+    )
+    bao_dam(
+        da_khai == ["nuavoi.ghi"],
+        "hoàn nguyên KHÔNG được dọn quá tay sang thứ người khác đã khai trước: "
+        "còn lại %r, phải còn đúng ['nuavoi.ghi']" % (da_khai,),
+    )
+
+    # Và sửa xong thì đăng ký LẠI phải chạy được — đó là toàn bộ lý do hoàn
+    # nguyên tồn tại. Nếu sổ còn rác thì lần này nổ "khai hai lần" vĩnh viễn.
+    class TrinhDaSua(TrinhDieuKhien):
+        ten = "nuavoi"
+
+        def cong_cu(self):
+            return [
+                BanKhaiCongCu(ten="doc", ham=lambda ts: 1, ghi=False),
+                BanKhaiCongCu(ten="ghi", ham=lambda ts: 2, ghi=True),
+            ]
+
+    ten_day_du = nhan.dang_ky("nuavoi", TrinhDaSua())
+    bao_dam(
+        sorted(ten_day_du) == ["nuavoi.doc", "nuavoi.ghi"],
+        "đăng ký lại sau khi sửa phải chạy được, nhận %r" % (ten_day_du,),
+    )
+    return "PHA 2 hỏng: hoàn nguyên sạch cả hai sổ, đăng ký lại được"
+
+
+@phep_kiem(
+    "28. lo_chi_tiet_loi=True: khoá ở ĐẦU / GIỮA / CUỐI câu, và cả trong "
+    "them.thong_diep lẫn them.vet_goi"
+)
+def kiem_lo_chi_tiet_loi_moi_vi_tri():
+    # Phép kiểm 24 chỉ đo MỘT vị trí (khoá ở cuối câu) và chỉ đo `kq.ly_do`.
+    # Câu báo lỗi của chính nó thì nói tới `them.thong_diep` và `them.vet_goi`,
+    # nhưng không kiểm hai trường ấy — đo được: gỡ hẳn làm mờ khỏi vết ngăn xếp
+    # (`vet = traceback.format_exc()`) mà bộ kiểm vẫn 26/26 XANH, trong khi vết
+    # ngăn xếp của Python in cả dòng mã nguồn gây lỗi.
+    #
+    # `them` KHÔNG đi qua `lam_mo` (nhật ký cố ý để nhân tự chịu trách nhiệm),
+    # nên chỗ duy nhất che nó là `dinh_tuyen`. Ca này khoá đúng chỗ ấy.
+    for vi_tri, cau in (
+        ("ĐẦU", KHOA_BIA + " là chứng thư nền tảng đích từ chối"),
+        ("GIỮA", "nền tảng đích từ chối: chứng thư " + KHOA_BIA + " đã hết hạn"),
+        ("CUỐI", "nền tảng đích từ chối, chứng thư đã dùng: " + KHOA_BIA),
+    ):
+
+        def no(_ts, c=cau):
+            raise RuntimeError(c)
+
+        nhan, _, so, _ = dung_nhan(ham_doc=no, lo_chi_tiet_loi=True)
+        kq = nhan.goi(DT_DOC, "gia.doc", {})
+        bao_dam(
+            KHOA_BIA not in kq.ly_do,
+            "khoá ở %s câu đi thẳng RA NGƯỜI GỌI: %s" % (vi_tri, kq.ly_do),
+        )
+        bg = cac_ban_ghi(so)[-1]
+        them = bg.get("them", {})
+        bao_dam(
+            KHOA_BIA not in json.dumps(them, ensure_ascii=False, default=str),
+            "khoá ở %s câu đi vào NHẬT KÝ qua trường 'them' (%s). Vết ngăn xếp "
+            "của Python in cả dòng mã nguồn gây lỗi, và dòng ấy rất hay là dòng "
+            "dựng một yêu cầu HTTP kèm chứng thư." % (vi_tri, sorted(them)),
+        )
+        bao_dam(
+            them.get("vet_goi"),
+            "lo_chi_tiet_loi=True mà không có vết ngăn xếp nào trong 'them': %r. "
+            "Che bằng cách BỎ TRỐNG là đổi một lỗ rò lấy một sổ sách vô dụng."
+            % (sorted(them),),
+        )
+        bao_dam(
+            "RuntimeError" in json.dumps(them, ensure_ascii=False, default=str),
+            "che quá tay: loại ngoại lệ cũng mất, %r" % (them,),
+        )
+    return "3 vị trí × (ly_do + them.thong_diep + them.vet_goi)"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 
 CAC_PHEP_KIEM = [
     kiem_trung_ten_trinh,
@@ -845,6 +994,8 @@ CAC_PHEP_KIEM = [
     kiem_lo_chi_tiet_loi,
     kiem_danh_sach_loc_theo_quyen,
     kiem_danh_sach_theo_cong_ghi,
+    kiem_hoan_nguyen_pha_ghi,
+    kiem_lo_chi_tiet_loi_moi_vi_tri,
 ]
 
 

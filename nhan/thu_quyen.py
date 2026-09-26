@@ -41,9 +41,18 @@ LUẬT CỦA BÀI NÀY: mỗi ca kiểm ở đây đã được THỬ NGƯỢC �
 cách nhỏ nhất có thể, xác nhận ca ấy ĐỎ, rồi phục hồi nguyên trạng. Một ca kiểm
 chưa thử ngược thì chưa biết nó có đo gì không.
 
-HAI CA ĐANG ĐỎ LÀ CỐ Ý. Chúng đỏ vì mã nguồn thật sự sai, không phải vì bài kiểm
-sai. Xem phần in ra ở cuối. Người điều phối quyết định sửa thế nào; bài kiểm này
-KHÔNG tự sửa `nhan/quyen.py`.
+KHÔNG CÒN CA ĐỎ CÓ CHỦ Ý (26/09/2026). Hai ca cuối cùng đã xử xong, và hai cách
+xử KHÁC HẲN nhau — ghi ra đây vì chỗ này dễ làm ẩu nhất:
+
+  · 3.3 `CongGhi(mo=True)` mở cổng ghi vô danh → sửa MÃ NGUỒN. Hàm dựng nay nổ
+    y như `mo()`. Bài kiểm được viết lại để đòi đúng tiếng nổ ấy, chứ không
+    phải để thôi kiểm.
+  · 4.1 `cong_cu_duoc_phep` → sửa BÀI KIỂM, và chỉ ở đúng một chỗ: nó đối chiếu
+    thứ tự ngược ([kho…, crm…]) trong khi hợp đồng của hàm là SẮP XẾP, đúng
+    hợp đồng mà phép kiểm 4.3 ngay bên dưới đang chốt. Mã nguồn không sai.
+    Không ca nào được làm xanh bằng cách nới lỏng phép kiểm.
+
+Ca đỏ từ nay đều là HỒI QUY. Đọc phần in ra ở cuối.
 
 BÀI NÀY KHÔNG NÓI GÌ VỀ: nhật ký (xem `nhan/nhat_ky.py`), hạn mức, xác thực,
 hay bảy bước của `nhan/dinh_tuyen.py`. Nó chỉ trả lời "người này CÓ ĐƯỢC LÀM
@@ -430,20 +439,40 @@ def kiem_mo_phai_co_ly_do():
 
 @phep_kiem("3.3 CongGhi(mo=True) KHÔNG được mở cổng vô danh, không lý do")
 def kiem_dung_cong_ghi_vo_danh():
-    # `mo()` bắt buộc ly_do và nguoi_mo; hàm dựng thì không. Hai đường vào cùng
-    # một trạng thái, chỉ một đường có phép kiểm. Đây là ca ĐỎ CỐ Ý — xem phần
-    # in ra ở cuối tệp.
-    c = CongGhi(mo=True)
+    # `mo()` bắt buộc ly_do và nguoi_mo; hàm dựng thì trước đây không — hai
+    # đường vào cùng một trạng thái, chỉ một đường có phép kiểm. Lỗ ấy ĐÃ BỊT
+    # trong `quyen.CongGhi.__init__`, nên bài kiểm phải đòi đúng thứ mã nguồn
+    # nay làm: NỔ. Bản cũ vẫn gọi `CongGhi(mo=True)` trần rồi mới xem tom_tat,
+    # nên nó chết vì LoiChinhSach trước khi kịp kiểm gì — đỏ vì BÀI KIỂM lạc
+    # hậu so với bản vá, không phải vì mã sai. Sửa 26/09/2026.
+    nem(
+        LoiChinhSach,
+        lambda: CongGhi(mo=True),
+        "CongGhi(mo=True) mở được cổng GHI toàn nhân với ly_do='' và "
+        "nguoi_mo='' — hàm dựng đi vòng qua đúng phép kiểm mà mo() bắt buộc. "
+        "Hệ quả: một chính sách dựng bằng ChinhSach(cong_ghi=CongGhi(mo=True)) "
+        "chạy với cổng ghi MỞ mà nhật ký không trả lời được câu 'vì sao hôm ấy "
+        "nhân đang mở ghi' — đúng câu mà chú thích của lớp này nói nó sinh ra "
+        "để trả lời.",
+    )
+    # Thiếu MỘT trong hai cũng phải nổ, không chỉ thiếu cả hai.
+    for ly_do, nguoi_mo in (("điều tra", ""), ("", MA_BIA)):
+        nem(
+            LoiChinhSach,
+            lambda l=ly_do, n=nguoi_mo: CongGhi(mo=True, ly_do=l, nguoi_mo=n),
+            "CongGhi(mo=True) lọt với ly_do=%r nguoi_mo=%r" % (ly_do, nguoi_mo),
+        )
+    # Và cửa chính vẫn phải đi qua được: bịt đường vòng KHÔNG được bịt luôn
+    # cách dùng đúng, mà đó là kiểu "sửa" hay gặp nhất sau một bản vá bảo mật.
+    c = CongGhi(mo=True, ly_do="điều tra sự cố 24/08", nguoi_mo=MA_BIA)
+    bang(c.dang_mo is True, "khai đủ lý do và người mở mà cổng vẫn ĐÓNG")
     tt = c.tom_tat()
     bang(
-        not (c.dang_mo and not tt.get("ly_do") and not tt.get("nguoi_mo")),
-        "CongGhi(mo=True) mở cổng GHI toàn nhân với ly_do='' và nguoi_mo='' — "
-        "hàm dựng đi vòng qua đúng phép kiểm mà mo() bắt buộc. "
-        "tom_tat() = %r. Hệ quả: một chính sách dựng bằng "
-        "ChinhSach(cong_ghi=CongGhi(mo=True)) chạy với cổng ghi MỞ mà nhật ký "
-        "không trả lời được câu 'vì sao hôm ấy nhân đang mở ghi' — đúng câu mà "
-        "chú thích của lớp này nói nó sinh ra để trả lời." % (tt,),
+        tt["ly_do"] == "điều tra sự cố 24/08" and tt["nguoi_mo"] == MA_BIA,
+        "hàm dựng nhận lý do/người mở nhưng không giữ lại: %r" % (tt,),
     )
+    # Mặc định vẫn là ĐÓNG — không lý do thì không cần, vì không mở gì cả.
+    bang(CongGhi().dang_mo is False, "CongGhi() mặc định phải ĐÓNG")
     return "hai đường vào cùng một trạng thái, cùng một phép kiểm"
 
 
@@ -500,13 +529,20 @@ def kiem_khong_ro_ri_danh_sach_phep():
     mo_cong(cs)
     ai_do = nguoi((VAI_DOC,))
     goc = cs.cong_cu_duoc_phep(ai_do)
-    bang(goc == [CC_DOC_2, CC_DOC], "tập ban đầu sai: %r" % (goc,))
+    # THỨ TỰ LÀ SẮP XẾP, không phải thứ tự khai. `cong_cu_duoc_phep` lọc trên
+    # `sorted(self._cong_cu)`, và phép kiểm 4.3 bên dưới chốt đúng hợp đồng ấy
+    # (`phep == sorted(tinh_lai)`). Hai dòng dưới đây trước viết ngược
+    # ([CC_DOC_2, CC_DOC] = kho… trước crm…), nên ca này ĐỎ vì BÀI KIỂM sai chứ
+    # không phải mã sai — sửa 26/09/2026. Cố ý KHÔNG đổi thành so sánh tập hợp:
+    # thứ tự ổn định là thứ `tools/list` của MCP dựa vào, và một so sánh
+    # `sorted(...) == sorted(...)` sẽ thôi không đo nó nữa.
+    bang(goc == [CC_DOC, CC_DOC_2], "tập ban đầu sai: %r" % (goc,))
 
     goc.append(CC_GHI)  # thử leo thang bằng cách sửa danh sách trả về
     goc.remove(CC_DOC)
     sau = cs.cong_cu_duoc_phep(ai_do)
     bang(
-        sau == [CC_DOC_2, CC_DOC],
+        sau == [CC_DOC, CC_DOC_2],
         "sửa danh sách trả về ĐỔI LUÔN chính sách bên trong: nay ra %r. Người gọi "
         "tự cấp cho mình %r." % (sau, CC_GHI),
     )
@@ -929,6 +965,57 @@ def kiem_khong_dau_sao_o_dau_ca():
     return "không khai được, không gọi được"
 
 
+@phep_kiem("7.7 hoan_nguyen_khai_cong_cu KHÔNG được thành đường hạ quyền âm thầm")
+def kiem_hoan_nguyen_khai_cong_cu():
+    # Hàm này thêm 26/09/2026 cho `dinh_tuyen.Nhan.dang_ky` (đăng ký hỏng nửa
+    # chừng thì hoàn nguyên). Nó GỠ một công cụ khỏi sổ, nên nó cũng là đường
+    # duy nhất trong lớp này có thể làm một dòng cấp quyền trỏ vào hư không.
+    # Hai giới hạn nó tự khai phải có phép kiểm, nếu không thì chúng chỉ là chú
+    # thích.
+    cs = chinh_sach_mau()
+
+    # 1. Đang có vai được cấp thì TỪ CHỐI gỡ — cả phía ĐỌC lẫn phía GHI.
+    nem(
+        LoiChinhSach,
+        lambda: cs.hoan_nguyen_khai_cong_cu(CC_DOC),
+        "gỡ được %r trong khi vai %r đang được cấp nó. Dòng cấp quyền ấy thành "
+        "trỏ vào hư không, và lần khai_vai sau mới nổ — xa nguyên nhân."
+        % (CC_DOC, VAI_DOC),
+    )
+    nem(
+        LoiChinhSach,
+        lambda: cs.hoan_nguyen_khai_cong_cu(CC_GHI),
+        "gỡ được công cụ GHI %r trong khi vai %r đang được cấp nó" % (CC_GHI, VAI_BIEN_TAP),
+    )
+    bang(
+        CC_DOC in cs.cong_cu_da_khai() and CC_GHI in cs.cong_cu_da_khai(),
+        "từ chối gỡ mà vẫn gỡ mất: %r" % (cs.cong_cu_da_khai(),),
+    )
+    # Và quyền phải còn nguyên sau lần từ chối — một lần nổ giữa chừng không
+    # được để lại sổ méo.
+    bang(cs.duoc_goi(nguoi((VAI_DOC,)), CC_DOC)[0], "quyền ĐỌC mất sau lần gỡ bị từ chối")
+
+    # 2. Chưa vai nào cấp thì gỡ được, và gỡ đúng một cái.
+    cs.khai_cong_cu("crm.moi_khai", ghi=False, mo_ta="chưa vai nào được cấp")
+    bang(cs.hoan_nguyen_khai_cong_cu("crm.moi_khai") is True, "gỡ phải trả True")
+    bang(
+        "crm.moi_khai" not in cs.cong_cu_da_khai(),
+        "gỡ xong mà vẫn còn trong sổ: %r" % (cs.cong_cu_da_khai(),),
+    )
+    bang(
+        sorted(cs.cong_cu_da_khai()) == sorted([CC_DOC, CC_DOC_2, CC_GHI]),
+        "gỡ quá tay sang công cụ khác: %r" % (cs.cong_cu_da_khai(),),
+    )
+
+    # 3. Không có gì để gỡ thì trả False, KHÔNG nổ: chỗ gọi là một khối dọn dẹp,
+    #    và một khối dọn dẹp tự ném lỗi sẽ che mất lỗi GỐC.
+    bang(
+        cs.hoan_nguyen_khai_cong_cu(CC_CHUA_KHAI) is False,
+        "gỡ thứ không có phải trả False, không được nổ",
+    )
+    return "từ chối khi đang được cấp · gỡ đúng một cái · vắng thì False"
+
+
 CAC_PHEP_KIEM = [
     kiem_cong_cu_chua_khai,
     kiem_vai_chua_khai,
@@ -969,18 +1056,21 @@ CAC_PHEP_KIEM = [
     kiem_nhanh_chet,
     kiem_ranh_gioi_han_danh_tinh,
     kiem_khong_dau_sao_o_dau_ca,
+    kiem_hoan_nguyen_khai_cong_cu,
 ]
 
-# Hai ca dưới đây ĐỎ vì `nhan/quyen.py` thật sự sai, không phải vì bài kiểm sai.
-# Giữ nguyên màu đỏ cho tới khi người điều phối quyết định sửa thế nào.
-CA_DO_CO_Y = {
-    "3.3 CongGhi(mo=True) KHÔNG được mở cổng vô danh, không lý do":
-        "CongGhi.__init__ nhận mo=True mà không đòi ly_do/nguoi_mo, trong khi "
-        "CongGhi.mo() thì đòi. Cổng GHI toàn nhân mở được không dấu vết.",
-    "5.3 Khai lại vai với danh sách NGẮN HƠN phải THU HỒI quyền":
-        "ChinhSach.khai_vai dùng setdefault().update() nên chỉ CỘNG DỒN. Không "
-        "có API thu hồi. Nạp lại cấu hình sau khi cắt quyền thì quyền cũ vẫn còn.",
-}
+# KHÔNG CÒN CA ĐỎ CÓ CHỦ Ý — 26/09/2026. Cả hai ca từng nằm ở đây đã được vá
+# trong `nhan/quyen.py`, và bảng này để RỖNG chứ không xoá đi: rỗng thì mọi ca
+# đỏ từ nay đều là ca "NGOÀI DỰ KIẾN" và được in kèm lời nhắc đọc kỹ, còn xoá
+# bảng đi thì nhánh phân loại ấy biến mất cùng.
+#
+# Hai ca đã vá, ghi lại để người sau nhận ra nếu chúng đỏ lại:
+#   · 3.3 — `CongGhi.__init__` nhận mo=True mà không đòi ly_do/nguoi_mo, trong
+#     khi `CongGhi.mo()` thì đòi. Cổng GHI toàn nhân mở được không dấu vết.
+#     Nay hàm dựng nổ y như `mo()`, và bài kiểm đòi đúng tiếng nổ ấy.
+#   · 5.3 — `khai_vai` dùng setdefault().update() nên chỉ CỘNG DỒN, không thu
+#     hồi được quyền. Nay khai_vai KHAI BÁO trạng thái cuối.
+CA_DO_CO_Y = {}
 
 
 def main():
@@ -1030,10 +1120,10 @@ def main():
             for t in ngoai_y:
                 print("  · {}".format(t))
         else:
-            print("Mọi ca đỏ đều nằm trong danh sách ĐỎ CỐ Ý ở cuối tệp này: chúng đỏ vì")
-            print("nhan/quyen.py thật sự sai. Bài kiểm KHÔNG tự sửa mã nguồn — người điều")
-            print("phối quyết định sửa thế nào. Mã thoát 1 là đúng: cổng CI phải đỏ cho tới")
-            print("khi hai lỗi ấy được xử lý hoặc được ghi nhận là chấp nhận có ý thức.")
+            print("Mọi ca đỏ đều nằm trong danh sách ĐỎ CỐ Ý ở cuối tệp này. Bài kiểm KHÔNG")
+            print("tự sửa mã nguồn — người điều phối quyết định sửa thế nào. Mã thoát 1 là")
+            print("đúng: cổng CI phải đỏ cho tới khi lỗi được xử hoặc được ghi nhận là chấp")
+            print("nhận có ý thức.")
     print("=" * 78)
     return 0 if tat_ca_dat else 1
 

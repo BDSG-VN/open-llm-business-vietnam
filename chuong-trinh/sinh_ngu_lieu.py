@@ -73,6 +73,8 @@ class LoiSinh(RuntimeError):
 
 
 SO_BAI_MOI_MON = 70   # một năm học thật ~70 bài mỗi môn
+SO_BAI_MOI_NGANH = 600    # 40 học phần × 15 bài của một chương trình đại học
+SO_BAI_MOI_HUONG = 30     # một hướng nghiên cứu sau đại học
 
 
 def lat_can_sinh(chi_cap: Optional[str] = None,
@@ -86,6 +88,31 @@ def lat_can_sinh(chi_cap: Optional[str] = None,
     Số đo từ mẻ thử: 1.595 token/bài, 211 token/giây, $0,383/triệu token. Với
     chiều này, phổ thông ra ~15,9 triệu token và tốn khoảng 6 USD.
     """
+    if chi_cap == "dai-hoc":
+        for l in lat_dai_hoc():
+            yield l
+        return
+    if chi_cap == "sau-dai-hoc":
+        for l in lat_sau_dai_hoc():
+            yield l
+        return
+    if chi_cap == "tat-ca":
+        for cap in CAP_HOC:
+            for lop in (cap["lop"] or (0,)):
+                for mon in mon_cua_cap(cap["ma"]):
+                    for bai in range(1, so_bai + 1):
+                        yield {
+                            "ma_lat": "%s|%s|%d|b%03d" % (cap["ma"], mon["ma"], lop, bai),
+                            "cap": cap["ma"], "cap_ten": cap["ten"],
+                            "mon": mon["ma"], "mon_ten": mon["ten"],
+                            "lop": lop, "bai": bai, "so_bai": so_bai,
+                            "chuan_vn": mon["chuan_vn"],
+                        }
+        for l in lat_dai_hoc():
+            yield l
+        for l in lat_sau_dai_hoc():
+            yield l
+        return
     for cap in CAP_HOC:
         if chi_cap and cap["ma"] != chi_cap:
             continue
@@ -100,6 +127,71 @@ def lat_can_sinh(chi_cap: Optional[str] = None,
                         "lop": lop, "bai": bai, "so_bai": so_bai,
                         "chuan_vn": mon["chuan_vn"],
                     }
+
+
+def lat_dai_hoc(so_bai: int = SO_BAI_MOI_NGANH) -> Iterator[Dict[str, Any]]:
+    """Lát bậc đại học: một (ngành, bài số N) là một lát.
+
+    Ngành lấy từ `ho_so.LINH_VUC` — cùng một danh mục mà hồ sơ học vấn của agent
+    trỏ vào. Dùng chung một nguồn là cố ý: nếu ngữ liệu có ngành mà hồ sơ không
+    có (hoặc ngược lại) thì có agent mang bằng một ngành chưa ai viết bài, và
+    không có gì báo cho biết.
+    """
+    from ho_so import LINH_VUC
+    for ma_lv, ten_lv, nganh_ds in LINH_VUC:
+        for nganh in nganh_ds:
+            ma_nganh = "".join(c if c.isalnum() else "-" for c in nganh.lower())
+            for bai in range(1, so_bai + 1):
+                yield {
+                    "ma_lat": "dai-hoc|%s|%s|b%03d" % (ma_lv, ma_nganh, bai),
+                    "cap": "dai-hoc", "cap_ten": "Đại học",
+                    "mon": ma_nganh, "mon_ten": nganh,
+                    "linh_vuc": ten_lv, "lop": 0, "bai": bai, "so_bai": so_bai,
+                    # Ngành nào cũng có chỗ chạm dữ liệu/địa lý/lịch sử Việt Nam,
+                    # nên bật cờ để cổng chủ quyền chạy cho TẤT CẢ.
+                    "chuan_vn": True,
+                }
+
+
+def lat_sau_dai_hoc(so_bai: int = SO_BAI_MOI_HUONG) -> Iterator[Dict[str, Any]]:
+    """Lát sau đại học: mỗi ngành sinh ra một số hướng nghiên cứu."""
+    from ho_so import LINH_VUC
+    for ma_lv, ten_lv, nganh_ds in LINH_VUC:
+        for nganh in nganh_ds:
+            ma_nganh = "".join(c if c.isalnum() else "-" for c in nganh.lower())
+            for bai in range(1, so_bai + 1):
+                yield {
+                    "ma_lat": "sau-dai-hoc|%s|%s|b%03d" % (ma_lv, ma_nganh, bai),
+                    "cap": "sau-dai-hoc", "cap_ten": "Thạc sĩ / Tiến sĩ",
+                    "mon": ma_nganh, "mon_ten": nganh,
+                    "linh_vuc": ten_lv, "lop": 0, "bai": bai, "so_bai": so_bai,
+                    "chuan_vn": True,
+                }
+
+
+LOI_NHAC_CAO = """Bạn là người viết giáo trình bậc {cap_ten} tại Việt Nam.
+
+Viết một bài giảng NGUYÊN BẢN cho:
+  Ngành: {mon_ten}
+  Lĩnh vực: {linh_vuc}
+  Bài số {bai} trong tổng số {so_bai} bài của toàn chương trình.
+
+RÀNG BUỘC BẮT BUỘC:
+1. VIẾT MỚI hoàn toàn. Không tái tạo, không trích, không diễn đạt lại giáo
+   trình của bất kỳ trường nào.
+2. Chọn chủ đề HỢP LÝ cho vị trí bài này trong chương trình: bài đầu là kiến
+   thức nền của ngành, về sau chuyên sâu dần. KHÔNG lặp chủ đề bài khác.
+3. Thuật ngữ chuyên ngành bằng tiếng Việt, kèm tiếng Anh trong ngoặc ở lần
+   xuất hiện đầu.
+4. Nếu có ví dụ, ƯU TIÊN bối cảnh Việt Nam: doanh nghiệp Việt, quy định Việt,
+   số liệu Việt. Không bịa số — nếu không chắc thì nói là ví dụ minh hoạ.
+5. Nếu có nhắc địa lý hành chính: Việt Nam có 34 tỉnh, thành phố trực thuộc
+   trung ương theo Nghị quyết 202/2025/QH15.
+6. Nếu có nhắc biển đảo: Quần đảo Hoàng Sa thuộc thành phố Đà Nẵng, Quần đảo
+   Trường Sa thuộc tỉnh Khánh Hòa, đều là lãnh thổ Việt Nam.
+7. Độ dài khoảng {so_tu} từ.
+
+Viết thẳng bài giảng, không mở đầu bằng lời dẫn."""
 
 
 LOI_NHAC = """Bạn là người viết học liệu cho chương trình giáo dục phổ thông Việt Nam.
@@ -126,6 +218,19 @@ RÀNG BUỘC BẮT BUỘC:
 6. Độ dài khoảng {so_tu} từ.
 
 Viết thẳng bài học, không mở đầu bằng lời dẫn."""
+
+
+def loi_nhac_cua(lat: Dict[str, Any], so_tu: int) -> str:
+    """Bậc cao dùng lời nhắc riêng: 'lớp' không còn nghĩa, 'ngành' mới có."""
+    if lat["cap"] in ("dai-hoc", "sau-dai-hoc"):
+        return LOI_NHAC_CAO.format(
+            cap_ten=lat["cap_ten"], mon_ten=lat["mon_ten"],
+            linh_vuc=lat.get("linh_vuc", ""), bai=lat["bai"],
+            so_bai=lat["so_bai"], so_tu=so_tu)
+    return LOI_NHAC.format(
+        cap_ten=lat["cap_ten"], mon_ten=lat["mon_ten"], so_tu=so_tu,
+        bai=lat["bai"], so_bai=lat["so_bai"],
+        lop_cau=("Lớp: %d" % lat["lop"]) if lat["lop"] else "Lứa tuổi: mẫu giáo")
 
 
 def _goi_mo_hinh(goc: str, khoa: str, mo_hinh: str, loi_nhac: str,
@@ -207,10 +312,7 @@ def sinh_song_song(goc: str, khoa: str, mo_hinh: str, duong_ra: str,
                 lat = viec.get_nowait()
             except queue.Empty:
                 return
-            ln = LOI_NHAC.format(
-                cap_ten=lat["cap_ten"], mon_ten=lat["mon_ten"], so_tu=so_tu,
-                bai=lat["bai"], so_bai=lat["so_bai"],
-                lop_cau=("Lớp: %d" % lat["lop"]) if lat["lop"] else "Lứa tuổi: mẫu giáo")
+            ln = loi_nhac_cua(lat, so_tu)
             try:
                 d = _goi_mo_hinh(goc, khoa, mo_hinh, ln, tran_token)
             except Exception as loi:
@@ -231,7 +333,8 @@ def sinh_song_song(goc: str, khoa: str, mo_hinh: str, duong_ra: str,
             ket.put({
                 "ma_lat": lat["ma_lat"], "cap": lat["cap"], "mon": lat["mon"],
                 "mon_ten": lat["mon_ten"], "lop": lat["lop"], "bai": lat["bai"],
-                "chuan_vn": lat["chuan_vn"], "van_ban": van,
+                "chuan_vn": lat["chuan_vn"], "linh_vuc": lat.get("linh_vuc", ""),
+                "van_ban": van,
                 "do_ai_sinh": True, "mo_hinh": d.get("model") or mo_hinh,
                 "luc": time.strftime("%Y-%m-%dT%H:%M:%S+0000", time.gmtime()),
                 "bam_loi_nhac": hashlib.blake2b(ln.encode(), digest_size=8).hexdigest(),
@@ -299,10 +402,7 @@ def sinh(goc: str, khoa: str, mo_hinh: str, duong_ra: str,
             if lat["ma_lat"] in da_xong:
                 tk["bo_qua"] += 1
                 continue
-            ln = LOI_NHAC.format(
-                cap_ten=lat["cap_ten"], mon_ten=lat["mon_ten"], so_tu=so_tu,
-                bai=lat["bai"], so_bai=lat["so_bai"],
-                lop_cau=("Lớp: %d" % lat["lop"]) if lat["lop"] else "Lứa tuổi: mẫu giáo")
+            ln = loi_nhac_cua(lat, so_tu)
             t0 = time.time()
             try:
                 d = _goi_mo_hinh(goc, khoa, mo_hinh, ln, tran_token)

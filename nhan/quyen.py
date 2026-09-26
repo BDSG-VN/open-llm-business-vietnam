@@ -61,7 +61,13 @@ GHI = "ghi"
 #   `\Z` chỉ khớp ở cuối chuỗi thật. Mọi mẫu KIỂM HỢP LỆ trong nhân dùng \Z.
 #   Các mẫu DÒ TÌM trong nhat_ky.py giữ `$`: ở đó khớp rộng hơn là làm mờ nhiều
 #   hơn, tức nghiêng về phía an toàn.
-MAU_TEN_DAY_DU = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}\.[a-z0-9][a-z0-9_]{0,63}\Z")
+#
+#   Hai vế đều mở đầu bằng CHỮ CÁI, khớp với `MAU_TEN_TRINH`/`MAU_TEN_NGAN`
+#   trong `dinh_tuyen.py` (sửa 26/09/2026, lý do đầy đủ ghi ở đó: một tên như
+#   `123.45` đọc thành SỐ trong mọi tệp cấu hình). Hai lớp phải cùng một luật —
+#   lớp quyền nhận một tên mà lớp định tuyến từ chối thì chính sách có những
+#   dòng không bao giờ dùng tới, và không ai được báo.
+MAU_TEN_DAY_DU = re.compile(r"^[a-z][a-z0-9_]{0,31}\.[a-z][a-z0-9_]{0,63}\Z")
 MAU_TEN_VAI = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}\Z")
 
 
@@ -170,6 +176,38 @@ class ChinhSach:
         mt = MoTaCongCu(ten=ten, loai=GHI if ghi else DOC, mo_ta=mo_ta)
         self._cong_cu[ten] = mt
         return mt
+
+    def hoan_nguyen_khai_cong_cu(self, ten: str) -> bool:
+        """Gỡ một công cụ VỪA khai, để hoàn nguyên một lần đăng ký hỏng nửa chừng.
+
+        Thêm 26/09/2026 cho `dinh_tuyen.Nhan.dang_ky`: khi một trình điều khiển
+        khai năm công cụ và cái thứ ba méo, ba cái đầu đã kịp vào sổ. Không có
+        đường gỡ thì chúng ở lại làm công cụ MỒ CÔI — `tools/list` quảng cáo
+        chúng, mọi lời gọi đều bị từ chối, và đăng ký lại sau khi sửa thì nổ
+        vĩnh viễn vì "khai hai lần".
+
+        HAI GIỚI HẠN CỐ Ý, để hàm này không thành đường hạ quyền âm thầm:
+
+          1. TỪ CHỐI gỡ một công cụ đang được vai nào đó cấp. Gỡ nó sẽ làm dòng
+             cấp quyền ấy trỏ vào hư không, và lần `khai_vai` sau mới nổ — xa
+             nguyên nhân. Một lần đăng ký hỏng nửa chừng thì chưa vai nào kịp
+             được cấp, nên giới hạn này không cản đúng việc nó sinh ra để làm.
+          2. Trả về True/False chứ không nổ khi không có gì để gỡ: chỗ gọi là
+             một khối dọn dẹp, và một khối dọn dẹp tự ném lỗi sẽ che mất lỗi
+             gốc — thứ người sửa thật sự cần đọc.
+        """
+        if ten not in self._cong_cu:
+            return False
+        for bang in (self._vai_doc, self._vai_ghi):
+            for ten_vai, tap in bang.items():
+                if ten in tap:
+                    raise LoiChinhSach(
+                        "không gỡ được công cụ %r: vai %r đang được cấp nó. "
+                        "Thu hồi quyền trước (khai_vai với danh sách không có "
+                        "nó), rồi mới gỡ." % (ten, ten_vai)
+                    )
+        del self._cong_cu[ten]
+        return True
 
     def khai_vai(
         self,
