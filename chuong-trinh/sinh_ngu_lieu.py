@@ -153,6 +153,128 @@ def kiem_chu_quyen(van_ban: str, chuan_vn: bool) -> Dict[str, Any]:
     return kq
 
 
+def sinh_song_song(goc: str, khoa: str, mo_hinh: str, duong_ra: str,
+                   so_luong: int = 10, gioi_han: Optional[int] = None,
+                   chi_cap: Optional[str] = None, so_tu: int = 900,
+                   tran_token: int = 2000, so_bai: int = SO_BAI_MOI_MON,
+                   in_moi: int = 50) -> Dict[str, Any]:
+    """Sinh bằng NHIỀU LUỒNG. Một luồng mất ~21 giờ cho riêng phần phổ thông.
+
+    BA ĐIỀU PHẢI ĐÚNG, và mỗi điều là một cách hỏng đã lường trước:
+
+    1. MỘT LUỒNG GHI, NHIỀU LUỒNG GỌI. Nhiều luồng cùng ghi vào một tệp thì
+       dòng của chúng cài răng lược vào nhau và tệp JSONL hỏng ở những chỗ
+       ngẫu nhiên — hỏng theo kiểu chỉ phát hiện ra lúc nạp, sau hàng giờ.
+       Nên: các luồng gọi mô hình, kết quả về một hàng đợi, MỘT luồng ghi.
+
+    2. ĐỌC LÁT ĐÃ XONG TRƯỚC KHI BẮT ĐẦU. Chạy lại phải bỏ qua đúng chỗ cũ.
+
+    3. LỖI MỘT LÁT KHÔNG ĐƯỢC GIẾT CẢ MẺ. Một lát hỏng thì đếm rồi đi tiếp;
+       hết mẻ mới báo tổng. Dừng cả mẻ vì một lần mạng chập là mất hàng giờ.
+    """
+    import queue
+    import threading
+
+    da_xong = set()
+    if os.path.exists(duong_ra):
+        with open(duong_ra, encoding="utf-8") as f:
+            for d in f:
+                try:
+                    da_xong.add(json.loads(d)["ma_lat"])
+                except Exception:
+                    pass
+
+    can = [l for l in lat_can_sinh(chi_cap, so_bai) if l["ma_lat"] not in da_xong]
+    if gioi_han is not None:
+        can = can[:gioi_han]
+    print("  đã có %d lát · còn phải sinh %d lát · %d luồng"
+          % (len(da_xong), len(can), so_luong), flush=True)
+    if not can:
+        return {"lat_moi": 0, "bo_qua": len(da_xong), "ghi_chu": "không còn lát nào"}
+
+    viec = queue.Queue()
+    for l in can:
+        viec.put(l)
+    ket = queue.Queue()
+    tk = {"lat_moi": 0, "bo_qua": len(da_xong), "tu_choi_chu_quyen": 0, "loi": 0,
+          "token_ra": 0, "token_vao": 0, "thieu_quan_dao": 0}
+    khoa_dem = threading.Lock()
+    t_tong = time.time()
+
+    def tho():
+        while True:
+            try:
+                lat = viec.get_nowait()
+            except queue.Empty:
+                return
+            ln = LOI_NHAC.format(
+                cap_ten=lat["cap_ten"], mon_ten=lat["mon_ten"], so_tu=so_tu,
+                bai=lat["bai"], so_bai=lat["so_bai"],
+                lop_cau=("Lớp: %d" % lat["lop"]) if lat["lop"] else "Lứa tuổi: mẫu giáo")
+            try:
+                d = _goi_mo_hinh(goc, khoa, mo_hinh, ln, tran_token)
+            except Exception as loi:
+                with khoa_dem:
+                    tk["loi"] += 1
+                continue
+            van = (d["choices"][0]["message"]["content"] or "").strip()
+            dung = d.get("usage") or {}
+            cq = kiem_chu_quyen(van, lat["chuan_vn"])
+            if not cq["dat"]:
+                with khoa_dem:
+                    tk["tu_choi_chu_quyen"] += 1
+                print("  [TỪ CHỐI] %s — %s" % (lat["ma_lat"], cq["chuoi_cam"]), flush=True)
+                continue
+            if cq.get("nhac_bien_dao") and not (cq.get("co_hoang_sa") and cq.get("co_truong_sa")):
+                with khoa_dem:
+                    tk["thieu_quan_dao"] += 1
+            ket.put({
+                "ma_lat": lat["ma_lat"], "cap": lat["cap"], "mon": lat["mon"],
+                "mon_ten": lat["mon_ten"], "lop": lat["lop"], "bai": lat["bai"],
+                "chuan_vn": lat["chuan_vn"], "van_ban": van,
+                "do_ai_sinh": True, "mo_hinh": d.get("model") or mo_hinh,
+                "luc": time.strftime("%Y-%m-%dT%H:%M:%S+0000", time.gmtime()),
+                "bam_loi_nhac": hashlib.blake2b(ln.encode(), digest_size=8).hexdigest(),
+                "kiem_chu_quyen": cq,
+                "token_ra": dung.get("completion_tokens"),
+                "_vao": dung.get("prompt_tokens") or 0,
+            })
+
+    def ghi():
+        with open(duong_ra, "a", encoding="utf-8") as ra:
+            while True:
+                r = ket.get()
+                if r is None:
+                    return
+                vao = r.pop("_vao", 0)
+                ra.write(json.dumps(r, ensure_ascii=False) + "\n")
+                ra.flush()
+                with khoa_dem:
+                    tk["lat_moi"] += 1
+                    tk["token_ra"] += r.get("token_ra") or 0
+                    tk["token_vao"] += vao
+                    n = tk["lat_moi"]
+                if n % in_moi == 0:
+                    g = time.time() - t_tong
+                    con = (len(can) - n) / max(n / g, 1e-9)
+                    print("  [%5d/%d] %s · %.0f bài/phút · còn ~%.0f phút"
+                          % (n, len(can), r["ma_lat"], n / g * 60, con / 60), flush=True)
+
+    t_ghi = threading.Thread(target=ghi, daemon=True)
+    t_ghi.start()
+    tho_ds = [threading.Thread(target=tho, daemon=True) for _ in range(so_luong)]
+    for t in tho_ds:
+        t.start()
+    for t in tho_ds:
+        t.join()
+    ket.put(None)
+    t_ghi.join()
+
+    tk["tong_giay"] = time.time() - t_tong
+    tk["bai_moi_phut"] = tk["lat_moi"] / max(tk["tong_giay"], 1e-9) * 60
+    return tk
+
+
 def sinh(goc: str, khoa: str, mo_hinh: str, duong_ra: str,
          gioi_han: Optional[int] = None, chi_cap: Optional[str] = None,
          so_tu: int = 900, tran_token: int = 2000,
@@ -240,12 +362,18 @@ if __name__ == "__main__":
     p.add_argument("--cap", default=None)
     p.add_argument("--so-tu", type=int, default=900)
     p.add_argument("--so-bai", type=int, default=SO_BAI_MOI_MON)
+    p.add_argument("--luong", type=int, default=1, help="số luồng song song")
     a = p.parse_args()
     if not a.khoa:
         raise SystemExit("Thiếu --khoa (hoặc LITELLM_KEY). KHÔNG ghi khoá vào mã.")
     print("  tổng số lát trong khung: %d" % tong_so_lat(a.cap, a.so_bai))
-    tk = sinh(a.goc, a.khoa, a.mo_hinh, a.ra, a.gioi_han, a.cap, a.so_tu,
-              so_bai=a.so_bai)
+    if a.luong > 1:
+        tk = sinh_song_song(a.goc, a.khoa, a.mo_hinh, a.ra, so_luong=a.luong,
+                            gioi_han=a.gioi_han, chi_cap=a.cap, so_tu=a.so_tu,
+                            so_bai=a.so_bai)
+    else:
+        tk = sinh(a.goc, a.khoa, a.mo_hinh, a.ra, a.gioi_han, a.cap, a.so_tu,
+                  so_bai=a.so_bai)
     print("")
     print("  ── KẾT QUẢ ──")
     for k, v in tk.items():
