@@ -128,6 +128,15 @@ NGUON_SQL: List[Tuple[str, str, str, str]] = [
         "Tin dang tren san trao doi.",
     ),
     (
+        "kho-tri-thuc",
+        "SELECT van FROM doan_tri_thuc WHERE nguon NOT IN ('bai-dang-bds','nao-agent')",
+        "mo",
+        "Kho tri thuc da chia doan cua he truy hoi (CSDL bdsg_chat, KHAC CSDL chinh). "
+        "Da loai hai nguon MAY SINH qua cong mo hinh ben thu ba. Nguon nay CHONG LAN mot "
+        "phan voi ho-so-dn — bo khu trung lap se giu ban den truoc, nen thu tu trong danh "
+        "sach nay quyet dinh ban nao duoc giu.",
+    ),
+    (
         "ocop",
         "SELECT mo_ta FROM ocop.san_pham WHERE mo_ta IS NOT NULL",
         "cam",
@@ -310,6 +319,54 @@ def boc_json(van: str) -> str:
     return van
 
 
+# Hop thu CONG KHAI cua chinh BDSG — giu nguyen, khong che.
+# Che ca hop thu cua minh la day mo hinh rang khong ai lien he duoc voi BDSG.
+LIEN_HE_BDSG = re.compile(r"(?i)\b(?:info@bdsg\.vn|bdsg\.vn@gmail\.com|[a-z0-9._%+-]+@bdsg\.vn)\b")
+
+# Vi du BIA trong chu thich ma — khong phai lien he that.
+VI_DU_BIA = re.compile(r"(?i)@(?:evil|example|test|vidu|localhost)\.")
+
+
+def che_lien_he_ben_thu_ba(van: str) -> Tuple[str, int]:
+    """
+    Che email va so dien thoai cua BEN THU BA, giu lai cua BDSG va cac vi du bia.
+
+    ═══ VI SAO KHONG CHE TAT ═══
+
+    Do 26/09/2026 tren 45.416 ban ghi: 8 khop du lieu ca nhan, va 6 trong so do
+    KHONG phai du lieu ca nhan — bon la hop thu cong khai cua chinh BDSG, hai la
+    mot vi du bia (`user@evil.tld`) trong chu thich ma giai thich mot phep kiem
+    URL. Che het thanh [EMAIL] se lam ba viec deu sai:
+      - day mo hinh rang khong ai lien he duoc voi BDSG,
+      - pha mot doan van ban day ve bao mat dang hoc duoc,
+      - va lam con so "da che bao nhieu" mat y nghia.
+
+    Con lai dung hai cai can che, va ca hai la lien he cua doanh nghiep KHAC nam
+    trong van ban do BDSG viet hoac cao ve.
+    """
+    n = 0
+
+    def _email(m: re.Match) -> str:
+        nonlocal n
+        t = m.group(0)
+        if LIEN_HE_BDSG.fullmatch(t) or VI_DU_BIA.search(t):
+            return t
+        n += 1
+        return "[EMAIL]"
+
+    def _sdt(m: re.Match) -> str:
+        nonlocal n
+        n += 1
+        return "[SĐT]"
+
+    van = CA_NHAN["email"].sub(_email, van)
+    van = CA_NHAN["dien-thoai"].sub(_sdt, van)
+    # So 12 chu so dung sat ten doanh nghiep gan nhu luon la so dien thoai co ma
+    # quoc gia, khong phai so giay to. Che theo huong an toan.
+    van = CA_NHAN["the-can-cuoc"].sub(_sdt, van)
+    return van, n
+
+
 def la_rac(van: str) -> bool:
     return any(p.search(van) for p in RAC)
 
@@ -369,10 +426,14 @@ def main() -> int:
     bao_cao: List[Tuple[str, str, int, int, str]] = []
     bi_tu_choi: List[str] = []
 
+    so_che = [0]
+
     def them(van: str, nguon: str, lop: str, xuat_xu: str) -> bool:
         van = chuan_hoa(boc_json(van))
         if len(van) < DAI_TOI_THIEU or la_rac(van):
             return False
+        van, n_che = che_lien_he_ben_thu_ba(van)
+        so_che[0] += n_che
         h = hashlib.md5(van.encode("utf-8")).hexdigest()
         if h in da_thay:
             return False
@@ -458,7 +519,10 @@ def main() -> int:
 
     cn = quet_ca_nhan(b["text"] for b in ban_ghi)
     print()
-    print("  ── QUÉT DỮ LIỆU CÁ NHÂN ──")
+    print(f"  ── ĐÃ CHE {so_che[0]} liên hệ của bên thứ ba ──")
+    print("     (hộp thư công khai của BDSG và ví dụ bịa trong chú thích mã: GIỮ NGUYÊN)")
+    print()
+    print("  ── QUÉT LẠI SAU KHI CHE ──")
     for k, v in cn.items():
         print(f"    {'⚠' if v else '✓'} {k:14s} {v}")
 
