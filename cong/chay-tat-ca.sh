@@ -75,7 +75,7 @@ fi
 # Cố ý KHÔNG dùng glob *.py. Glob im lặng bỏ qua cổng bị xoá: kho mất một cổng mà bảng
 # tổng kết vẫn "toàn ĐẠT". Khai tên ra thì thiếu tệp là HỎNG, thấy ngay.
 CONG_MONG_DOI=(khong-bi-mat.py khong-ha-tang.py khong-du-lieu-cam.py khong-lo-hong.py \
-                khong-danh-tinh.py khong-tham-chieu-ngoai.py)
+                khong-danh-tinh.py khong-tham-chieu-ngoai.py khong-cua-hau.py)
 # khong-danh-tinh.py thêm 26/09/2026: bốn cổng trên ĐẠT toàn kho, rồi một lượt soát
 # TAY độc lập vẫn tìm ra họ tên thật của chủ dự án. Thứ soát tay tìm được phải trở
 # thành cổng, nếu không lần sau nó lọt.
@@ -85,6 +85,14 @@ CONG_MONG_DOI=(khong-bi-mat.py khong-ha-tang.py khong-du-lieu-cam.py khong-lo-ho
 # tính). Cổng này chặn một LỜI KHAI SAI ở lại trong kho — tài liệu nói sai về nguồn gốc của
 # chính mã trong kho, và nói sai về phạm vi ngôn ngữ của dự án. Không có gì rò rỉ, nhưng
 # người đọc bị dẫn sai, mà kho này thì tồn tại để nói đúng chỗ khó.
+#
+# khong-cua-hau.py thêm 26/09/2026, và nó chặn họ lỗi THỨ BA: một CỬA HẬU ở lại trong kho.
+# Số đo làm nó ra đời: máy chủ MCP đang chạy của BDSG (nằm ngoài kho này) lấy SSH vào máy
+# chủ sản phẩm làm phương tiện, với một khoá root ghi cứng trong mã — mỗi công cụ là một
+# lệnh tuỳ ý trên production. Kho này đang thành một hệ điều hành cho doanh nghiệp, nên
+# khuôn ấy không được phép quay về qua một lần sao chép mã. Khác hai họ trên ở chỗ: không
+# có gì rò ra, không có lời khai nào sai — nhưng nếu mã ấy được chạy thì thiệt hại là toàn
+# quyền trên máy chủ, chứ không phải một dòng tài liệu đọc nhầm.
 
 echo "════════════════════════════════════════════════════════════════════════════"
 echo " CỔNG KIỂM TRƯỚC KHI ĐẨY — Open BDSG OS"
