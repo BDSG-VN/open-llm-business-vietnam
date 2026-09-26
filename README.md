@@ -111,6 +111,11 @@ Một thùng máy: ban ngày phục vụ nhân sự, ban đêm tinh chỉnh trê
 ty. Cấu hình, lập luận chọn từng linh kiện, và **những gì chưa đo** nằm ở
 [`tai-lieu/MAY-BDSG-OS.md`](tai-lieu/MAY-BDSG-OS.md).
 
+Các máy ấy còn có thể **cùng góp vào mô hình chung**: mỗi nơi tinh chỉnh trên dữ liệu
+của mình rồi chỉ gửi về bộ điều hợp, không gửi dữ liệu. Đó là ĐỀ XUẤT kiến trúc, chưa
+có mã — kèm ba giới hạn phải đọc trước khi hứa với ai:
+[`tai-lieu/CUNG-HUAN-LUYEN.md`](tai-lieu/CUNG-HUAN-LUYEN.md).
+
 ---
 
 > **Số đo trong README này là số đo trên CƠ SỞ DỮ LIỆU NGUỒN và trên hệ đang chạy, không
@@ -129,6 +134,7 @@ ty. Cấu hình, lập luận chọn từng linh kiện, và **những gì chưa
 - [Hệ sinh thái](#he-sinh-thai-nhung-thiet-bi-ma-he-dieu-hanh-nay-lai)
 - [Cấp phép trọng số đi kèm máy](#cap-phep-trong-so-di-kem-may)
 - [Máy trạm BDSG OS](#may-tram-bdsg-os)
+- [Cùng huấn luyện (đề xuất)](tai-lieu/CUNG-HUAN-LUYEN.md)
 - [Hai thứ khác nhau trong kho này](#hai-thu-khac-nhau-trong-kho-nay)
 - [Bảng trạng thái thẳng thắn](#bang-trang-thai-thang-than)
 - [Backend Gemma 4 31B của Google](#backend-gemma-4-31b-cua-google)
