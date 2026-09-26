@@ -176,6 +176,53 @@ MAU_CONG = re.compile(re.escape(":") + r"(" + "|".join(sorted(CONG_NOI_BO)) + r"
 TRUOC_CONG_LA_NOI_BO = re.compile(r"(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])$")
 
 
+def trong_ngoac_vuong(dong, vi_tri):
+    """
+    Dấu hai chấm ở `vi_tri` có nằm trong một cặp ngoặc vuông đang mở không?
+
+    ═══ VÌ SAO CẦN HÀM NÀY ═══
+
+    Đo 26/09/2026: cổng bắt oan một phép CẮT CHUỖI của Python trong
+    nhan/dinh_tuyen.py — dạng `vet[` rồi dấu hai chấm rồi một số giới hạn độ dài,
+    tình cờ trùng một trong các số cổng nội bộ. Biểu thức dò cổng đòi một dấu hai
+    chấm đứng trước, mà cú pháp cắt chuỗi cũng có đúng dấu ấy.
+
+    Cách phân biệt đáng tin nhất là NGỮ CẢNH NGOẶC: địa chỉ máy chủ kèm cổng nằm
+    NGOÀI ngoặc vuông, còn phép cắt chuỗi và phép chỉ số thì nằm TRONG. Đếm độ sâu
+    ngoặc từ đầu dòng tới dấu hai chấm; sâu hơn 0 nghĩa là đang ở trong một phép
+    chỉ số.
+
+    ⚠ Chỗ này KHÔNG được nới thêm. Một địa chỉ thật viết trong một danh sách cũng
+    nằm trong ngoặc vuông, nên nếu chỉ dựa vào ngoặc thì sẽ bỏ lọt. Vì thế hàm bỏ
+    qua ngoặc nằm TRONG chuỗi trích dẫn: một dấu hai chấm bên trong dấu nháy vẫn
+    bị soi bình thường.
+
+    ⚠ Và chú thích này CỐ Ý không viết khuôn ấy ra nguyên văn. Cổng quét cả chính
+    nó; một ví dụ viết thẳng sẽ làm cổng tự báo hỏng — đúng lỗi đã xảy ra ở bản
+    đầu của hàm này.
+    """
+    sau = 0
+    trong_nhay = None
+    i = 0
+    while i < vi_tri:
+        c = dong[i]
+        if trong_nhay is not None:
+            if c == "\\":
+                i += 2
+                continue
+            if c == trong_nhay:
+                trong_nhay = None
+        elif c in "\"'":
+            trong_nhay = c
+        elif c == "[":
+            sau += 1
+        elif c == "]":
+            sau = max(0, sau - 1)
+        i += 1
+    # Trong chuỗi trích dẫn thì soi bình thường, dù chuỗi ấy nằm trong ngoặc.
+    return trong_nhay is None and sau > 0
+
+
 def la_nhi_phan(duong_dan):
     with open(duong_dan, "rb") as f:
         return b"\x00" in f.read(8192)
@@ -232,6 +279,8 @@ def quet_dong(dong):
     for khop in MAU_CONG.finditer(dong):
         if TRUOC_CONG_LA_NOI_BO.search(dong[:khop.start()]):
             continue  # gắn với loopback: không lộ máy chủ nào ở xa
+        if trong_ngoac_vuong(dong, khop.start()):
+            continue  # cắt chuỗi/chỉ số Python, không phải cổng — xem chú thích hàm
         thay.append(("cong-noi-bo", "cổng %s (cột %d)" % (khop.group(1), khop.start() + 1)))
 
     return thay
@@ -315,13 +364,21 @@ def tu_kiem():
         "duong-dan-van-hanh": "rsync tới " + "/home/" + "nguoi-dung-vi-du" + "/domains/",
         "ten-container": "docker restart " + ten_gia,
         "ten-mien-noi-bo": "đăng nhập " + mien_gia,
-        "cong-noi-bo": "gateway tại 10.1.2.3" + ":" + "4000",
+        # Dạng KHÓ hơn dạng trần: địa chỉ nằm trong danh sách, tức dấu hai chấm ở
+        # trong ngoặc vuông — đúng ca mà `trong_ngoac_vuong` phải KHÔNG bỏ qua, vì
+        # nó nằm trong chuỗi trích dẫn.
+        "cong-noi-bo": 'MAY = ["10.1.2.3' + ":" + '4000"]',
         "mien-tru-khong-ly-do": "MAY = '" + ip_thu + "'  # " + DAU_MIEN_TRU + " khong-ha-tang",
     }
     sach = [
         "# Số tiền Việt Nam — 5/5 dương tính giả đã gặp ngày 25/09/2026, phải KHÔNG bị bắt:",
         "doanh_thu = '120.086.720.000 đồng'",
         "von = '10.000.000.000 đồng'",
+        # Cắt chuỗi Python — dương tính giả đã gặp 26/09/2026, phải KHÔNG bị bắt.
+        # Ghép lúc chạy: viết thẳng thì cổng tự báo hỏng khi quét chính tệp này.
+        "if len(vet) > 4000: vet = vet[" + ":" + "4000]",
+        "cat = noi_dung[dau" + ":" + "4000]",
+        "# Nhưng địa chỉ thật TRONG một danh sách thì VẪN phải bị bắt — xem mẫu cài.",
         "# Dải ví dụ RFC5737 và loopback phải KHÔNG bị bắt:",
         "VI_DU = '203.0.113.7'   ;  CUC_BO = '127.0.0.1'  ;  MOI_GIAO_DIEN = '0.0.0.0'",
         "MANG_RIENG = '172.17.0.2'",
