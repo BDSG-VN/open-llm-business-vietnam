@@ -62,6 +62,30 @@ DAU_MIEN_TRU = "cong" + ":bo-qua"
 MIEN_TRU = re.compile(re.escape(DAU_MIEN_TRU) + r"\s+khong-lo-hong(?:\s+ly-do=(\S[^\n]*))?")
 
 # ── Luật 1: cookie phiên kèm giá trị ──────────────────────────────────────────
+#
+# ═══ VÌ SAO DANH SÁCH NÀY ĐƯỢC PHÉP Ở TRONG KHO CÔNG KHAI ═══
+#
+# Cùng ngày 26/09/2026, cổng `khong-danh-tinh.py` phải chuyển danh sách của nó ra
+# một tệp ngoài git, vì nó đã tự đăng lên kho công khai đúng những danh tính nó
+# sinh ra để chặn. Câu hỏi đúng là: danh sách dưới đây có cùng vấn đề không?
+#
+# KHÔNG, và khác biệt nằm ở chỗ **danh sách là gì**:
+#
+#   - Ở cổng danh tính, danh sách CHÍNH LÀ dữ liệu nhạy cảm. Tên một người là
+#     thứ cần giấu; bộ dò chỉ là cái cớ để nó lọt ra.
+#   - Ở đây, danh sách là các KHOÁ DÒ chung. `PHPSESSID`, `sessionid`,
+#     `csrftoken` là tên công khai của cả ngành. `bdsg_dn` cũng không phải bí
+#     mật: nó hiện ra trong công cụ nhà phát triển của bất kỳ trình duyệt nào
+#     mở trang. Một TÊN cookie không phải lỗ hổng.
+#
+# Thứ nguy hiểm là TỔ HỢP — tên cộng giá trị thật, cộng cờ bảo mật bị tắt, cộng
+# đường dẫn tệp của hệ đang chạy. Chính tổ hợp ấy là thứ biểu thức bên dưới
+# chặn, và nó cần cái tên để chặn được.
+#
+# Phép thử để quyết cho một cổng bất kỳ: **giấu danh sách đi thì cổng còn chặn
+# được không, và để lộ danh sách thì kẻ tấn công biết thêm gì?** Ở đây: giấu đi
+# thì cổng mù, còn để lộ thì không ai biết thêm gì. Ở cổng danh tính thì ngược
+# hẳn lại.
 TEN_COOKIE_PHIEN = [
     "bdsg_dn", "PHPSESSID", "sessionid", "session_id", "csrftoken",
     "laravel_session", "ci_session", "remember_token", "access_token", "refresh_token",
