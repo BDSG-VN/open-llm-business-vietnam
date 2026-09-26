@@ -4,15 +4,48 @@ Viết theo khuôn thẻ mô hình (model card) của Hugging Face.
 
 > ## Cảnh báo đặt ở đầu, không giấu xuống cuối
 >
-> **Tại 25/09/2026, BDSG chưa huấn luyện trọng số nào.** Không có tệp trọng số nào để tải,
-> không có liên kết tải nào trong tài liệu này.
+> **Thẻ này nói về MÔ HÌNH CỦA BDSG. Nó KHÔNG phải thẻ của Gemma 4 31B.**
+> Kho này còn có một backend phục vụ trọng số của Google; ranh giới ở
+> [§0](#0-hai-thu-khac-nhau-dung-lan).
+>
+> **Tại 26/09/2026, BDSG có đúng MỘT bản trọng số do chính mình huấn luyện, và nó là bản
+> nghiên cứu chưa dùng được** (26.878.464 tham số; perplexity phần kiểm 102,5 so với phần
+> học 19,9 — quá khớp 5,2 lần). Không có tệp trọng số nào trong kho, không có liên kết tải
+> nào trong tài liệu này.
 >
 > Thứ đang chạy tại `llm.bdsg.vn` là **lớp truy hồi của BDSG đặt trước một mô hình của bên
 > thứ ba**. API tự khai trường `bdsg_la_trong_so_bdsg = false` cho **mọi** mã mô hình.
 >
-> Mọi mục dưới đây cần trọng số để trả lời đều ghi **"chưa huấn luyện — mục này trống cho
-> tới M7"**. Không mục nào được điền bằng số ước lượng, số của mô hình khác, hay số của
-> thượng nguồn.
+> Mọi mục dưới đây cần một bản trọng số **dùng được** đều ghi **"chưa huấn luyện — mục này
+> trống cho tới M7"**. Không mục nào được điền bằng số ước lượng, số của mô hình khác, hay
+> số của thượng nguồn.
+
+---
+
+<a id="0-hai-thu-khac-nhau-dung-lan"></a>
+
+## 0. Hai thứ khác nhau, đừng lẫn
+
+| | **(a) Mô hình BDSG — thẻ này** | **(b) Backend Gemma 4 31B** |
+|---|---|---|
+| Trọng số của ai | **BDSG** | **Google DeepMind** |
+| Cỡ | 26.878.464 tham số (đo 26/09/2026) | 31.273.088.876 tham số |
+| Từ vựng | 6.400 token, BDSG tự luyện | 262.144 token, của Google |
+| `bdsg_la_trong_so_bdsg` | `true` cho đúng bản ấy | **`false`** — BDSG chỉ phục vụ |
+| Thẻ/tài liệu | **tệp này** | [`tai-lieu/GEMMA4-31B.md`](tai-lieu/GEMMA4-31B.md) |
+| Giấy phép | Apache-2.0 (mã) · CC BY 4.0 (dữ liệu) | Apache-2.0 (trọng số của Google) |
+
+**Ghi công Google:** trọng số Gemma 4 31B là của **Google DeepMind**, giấy phép
+**Apache-2.0** (tra 26/09/2026, `gated = false`).
+Nguồn: `https://huggingface.co/google/gemma-4-31B-it` ·
+`https://huggingface.co/google/gemma-4-31B` ·
+`https://github.com/google-deepmind/gemma` · bài báo arXiv:2607.02770.
+**BDSG PHỤC VỤ trọng số ấy; BDSG KHÔNG huấn luyện chúng.**
+
+Hai điều cấm về kỹ thuật, cả hai đều hỏng **lặng lẽ**, không có thông báo lỗi:
+
+- **Không nạp trọng số Gemma 4 vào kiến trúc ở §1.2 của thẻ này.**
+- **Không thay tokenizer/chat template gốc của Gemma bằng bộ từ vựng 6.400 ở §1.3.**
 
 ---
 
@@ -29,9 +62,11 @@ Viết theo khuôn thẻ mô hình (model card) của Hugging Face.
 | Giấy phép mã | Apache License 2.0 — xem [LICENSE-CODE](LICENSE-CODE) |
 | Giấy phép dữ liệu | CC BY 4.0, chỉ cho `bo-du-lieu/` — xem [LICENSE-DATA](LICENSE-DATA) |
 | Mô hình gốc được tinh chỉnh từ | **không có** — huấn luyện từ đầu, không nạp trọng số của ai |
-| Trọng số phát hành | **chưa có** (25/09/2026) |
+| Trọng số **đã huấn luyện** | bản **nghiên cứu**: 26.878.464 tham số · 107,5 MB · 74 tensor (26/09/2026) — [chi tiết](tai-lieu/LAN-HUAN-LUYEN-DAU-TIEN.md) |
+| Trọng số **phát hành** | **chưa có** — bản nghiên cứu quá khớp 5,2 lần, chưa dùng được cho việc gì |
 | Kho mã | thư mục này |
 | Điểm cuối API đang sống | `https://llm.bdsg.vn` — **không phục vụ trọng số của BDSG** |
+| Backend phục vụ trọng số **của bên ngoài** | `trien-khai/` — Gemma 4 31B **của Google DeepMind**, Apache-2.0; **không phải mô hình của thẻ này** |
 
 ### 1.2 Kiến trúc
 
@@ -69,9 +104,9 @@ con số ấy phải khớp **tuyệt đối**; lệch thì một bên hiểu sa
 Phép đối chiếu ấy **không chờ trọng số**. Đếm tham số chỉ cần dựng mô hình với khởi tạo
 ngẫu nhiên rồi cộng `p.numel()` trên `model.parameters()` — không cần huấn luyện, không cần
 GPU, không cần một byte trọng số nào. "Đếm được tham số" **không** có nghĩa là "đã có trọng
-số đã huấn luyện"; thẻ này giữ nguyên khẳng định ở mục 1.1 rằng trọng số **chưa có**
-(25/09/2026). Phép đối chiếu thuộc mã kiến trúc ở `mo-hinh/` — kết quả đọc tại đó, thẻ này
-không khẳng định thay.
+số **dùng được**"; thẻ này giữ nguyên khẳng định ở mục 1.1 rằng trọng số phát hành **chưa
+có** — bản trọng số duy nhất đã huấn luyện (26/09/2026) là bản nghiên cứu. Phép đối chiếu
+thuộc mã kiến trúc ở `mo-hinh/` — kết quả đọc tại đó, thẻ này không khẳng định thay.
 
 Lý do phải làm ngay chứ không hẹn tới M7: mọi ước tính bộ nhớ và mọi dự toán giờ GPU đều
 bắt đầu từ con số tham số. Công thức sai ở đây làm sai toàn bộ dự toán mà **không báo lỗi
@@ -141,6 +176,20 @@ Không phải trọng số, nhưng có thật — **có thật trong cơ sở d�
 | Ngữ liệu doanh nghiệp Việt Nam (11.733 đoạn · 7.509.969 ký tự · 7,16 MB) | huấn luyện hoặc đánh giá mô hình khác |
 | Lớp có cấu trúc: 5.424 doanh nghiệp đủ ngành + tỉnh + sản phẩm | dựng bộ hỏi–đáp có đáp án kiểm chứng được |
 | Bộ đánh giá 227 câu đóng băng (22/09/2026) | đo mô hình tiếng Việt lĩnh vực doanh nghiệp |
+| `trien-khai/` — kịch bản phục vụ **Gemma 4 31B của Google** qua vLLM (26/09/2026) | chạy một trợ lý **trên máy nội bộ**, nếu bạn có GPU NVIDIA đủ lớn |
+
+**Về dòng cuối, phải nói đủ ba điều — nó là trọng số của người khác và nó chưa chạy thật:**
+
+1. **Trọng số là của Google DeepMind** (Apache-2.0), không nằm trong kho này. BDSG phục vụ
+   chúng. Xem [§0](#0-hai-thu-khac-nhau-dung-lan) và
+   [`tai-lieu/GEMMA4-31B.md`](tai-lieu/GEMMA4-31B.md).
+2. **Chưa ai chạy thử.** Máy soạn phần đó là macOS arm64 không CUDA: chưa cài được `vllm`,
+   chưa nạp trọng số. Bài tự kiểm các hàm tính thì có chạy thật và ĐẠT 45/45 (26/09/2026),
+   nhưng nó chỉ chứng minh phép tính đúng như đã viết — **không** chứng minh mô hình chạy.
+   Độ trễ, thông lượng, VRAM thật: **chưa đo**.
+3. **CHƯA CÓ ĐĂNG NHẬP.** Mặc định nghe `127.0.0.1`, có chủ ý. Đây là bản **demo một người
+   trên localhost**, **chưa dùng được cho nhiều nhân viên**: không có "ai đã hỏi gì",
+   không có hạn mức theo người, không tách được hội thoại người này khỏi người kia.
 
 > **Phải đọc kèm bảng trên, nếu không nó thành lời hứa.** "Có thật" ở đây nghĩa là *đã đo
 > được ở nguồn*, **chưa** nghĩa là *đã nằm sẵn trong bản clone của bạn*. Việc kết xuất ba
@@ -415,12 +464,14 @@ Nếu bạn trích dẫn **kỹ thuật** chứ không trích kho này, xin trí
 
 | Trường | Giá trị |
 |---|---|
-| Phiên bản thẻ | 2 |
+| Phiên bản thẻ | 3 |
 | Ngày viết | 25/09/2026 · sửa 26/09/2026 |
 | Sửa gì ở bản 2 | Thu phạm vi ngôn ngữ về đúng hai (Việt chính, Anh phụ); ghi lại đúng nguồn gốc kiến trúc — do BDSG viết từ kỹ thuật đã công bố trong bài báo. **Không số đo nào bị sửa theo.** |
+| Sửa gì ở bản 3 | Thêm [§0](#0-hai-thu-khac-nhau-dung-lan) tách hẳn **mô hình của BDSG** khỏi **backend phục vụ trọng số Gemma 4 31B của Google** (Apache-2.0, có ghi công và liên kết); ghi lần huấn luyện đầu tiên 26/09/2026 vào §1.1 bằng đúng số đã đo; nói rõ backend **chưa chạy thật** và **chưa có đăng nhập**. **Không số đo cũ nào bị sửa theo.** |
 | Ngày số liệu ngữ liệu được đo | 25/09/2026 |
 | Ngày số liệu đánh giá được đo | 22/09/2026 |
-| Phiên bản mô hình được mô tả | **chưa có** |
+| Ngày lần huấn luyện đầu tiên | 26/09/2026 — bản nghiên cứu, chưa dùng được |
+| Phiên bản mô hình được mô tả | **chưa có bản phát hành** |
 
 Thẻ này sẽ được viết lại ở M7. Cho tới lúc đó, mọi mục ghi "chưa huấn luyện — mục này
 trống cho tới M7" phải giữ nguyên chữ ấy, không được điền bằng số suy đoán.
