@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BDSG Agent</title>
+<meta name="description" content="Nền tảng tác nhân quy mô dân số: một agent cho mỗi doanh nghiệp, một agent cho mỗi người. Trí nhớ riêng, học vấn theo chương trình Việt Nam, mã nguồn mở.">
+<link rel="canonical" href="https://agent.bdsg.vn/">
+<meta property="og:title" content="BDSG Agent — nền tảng tác nhân quy mô dân số">
+<meta property="og:description" content="Một agent cho mỗi doanh nghiệp, một agent cho mỗi người. Trí nhớ riêng, học vấn theo chương trình giáo dục Việt Nam.">
+<meta property="og:url" content="https://agent.bdsg.vn/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap">
+<style>
+:root{
+  --muc:#041124; --muc2:#06203a; --muc3:#07213c;
+  --lam:#005CA6; --lam-sang:#92c1e9; --lam-hon:#3fa0e8;
+  --luc:#00573f; --luc-sang:#7fe3b0; --cam:#a34400; --do:#A6192E;
+  --chu:#ffffff; --chu-mo:rgba(255,255,255,.80); --chu-mo2:rgba(255,255,255,.58);
+  --vien:rgba(146,193,233,.18);
+  --k3:22px; --k4:34px; --k5:56px; --k6:92px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--muc);color:var(--chu);
+  font-family:Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.khung{width:100%;max-width:1120px;margin:0 auto;padding-left:20px;padding-right:20px}
+a{color:var(--lam-sang)}
+h1,h2,h3{text-wrap:balance;margin:0}
+.nhan{margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--lam-sang)}
+.lede{max-width:66ch;color:var(--chu-mo);font-size:17px}
+.ghi{max-width:72ch;color:var(--chu-mo2);font-size:13.5px;line-height:1.65;margin-top:var(--k3)}
+
+/* thanh đầu */
+header.thanh{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:rgba(2,12,26,.88);backdrop-filter:saturate(1.2) blur(8px);
+  border-bottom:1px solid var(--vien)}
+.thanh .in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding-top:12px;padding-bottom:12px;font-size:13px}
+.cham{width:8px;height:8px;border-radius:50%;background:var(--luc-sang);flex:none}
+.thanh b{font-weight:600}
+.thanh em{font-style:normal;color:var(--lam-sang);font-size:12px}
+.thanh .nut{margin-left:auto;padding:8px 16px;border-radius:999px;
+  border:1px solid rgba(146,193,233,.45);text-decoration:none;color:#fff;font-size:13px}
+.thanh .nut:hover{background:rgba(146,193,233,.14)}
+
+/* mở đầu */
+.hero{padding:var(--k6) 0;background:
+  radial-gradient(120% 100% at 80% 24%,rgba(1,73,127,.5),transparent 64%),
+  linear-gradient(180deg,#041124,#06203a)}
+.hero h1{font-size:clamp(2.1rem,5.6vw,3.9rem);font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.hero .lede{margin-top:var(--k4)}
+.nut-hang{display:flex;flex-wrap:wrap;gap:12px;margin-top:var(--k4)}
+.nut-chinh,.nut-vien{display:inline-flex;align-items:center;gap:9px;padding:14px 26px;
+  border-radius:999px;text-decoration:none;font-size:15px;font-weight:500;border:1.5px solid transparent}
+.nut-chinh{background:var(--lam);color:#fff}
+.nut-chinh:hover{background:#0069bd}
+.nut-vien{border-color:rgba(146,193,233,.45);color:#fff}
+.nut-vien:hover{background:rgba(146,193,233,.14)}
+
+/* khối */
+section.khoi{padding:var(--k6) 0;border-top:1px solid var(--vien)}
+.khoi--sang{background:var(--muc2)}
+.khoi--toi{background:linear-gradient(180deg,#05182c,#041124)}
+h2{font-size:clamp(1.6rem,3.4vw,2.5rem);font-weight:600;letter-spacing:-.01em;
+  line-height:1.2;margin-bottom:18px}
+
+/* số */
+.so-luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));
+  gap:26px 36px;margin-top:var(--k5)}
+.so b{display:block;font-size:clamp(2.2rem,4.6vw,3.2rem);font-weight:700;line-height:1;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--lam-sang)}
+.so span{display:block;margin-top:10px;font-size:14.5px;color:var(--chu-mo)}
+.so small{display:block;margin-top:5px;font-size:12px;color:var(--chu-mo2)}
+
+/* thẻ */
+.the-luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+  gap:20px;margin-top:var(--k5)}
+.the{padding:28px 26px;border-radius:16px;background:rgba(255,255,255,.05);
+  border:1px solid var(--vien);border-left:4px solid var(--m,var(--lam))}
+.the h3{font-size:1.2rem;font-weight:600;margin:10px 0 0}
+.the p{margin:12px 0 0;font-size:14.5px;line-height:1.62;color:var(--chu-mo)}
+.the .do{margin-top:16px;padding-top:14px;border-top:1px solid var(--vien);
+  font-size:13px;color:var(--m,var(--lam-sang));filter:brightness(1.7);
+  font-variant-numeric:tabular-nums}
+
+/* bảng */
+.bang{margin-top:var(--k4);overflow-x:auto;border:1px solid var(--vien);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+th,td{padding:13px 18px;text-align:left;vertical-align:top;line-height:1.5}
+thead th{font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--lam-sang);background:rgba(255,255,255,.05)}
+tbody tr+tr{border-top:1px solid rgba(146,193,233,.12)}
+tbody td:first-child{color:var(--chu-mo)}
+td.so-cot{text-align:right;font-variant-numeric:tabular-nums;color:#fff}
+td b{color:var(--lam-sang);font-variant-numeric:tabular-nums}
+
+/* cảnh báo */
+.canh{margin-top:var(--k4);padding:22px 24px;border-radius:14px;
+  background:rgba(166,25,46,.12);border:1px solid rgba(224,123,138,.34)}
+.canh b{color:#f2a4ae}
+.canh p{margin:10px 0 0;font-size:14.5px;line-height:1.62;color:var(--chu-mo)}
+
+/* danh sách */
+ul.y{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:10px;
+  font-size:14.5px;line-height:1.5;color:var(--chu-mo)}
+ul.y li{position:relative;padding-left:21px}
+ul.y li::before{content:"";position:absolute;left:2px;top:.56em;width:6px;height:6px;
+  border-radius:50%;background:var(--lam-sang)}
+
+footer{padding:var(--k5) 0;border-top:1px solid var(--vien);background:#020c17}
+footer p{margin:0;font-size:13.5px;color:var(--chu-mo2);max-width:74ch}
+footer p+p{margin-top:12px}
+@media (max-width:760px){:root{--k5:40px;--k6:58px}}
+</style>
+</head>
+<body>
+
+<header class="thanh">
+  <div class="in khung">
+    <i class="cham" aria-hidden="true"></i>
+    <b>BDSG Agent</b>
+    <em>mã nguồn mở · Apache-2.0</em>
+    <a class="nut" href="https://github.com/BDSG-VN/open-bdsg-os" target="_blank" rel="noopener noreferrer">Mã nguồn →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="khung">
+    <p class="nhan">Nền tảng tác nhân quy mô dân số</p>
+    <h1>Một agent cho mỗi doanh nghiệp.<br>Một agent cho mỗi người.</h1>
+    <p class="lede">Mỗi agent có trí nhớ riêng, và trí nhớ của người này không lọt sang người kia — điều kiện ấy nằm trong chính câu truy vấn, không phải một bộ lọc ở tầng trên. Nền tảng thiết kế cho quy mô dân số; số agent thật bằng số người thật đã tới.</p>
+    <div class="nut-hang">
+      <a class="nut-chinh" href="https://github.com/BDSG-VN/open-bdsg-os/tree/main/tri-nho" target="_blank" rel="noopener noreferrer">Đọc mã trí nhớ →</a>
+      <a class="nut-vien" href="https://bdsg.vn/open-bdsg-os">Hệ điều hành Open BDSG OS →</a>
+    </div>
+  </div>
+</section>
+
+<section class="khoi khoi--sang">
+  <div class="khung">
+    <p class="nhan">Đo được, không ước lượng</p>
+    <h2>Hôm nay đã định danh được bao nhiêu</h2>
+    <p class="lede">Mỗi con số dưới đây là một phép đếm trên dữ liệu thật, chạy ngày 26/09/2026.</p>
+    <div class="so-luoi">
+      <div class="so"><b>1.079.991</b><span>doanh nghiệp định danh được</span><small>962.250 tên khác nhau · 100 % đã gán tỉnh</small></div>
+      <div class="so"><b>34</b><span>tỉnh, thành phố</span><small>NQ 202/2025/QH15</small></div>
+      <div class="so"><b>3.321</b><span>phường, xã, đặc khu</span></div>
+      <div class="so"><b>~101,3<span style="font-size:.4em"> triệu</span></b><span>dân số Việt Nam</span><small>quy mô thiết kế của nền tảng</small></div>
+    </div>
+
+    <div class="canh">
+      <b>Một con số trong dữ liệu BDSG KHÔNG được dùng ở đây</b>
+      <p>Bảng 34 tỉnh có cột <code>dan_so_quy_doi</code> với tổng <b>113.571.926</b>. Đó là “quy mô dân số quy đổi” theo NQ 202/2025/QH15, cao hơn dân số thường trú thật <b>12,1 %</b>, và chính kho mã ghi rõ: <em>tuyệt đối không dùng làm mẫu số</em>. Trang này vì vậy lấy <b>~101,3 triệu</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="khoi">
+  <div class="khung">
+    <p class="nhan">Ba lớp</p>
+    <h2>Một agent được làm bằng gì</h2>
+    <div class="the-luoi">
+      <article class="the" style="--m:#005CA6">
+        <p class="nhan" style="margin:0">Danh tính</p>
+        <h3>Pháp nhân, không phải thể nhân</h3>
+        <p>Agent gắn với một <b>doanh nghiệp có thật</b> — tra được, kiểm được. Một công ty không phải cá nhân, nên tên công ty vốn công khai để giao dịch. BDSG <b>không</b> dựng agent mang tên người thật: đó là mạo danh, và không có dữ liệu công khai nào làm nó hợp lệ.</p>
+        <p class="do">1.079.991 agent định danh được ngay</p>
+      </article>
+      <article class="the" style="--m:#00573f">
+        <p class="nhan" style="margin:0">Trí nhớ</p>
+        <h3>Riêng, và quên được</h3>
+        <p>Mỗi agent một kho trí nhớ, cách ly bằng điều kiện nằm <b>trong câu truy vấn</b>. Tìm bằng nội dung của người khác, gõ trúng mã của họ, gõ trúng khoá phạm vi của họ, xoá bằng đúng id của họ — không cách nào lấy được. Có đường <b>quên hết</b> theo quyền xoá dữ liệu của NĐ 13/2023.</p>
+        <p class="do">31/31 ca kiểm · 1.228 byte mỗi agent</p>
+      </article>
+      <article class="the" style="--m:#a34400">
+        <p class="nhan" style="margin:0">Học vấn</p>
+        <h3>Tính ra, không lưu</h3>
+        <p>Hồ sơ học vấn được <b>tính từ mã agent</b> bằng blake2b — tất định, cùng mã luôn ra cùng hồ sơ trên mọi máy. 101 triệu hồ sơ tốn <b>0 byte</b>. Hồ sơ chỉ ghi xuống khi người dùng tự sửa; lúc ấy nó thôi là suy luận, và nhãn <code>suy_ra</code> rụng đi.</p>
+        <p class="do">23 lĩnh vực · 75 ngành · lệch phân bố 0,075 %</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="khoi khoi--toi">
+  <div class="khung">
+    <p class="nhan">Học vấn</p>
+    <h2>Học như một người Việt học</h2>
+    <p class="lede">Mẫu giáo → tiểu học → THCS → THPT theo đúng Chương trình GDPT 2018, rồi mới nạp chuyên môn riêng. Ngữ liệu viết <b>một lần, dùng chung</b>: 101 triệu người Việt học cùng một chương trình phổ thông, nên viết riêng cho từng agent thì 99,99 % là bản sao — và dữ liệu trùng lặp không dạy thêm gì.</p>
+    <div class="bang">
+      <table>
+        <thead><tr><th>Chặng</th><th>Quy mô</th><th class="so-cot">Ngữ liệu</th><th class="so-cot">Chi phí</th></tr></thead>
+        <tbody>
+          <tr><td>Phổ thông (4 cấp, 39 môn)</td><td>9.940 bài</td><td class="so-cot"><b>15,9</b> triệu token</td><td class="so-cot"><b>$6</b></td></tr>
+          <tr><td>Đại học (23 lĩnh vực)</td><td>180.000 bài</td><td class="so-cot"><b>287</b> triệu token</td><td class="so-cot"><b>$110</b></td></tr>
+          <tr><td>Thạc sĩ &amp; tiến sĩ</td><td>36.000 bài</td><td class="so-cot"><b>57</b> triệu token</td><td class="so-cot"><b>$22</b></td></tr>
+          <tr><td><b>Tổng</b></td><td>225.940 bài</td><td class="so-cot"><b>0,36</b> tỷ token</td><td class="so-cot"><b>$138</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ghi">Suy từ mẻ thử đã chạy thật qua cổng LiteLLM ngày 26/09/2026: 1.595 token mỗi bài, 211 token/giây, $0,383 mỗi triệu token — giá lấy từ nhật ký chi tiêu thật, không phải bảng giá công bố. Với 10 luồng song song thì toàn bộ xong trong khoảng 2 ngày.</p>
+  </div>
+</section>
+
+<section class="khoi">
+  <div class="khung">
+    <p class="nhan">Chuẩn Việt Nam</p>
+    <h2>21 trong 39 môn là chỗ mô hình nước ngoài sai</h2>
+    <p class="lede">Lịch sử, Địa lí và Toán không phải môn phụ trong bài toán này — đó là chỗ một mô hình huấn luyện ở nơi khác sai theo cách người Việt nhận ra ngay từ câu đầu.</p>
+    <ul class="y">
+      <li><b>Địa lí</b> — cấu trúc hành chính 34 tỉnh theo NQ 202/2025/QH15, không phải 63 tỉnh cũ.</li>
+      <li><b>Chủ quyền</b> — Quần đảo Hoàng Sa thuộc thành phố Đà Nẵng, Quần đảo Trường Sa thuộc tỉnh Khánh Hoà.</li>
+      <li><b>Lịch sử</b> — trình bày theo quan điểm chính thống của Việt Nam.</li>
+      <li><b>Toán</b> — ký hiệu, cách trình bày và thứ tự kiến thức theo từng lớp.</li>
+    </ul>
+    <p class="ghi">Cổng chủ quyền chạy <b>trước khi ghi</b>, không phải sau: đoạn nào chứa chuỗi cấm thì bị từ chối ngay và không vào tệp ngữ liệu. Lọc sau là lọc có thể quên, mà một câu sai chủ quyền lọt vào bộ huấn luyện thì nó nằm trong trọng số — không gỡ ra được.</p>
+  </div>
+</section>
+
+<section class="khoi khoi--sang">
+  <div class="khung">
+    <p class="nhan">Chưa có, nói thẳng</p>
+    <h2>Trang này chưa làm được gì</h2>
+    <ul class="y">
+      <li>Chưa nạp agent nào lên máy chủ — mã đã chạy và có bài kiểm, nhưng dữ liệu thật chưa đổ vào.</li>
+      <li>Ngữ liệu học thuật mới có <b>10 bài</b> của mẻ thử, chưa phải 225.940 bài.</li>
+      <li>Trí nhớ đo trên SQLite; bản thật phải là Postgres, và hiệu năng ở đó <b>chưa đo</b>.</li>
+      <li>Truy hồi dùng BM25 trên <code>unicode61</code> — không tách từ tiếng Việt, nên cụm từ ghép sẽ kém. Chưa có bộ câu hỏi để đo.</li>
+      <li>Chưa có giao diện trò chuyện tại đây; phần chat đang ở <a href="https://chat.bdsg.vn">chat.bdsg.vn</a>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="khung">
+    <p><b>BDSG Agent</b> — một phần của <a href="https://bdsg.vn/open-bdsg-os">Open BDSG OS</a>, hệ điều hành doanh nghiệp mã nguồn mở. Mã nguồn Apache-2.0 tại <a href="https://github.com/BDSG-VN/open-bdsg-os" target="_blank" rel="noopener noreferrer">github.com/BDSG-VN/open-bdsg-os</a>.</p>
+    <p>Mọi con số trên trang là phép đo hoặc phép suy từ phép đo, có ghi ngày. Chỗ nào chưa đo thì trang nói là chưa đo.</p>
+  </div>
+</footer>
+
+</body>
+</html>
