@@ -421,6 +421,25 @@ source .venv/bin/activate
 M4 và chưa tồn tại trong kho, lệnh sẽ báo lỗi. Bước cài phụ thuộc chỉ có nghĩa khi đã có
 tệp đó; chừng nào chưa có thì mỗi script tự khai thư viện nó cần ở đầu tệp.
 
+### `chat/` — giao diện trò chuyện, chạy được ngay
+
+Khác mọi thư mục còn lại ở một điểm: **nó chạy được mà không cần trọng số nào.**
+Đây là giao diện đang phục vụ thật tại `chat.bdsg.vn`, phát hành nguyên trạng —
+1.272 dòng, ba tệp tĩnh, không bước đóng gói, không phụ thuộc.
+
+```bash
+cd chat && python3 -m http.server 8080
+```
+
+Nó gọi năm đường `/api/*`; cài đủ năm đường ấy ở máy chủ của bạn là nó chạy, kể
+cả khi phía sau là một mô hình tương thích OpenAI bất kỳ. Hợp đồng đầy đủ ở
+[`chat/README.md`](chat/README.md).
+
+**Phần máy chủ chưa phát hành**, và lý do nói thẳng trong tệp ấy: nó gắn với một
+hệ đăng nhập một lần còn một lỗ hổng chưa vá phần gốc.
+
+---
+
 Các thư mục `mo-hinh/`, `huan-luyen/`, `bo-du-lieu/`, `danh-gia/`, `cong/`, `tai-lieu/`
 được các nhóm của dự án đổ nội dung vào theo từng mốc M2–M7, và chúng có README hoặc ghi
 chú đo lường riêng — đọc tệp trong chính thư mục đó, đừng suy từ README này. Bản phát hành

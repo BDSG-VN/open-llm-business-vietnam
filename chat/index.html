@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BDSG Chat</title>
+<meta name="description" content="Trợ lý AI của BDSG — hỏi đáp bằng tiếng Việt.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23c2410c'/><text x='16' y='23' font-size='19' font-family='system-ui' font-weight='700' fill='%23fff' text-anchor='middle'>B</text></svg>">
+<link rel="stylesheet" href="/giao-dien.css">
+</head>
+<body>
+<div class="khung">
+
+  <!-- ═══ Cột trái ═══ -->
+  <aside class="canh" id="canh" aria-label="Hội thoại">
+    <div class="canh-dau">
+      <button class="nut-moi" id="nutMoi" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Hội thoại mới
+      </button>
+      <button class="nut-icon chi-hep" id="dongCanh" type="button" aria-label="Đóng danh sách">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <nav class="ds-hoi-thoai" id="dsHoiThoai" aria-live="polite"></nav>
+
+    <div class="canh-chan" id="canhChan"></div>
+  </aside>
+
+  <div class="phu-canh" id="phuCanh" hidden></div>
+
+  <!-- ═══ Cột phải ═══ -->
+  <main class="chinh">
+    <header class="dau">
+      <button class="nut-icon chi-hep" id="moCanh" type="button" aria-label="Mở danh sách hội thoại">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="hieu">
+        <span class="dau-cham" aria-hidden="true"></span>
+        <strong>BDSG Chat</strong>
+      </div>
+    </header>
+
+    <div class="cuon" id="cuon">
+      <div class="dong-tin" id="dongTin">
+        <!-- ═══ Màn hình chào: KHÔNG có cổng đăng nhập ═══ -->
+        <section class="chao" id="chao">
+          <h1>Hỏi gì cũng được.</h1>
+          <p class="chao-phu">Trợ lý AI của BDSG. Gõ câu hỏi bên dưới — không cần đăng ký.</p>
+          <div class="goi-y">
+            <button type="button" data-hoi="BDSG làm những gì? Tóm tắt trong 5 gạch đầu dòng.">BDSG làm những gì?</button>
+            <button type="button" data-hoi="Giải thích IoT công nghiệp cho người không chuyên, bằng một ví dụ nhà máy.">IoT công nghiệp là gì?</button>
+            <button type="button" data-hoi="So sánh thuê hạ tầng đám mây với tự dựng máy chủ, cho doanh nghiệp 50 người.">Thuê cloud hay tự dựng?</button>
+            <button type="button" data-hoi="Viết email mời hợp tác gửi một đối tác xây dựng, giọng lịch sự, dưới 150 chữ.">Viết email mời hợp tác</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="khu-nhap">
+      <div class="bao-nhap">
+        <form id="form" autocomplete="off">
+          <textarea id="o" rows="1" placeholder="Nhắn cho BDSG Chat…"
+                    aria-label="Câu hỏi" maxlength="12000"></textarea>
+
+          <!-- Hàng công cụ nằm TRONG khung nhập, không phải trên thanh đầu.
+               Lý do: lựa chọn mô hình là thứ người ta cân nhắc NGAY TRƯỚC khi
+               gõ câu hỏi, nên nó phải ở trong tầm mắt lúc ấy. Đặt trên thanh
+               đầu là bắt người dùng nhìn lên một chỗ khác rồi nhìn xuống. -->
+          <div class="hang-cong-cu">
+            <div class="chon-mo-hinh-vien">
+              <button class="vien-mo-hinh" id="nutNoLuc" type="button"
+                      aria-haspopup="listbox" aria-expanded="false"
+                      aria-label="Chọn mô hình và mức nỗ lực">
+                <span class="vien-mo-hinh__ten" id="tenMoHinh">BDSG Open Biz</span>
+                <span class="vien-mo-hinh__muc" id="nhanNoLuc">Nhanh</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="bang-no-luc" id="bangNoLuc" role="listbox" hidden></div>
+            </div>
+            <button class="gui" id="gui" type="submit" aria-label="Gửi">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </button>
+          </div>
+        </form>
+        <p class="chan-nho" id="chanNho">
+          Câu trả lời do AI sinh ra — hãy kiểm lại thông tin quan trọng.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/chat.js" type="module"></script>
+</body>
+</html>
