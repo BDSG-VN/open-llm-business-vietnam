@@ -87,7 +87,7 @@ CONG_MONG_DOI=(khong-bi-mat.py khong-ha-tang.py khong-du-lieu-cam.py khong-lo-ho
 # người đọc bị dẫn sai, mà kho này thì tồn tại để nói đúng chỗ khó.
 
 echo "════════════════════════════════════════════════════════════════════════════"
-echo " CỔNG KIỂM TRƯỚC KHI ĐẨY — Open LLM Business Việt Nam"
+echo " CỔNG KIỂM TRƯỚC KHI ĐẨY — Open LLM BDSG Business Park"
 echo " Gốc quét : $GOC"
 echo " Python   : $($PYTHON --version 2>&1)"
 echo "════════════════════════════════════════════════════════════════════════════"

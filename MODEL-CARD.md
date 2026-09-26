@@ -1,4 +1,4 @@
-# Thẻ mô hình — Open LLM Business Việt Nam
+# Thẻ mô hình — Open LLM BDSG Business Park
 
 Viết theo khuôn thẻ mô hình (model card) của Hugging Face.
 
@@ -22,7 +22,7 @@ Viết theo khuôn thẻ mô hình (model card) của Hugging Face.
 
 | Trường | Giá trị |
 |---|---|
-| Tên | Open LLM Business Việt Nam |
+| Tên | Open LLM BDSG Business Park |
 | Đơn vị phát triển | BDSG |
 | Loại mô hình | mô hình ngôn ngữ nhân quả (decoder-only), pre-norm, kiến trúc do BDSG viết |
 | Ngôn ngữ | **1. Tiếng Việt (chính) · 2. Tiếng Anh (phụ)** |
@@ -393,7 +393,7 @@ chạy thật. Không điền số của thượng nguồn vào ô của mình.
 
 ```bibtex
 @misc{openllmbusinessvietnam2026,
-  title        = {Open LLM Business Việt Nam: bộ dữ liệu và bộ đánh giá mở
+  title        = {Open LLM BDSG Business Park: bộ dữ liệu và bộ đánh giá mở
                   cho tri thức doanh nghiệp Việt Nam},
   author       = {BDSG},
   year         = {2026},

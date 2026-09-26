@@ -1,4 +1,4 @@
-# Đóng góp cho Open LLM Business Việt Nam
+# Đóng góp cho Open LLM BDSG Business Park
 
 Cảm ơn bạn đã quan tâm. Tài liệu này ngắn có chủ đích: chỉ nêu những điều mà nếu không biết
 trước thì đóng góp sẽ bị trả lại.

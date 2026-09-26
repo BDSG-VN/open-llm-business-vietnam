@@ -1,4 +1,4 @@
-# Open LLM Business Việt Nam
+# Open LLM BDSG Business Park
 
 [![Giấy phép mã](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE-CODE)
 [![Giấy phép dữ liệu](https://img.shields.io/badge/data-CC--BY--4.0-green.svg)](LICENSE-DATA)
@@ -408,10 +408,10 @@ Hai điều nói được chắc, không phụ thuộc thư mục nào:
 ### Chạy được ngay hôm nay
 
 ```bash
-# Kho công khai: github.com/BDSG-VN/open-llm-business-vietnam
+# Kho công khai: github.com/BDSG-VN/open-llm-bdsg-business-park
 # Chỗ này còn là chỗ trống vì tên tổ chức chưa được chốt tại 25/09/2026.
-git clone https://github.com/BDSG-VN/open-llm-business-vietnam.git
-cd open-llm-business-vietnam
+git clone https://github.com/BDSG-VN/open-llm-bdsg-business-park.git
+cd open-llm-bdsg-business-park
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -523,7 +523,7 @@ Bốn điều phải biết trước khi gọi:
 ## Cấu trúc kho
 
 ```
-open-llm-business-vietnam/
+open-llm-bdsg-business-park/
 ├── README.md              ← tệp này
 ├── MODEL-CARD.md          ← thẻ mô hình; phần lớn mục còn trống cho tới M7
 ├── LICENSE-CODE           ← Apache License 2.0 (toàn văn), cho MÃ
@@ -573,7 +573,7 @@ nên không có gì để cấp phép.
 
 ```bibtex
 @misc{openllmbusinessvietnam2026,
-  title        = {Open LLM Business Việt Nam: bộ dữ liệu và bộ đánh giá mở
+  title        = {Open LLM BDSG Business Park: bộ dữ liệu và bộ đánh giá mở
                   cho tri thức doanh nghiệp Việt Nam},
   author       = {BDSG},
   year         = {2026},
