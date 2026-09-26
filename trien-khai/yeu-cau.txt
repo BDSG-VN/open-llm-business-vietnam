@@ -1,0 +1,98 @@
+# trien-khai/yeu-cau.txt — phụ thuộc cho backend phục vụ Gemma 4 31B qua vLLM.
+#
+# ════════════════════════════════════════════════════════════════════════════
+# ⚠ KHAI TRƯỚC, TO VÀ RÕ: TỆP NÀY CHƯA ĐƯỢC KIỂM CHỨNG BẰNG MỘT LẦN CÀI THẬT.
+#
+#   Máy soạn tệp này ngày 26/09/2026 là macOS trên chip arm64, KHÔNG có GPU NVIDIA
+#   và KHÔNG có CUDA. `pip install vllm` trên máy ấy không cho ra một bản chạy được,
+#   nên KHÔNG có lần cài nào để trích. Mọi dòng dưới đây là phiên bản ĐƯỢC CHỌN theo
+#   tài liệu, chưa phải phiên bản ĐÃ CHẠY.
+#
+#   Việc phải làm trên máy có GPU, trước khi ai đó tin tệp này:
+#       python3 -m venv .venv-vllm && . .venv-vllm/bin/activate
+#       pip install -r trien-khai/yeu-cau.txt
+#       python -c 'import vllm; print(vllm.__version__)'
+#       trien-khai/chay-vllm.sh --chi-kiem
+#   Rồi thay khối chú thích này bằng KẾT QUẢ THẬT, kèm ngày và kèm cấu hình máy.
+#
+#   Vì sao nói thẳng thay vì im lặng: một danh sách phụ thuộc trông như đã kiểm
+#   chứng, mà thật ra chưa, là đúng họ lỗi "hỏng mà không báo" — người sau tin nó,
+#   mất một buổi, rồi mới biết chưa ai chạy thử.
+# ════════════════════════════════════════════════════════════════════════════
+#
+# VÌ SAO GHIM PHIÊN BẢN
+#   Không ghim thì hai người cài cùng một tệp, cách nhau một tuần, ra hai môi trường
+#   khác nhau — và khi một bên hỏng thì không ai truy được vì sao. Ghim cận DƯỚI
+#   (>=) cho vllm là có chủ ý và được giải thích ngay dưới đây; mọi dòng khác ghim
+#   khoảng đóng.
+#
+# TRƯỚC KHI CÀI: PHẦN KHÔNG NẰM TRONG pip
+#   - GPU NVIDIA + trình điều khiển đủ mới cho bản CUDA mà bánh xe vllm được dựng.
+#   - vllm phát hành bánh xe dựng sẵn theo từng bản CUDA. Cài `pip install vllm`
+#     trần sẽ kéo về torch khớp với bánh xe ấy. ĐỪNG ghim torch ở tệp này: ghim lệch
+#     một chữ số với bánh xe vllm là hỏng cả môi trường, và thông báo lỗi lúc ấy nói
+#     về một hàm C++ chứ không nói về phiên bản.
+#   - Trọng số KHÔNG tải bằng pip và KHÔNG được commit vào kho này (~62,5 GB BF16).
+
+# ── Máy phục vụ ──────────────────────────────────────────────────────────────
+# vLLM hỗ trợ kiến trúc `gemma4` TỪ BẢN 0.19.0 (phát hành 02/04/2026, cùng ngày
+# Google công bố Gemma 4). Bản cũ hơn sẽ báo "kiến trúc không được hỗ trợ" và câu
+# báo ấy KHÔNG nhắc gì tới phiên bản — nên chay-vllm.sh kiểm số này trước khi chạy.
+#
+# Ghim cận DƯỚI chứ không ghim cứng một bản: bản mới nhất khi soạn tệp là 0.24.0
+# (30/06/2026), nhưng ghim cứng 0.24.0 sẽ khoá người dùng khỏi các bản vá sau đó.
+# Cận trên <1.0 để một lần đổi phiên bản chính không lặng lẽ đi vào.
+vllm>=0.19.0,<1.0.0
+
+# ── Thư viện nền của hệ sinh thái Hugging Face ───────────────────────────────
+# vllm tự kéo về theo phụ thuộc của nó; ghim ở đây để bản cài lại được ổn định.
+# Tokenizer và chat template của Gemma 4 đi kèm kho trọng số và được nạp qua đây.
+# ⚠ KHÔNG thay tokenizer này bằng bộ từ vựng 6.400 token thử nghiệm của BDSG. Hai
+#   thứ ấy thuộc hai nhánh khác nhau — xem tai-lieu/GEMMA4-31B.md, mục "ai sở hữu
+#   cái gì". Thay vào là mô hình sinh ra chữ vô nghĩa.
+transformers>=4.57.0,<5.0.0
+tokenizers>=0.22.0,<0.23.0
+huggingface-hub>=0.35.0,<2.0.0
+
+# ── Tải trọng số nhanh hơn (tuỳ chọn nhưng nên có) ───────────────────────────
+# Với một kho ~62,5 GB thì phần truyền tải chiếm gần hết thời gian chuẩn bị.
+hf-transfer>=0.1.8,<0.2.0
+
+# ── Gọi API tương thích OpenAI từ phía backend: KHÔNG CẦN THÊM GÌ ────────────
+# Phần nối giao diện chat vào vLLM nằm ở `phuc-vu/` và nó chỉ dùng THƯ VIỆN CHUẨN
+# của Python (`urllib.request` + một bộ đọc SSE tự viết). Lý do đầy đủ ở đầu tệp
+# `phuc-vu/cong_mo_hinh.py`: phần khó của việc này nằm ở bộ đọc SSE (gói mạng cắt
+# đôi một mẩu chữ), không nằm ở thư viện HTTP.
+#
+# ⚠ HAI DÒNG ĐÃ BỊ GỠ NGÀY 26/09/2026 — ghi lại để không ai thêm lại cho tiện:
+#
+#   openai>=1.109.0   GỠ. Đây là thư viện khách CHÍNH THỨC CỦA MỘT NHÀ CUNG CẤP
+#       ĐÁM MÂY, và nó mặc định trỏ tới `https://api.openai.com/v1` khi người gọi
+#       không truyền `base_url`; nó còn tự đọc `OPENAI_API_KEY`/`OPENAI_BASE_URL`
+#       từ môi trường. Tức là một lần quên một tham số là câu hỏi của nhân viên
+#       đi ra khỏi máy nội bộ, KHÔNG có thông báo nào — đúng thứ luật số 1 của kho
+#       này cấm. Nó lại còn KHÔNG được tệp nào trong kho nhập vào (kiểm bằng grep
+#       ngày 26/09/2026), nên nó chỉ là một khẩu súng đã lên đạn để sẵn.
+#       Nói "chỉ dùng nó để gọi vLLM cục bộ" không cứu được: chính chỗ mặc định ấy
+#       là chỗ hỏng, và nó hỏng im lặng.
+#
+#   httpx>=0.28.0     GỠ. Không tệp nào nhập. Giữ một phụ thuộc không ai dùng là
+#       trả giá thật (một cây phụ thuộc nữa phải vá, một nguồn CVE nữa phải theo)
+#       để mua một tiện lợi không có. `phuc-vu/thu_may_chu.py` còn có một phép kiểm
+#       CẤM `may_chu.py` nhập httpx/aiohttp/socket — giữ dòng này ở đây là để sẵn
+#       một mâu thuẫn cho người sau.
+#
+# Cần một khách HTTP thật ở tương lai thì thêm lại kèm LÝ DO viết ra, và với
+# `openai` thì bắt buộc truyền `base_url` tường minh cùng một phép kiểm chặn mọi
+# máy chủ không phải nội bộ.
+
+# ── KHÔNG có trong tệp này, và là cố ý ───────────────────────────────────────
+# - Không có thư viện của bất kỳ nhà cung cấp mô hình đám mây nào — kể cả `openai`
+#   dùng ở chế độ "tương thích". Hệ này gọi mô hình NỘI BỘ; máy nội bộ hỏng thì BÁO
+#   LỖI, không đi vòng ra ngoài. Thêm một thư viện như thế vào đây là mở sẵn đường
+#   cho một lần "dự phòng" sau này. (Dòng này từng SAI: tệp có `openai` ở ngay dưới
+#   nó cho tới 26/09/2026.)
+# - Không có torch. Lý do ở phần đầu tệp.
+# - Không có bitsandbytes/autoawq. Chỉ thêm khi thật sự chạy lượng tử hoá, và chỉ
+#   sau khi đã ĐO lại năng lực gọi công cụ — xem mục cảnh báo trong
+#   tai-lieu/GEMMA4-31B.md.

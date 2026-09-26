@@ -84,3 +84,9 @@ Thumbs.db
 # Danh sách danh tính của cổng khong-danh-tinh — KHÔNG BAO GIỜ đưa lên kho.
 # Xem đầu cong/khong-danh-tinh.py để biết vì sao nó phải nằm ngoài git.
 cong/danh-tinh.local
+
+# CSDL hoi thoai cua may chu chat noi bo (phuc-vu/kho_hoi_thoai.py).
+# Chua CAU HOI THAT cua nguoi dung => khong bao gio duoc vao kho cong khai.
+*.db
+*.db-wal
+*.db-shm

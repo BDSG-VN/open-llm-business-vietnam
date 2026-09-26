@@ -6,13 +6,112 @@
 ![Kiến trúc](https://img.shields.io/badge/kien%20truc-BDSG%20tu%20viet-orange.svg)
 ![Ngôn ngữ](https://img.shields.io/badge/ngon%20ngu-vi%20%7C%20en-informational.svg)
 
-**Mô hình ngôn ngữ mở cho tri thức doanh nghiệp Việt Nam. Kiến trúc và bộ huấn luyện do
-BDSG viết, dựng từ kỹ thuật đã công bố trong các bài báo. Tiếng Việt là ngôn ngữ chính,
-tiếng Anh là ngôn ngữ phụ.**
+**Hệ điều hành mã nguồn mở cho doanh nghiệp: một mô hình ngôn ngữ chạy trên máy của chính
+công ty, một phần nhân giữ danh tính — quyền — hạn mức — nhật ký, và một giao thức duy
+nhất (MCP) để chạm tới mọi nền tảng nghiệp vụ. Tiếng Việt là ngôn ngữ chính, tiếng Anh là
+ngôn ngữ phụ.**
 
-Kho này phát hành **dữ liệu, mã và bộ đánh giá trước; trọng số sau**. Ở thời điểm viết
-(25/09/2026) BDSG **chưa huấn luyện trọng số nào**. Đọc [bảng trạng thái](#bang-trang-thai-thang-than)
-trước khi dùng bất cứ thứ gì ở đây.
+## Luận đề
+
+Phần lớn "AI cho doanh nghiệp" hôm nay là một ô chat đặt cạnh phần mềm. Nó không biết ai
+đang hỏi, không biết người ấy được phép đọc gì, không ghi lại việc nó đã làm, và mỗi câu
+hỏi là một lần dữ liệu rời khỏi toà nhà.
+
+Một **hệ điều hành** giải bài toán khác. Hệ điều hành máy tính không phải là phần mềm chạy
+nhanh hơn — nó là lớp đứng giữa chương trình và phần cứng để quản **tiến trình, quyền, bộ
+nhớ và thiết bị**. Open BDSG OS đặt đúng những lớp ấy giữa **tác nhân AI** và **nghiệp vụ
+doanh nghiệp**:
+
+| Khái niệm hệ điều hành | Tương ứng trong Open BDSG OS |
+|---|---|
+| Lời gọi hệ thống (syscall) | Một **công cụ** mà mô hình được phép gọi |
+| Trình điều khiển thiết bị | Một **máy chủ MCP** nối vào một nền tảng |
+| Thiết bị | CRM, kho dữ liệu, bản đồ, không gian 3D, cổng thanh toán… |
+| Nhân (kernel) | `nhan/` — danh tính, quyền, hạn mức, nhật ký, định tuyến |
+| Tiến trình | Một phiên tác nhân, có chủ và có trần chi phí |
+| Bộ nhớ ảo | Kho tri thức có phân quyền theo từng người, từng tài liệu |
+
+Hệ quả kiểm chứng được, không phải khẩu hiệu: **mọi lời gọi công cụ đều đi qua nhân**, nên
+nó luôn có một chủ thể, một phép thử quyền và một dòng nhật ký. Không có đường vòng, vì
+đường vòng là thứ cổng kiểm tra trong `cong/` được viết ra để chặn.
+
+## Quy mô huấn luyện hướng tới: 30 tỷ tham số
+
+Đây là **đích của lộ trình**, không phải hiện trạng. Nói rõ để không ai đọc nhầm:
+
+| | Số thật, đo ngày 26/09/2026 |
+|---|---|
+| Trọng số BDSG tự huấn luyện, hiện có | **26.878.464 tham số** (26,9 triệu) |
+| Ngữ liệu BDSG đã gom | **14,72 MB · 4,37 triệu token** |
+| Đích lộ trình | **~30 tỷ tham số** |
+| Khoảng cách | Mô hình hiện tại bằng **0,09 %** đích |
+
+Vì sao là 30 tỷ chứ không phải một con số to hơn cho oai. Ở mức 30 tỷ tham số lượng tử hoá
+4-bit, trọng số vừa một card đồ hoạ 24–48 GB — tức **vừa một thùng máy đặt trong phòng máy
+của doanh nghiệp**, không cần một cụm máy chủ. Đó là ràng buộc quyết định kiến trúc: mô
+hình phải đủ lớn để làm được việc, và đủ nhỏ để **không bao giờ cần rời khỏi toà nhà**.
+
+Ràng buộc đã biết, chưa đo, phải đo trước khi hứa: **gọi công cụ nhạy với lượng tử hoá gấp
+khoảng 70 lần so với sinh văn bản thường** (họ Gemma-3 12B rơi 91,3 % → 69,0 % BFCL khi ép
+xuống Q4_K_M; họ Qwen-3 8B thì gần như không rơi). Một hệ điều hành sống bằng gọi công cụ,
+nên đây là phép đo bắt buộc chứ không phải chi tiết kỹ thuật phụ.
+
+Theo quy luật Chinchilla (~20 token mỗi tham số), 30 tỷ tham số cần khoảng **600 tỷ
+token**. Ngữ liệu BDSG hiện có 4,37 triệu. Con đường không phải là "gom thêm dữ liệu BDSG
+cho đủ" — điều đó bất khả — mà là **tinh chỉnh trên nền một mô hình nền đã huấn luyện
+trước**, dùng ngữ liệu BDSG cho thứ mô hình nền không có: tri thức tư vấn, triển khai, vận
+hành, và dữ liệu hành chính — doanh nghiệp Việt Nam.
+
+## Hệ sinh thái: những "thiết bị" mà hệ điều hành này lái
+
+Doanh nghiệp không cần một trợ lý biết nói. Họ cần một trợ lý **chạm được vào việc**. Mỗi
+nền tảng dưới đây nối vào nhân qua một trình điều khiển MCP, và mỗi lời gọi đều mang theo
+danh tính người hỏi:
+
+| Nền tảng | Tác nhân làm được gì qua MCP |
+|---|---|
+| CRM | Đọc/ghi khách hàng, việc cần làm, hợp đồng — trong phạm vi quyền của người hỏi |
+| Kho dữ liệu | Truy vấn dữ liệu doanh nghiệp, hành chính, dự án |
+| Bản đồ & dữ liệu hành chính | 34 tỉnh, 3.321 phường/xã theo NQ 202/2025/QH15 |
+| Danh bạ doanh nghiệp | Hơn một triệu bản ghi, gán về đơn vị hành chính |
+| Không gian 3D (Twin) | Dựng, sửa, mở không gian triển lãm của doanh nghiệp |
+| Học liệu & tài liệu nội bộ | Kho tri thức có phân quyền theo người và theo tài liệu |
+
+Gọi đây là **nền kinh tế số** không phải để nghe cho kêu: khi nhiều doanh nghiệp cùng chạy
+một hệ điều hành mở, mỗi nơi vẫn giữ dữ liệu của mình, nhưng **giao thức thì chung** — nên
+một tác nhân bên A gọi được dịch vụ bên B mà không bên nào phải giao dữ liệu gốc cho bên
+kia. Đó là điều kiện kỹ thuật của một thị trường, không phải là một lời hứa thương mại.
+
+## Cấp phép trọng số đi kèm máy
+
+Mã nguồn trong kho này là **Apache-2.0** — tải về, sửa, dùng thương mại, không phải hỏi ai.
+
+**Trọng số thì tách riêng.** Trọng số BDSG tự huấn luyện được cấp phép **đi kèm máy trạm
+BDSG OS**: doanh nghiệp mua máy thì nhận trọng số cùng máy, cài sẵn, chạy được ngay, và
+được tinh chỉnh tiếp trên tài liệu của chính mình. Lý do là vận hành chứ không phải giữ
+của: một bản trọng số phát tán rời khỏi phần cứng đã kiểm chứng sẽ chạy sai trên cấu hình
+bất kỳ, và mọi báo lỗi sau đó đều không truy được nguồn.
+
+Ba điều phải nói thẳng vì chúng dễ bị đọc nhầm:
+
+1. **Chưa có bản trọng số phát hành nào.** Bản BDSG tự huấn luyện hiện tại là bản nghiên
+   cứu và chưa dùng được cho việc gì.
+2. **Trọng số Gemma 4 31B là của Google DeepMind**, Apache-2.0, không phải của BDSG. Kho
+   này chỉ có phần *backend phục vụ* nó. Xem [bảng phân biệt](#hai-thu-khac-nhau-trong-kho-nay).
+3. **Giấy phép đi-kèm-máy chỉ áp cho trọng số BDSG tự huấn luyện**, không áp cho mã nguồn
+   và không áp cho trọng số của bên khác.
+
+## Máy trạm BDSG OS
+
+![Bản vẽ minh hoạ máy trạm BDSG OS](tai-lieu/anh/may-bdsg-os.svg)
+
+*Bản vẽ dựng tạm, không phải ảnh chụp một cỗ máy đã xuất xưởng.*
+
+Một thùng máy: ban ngày phục vụ nhân sự, ban đêm tinh chỉnh trên tài liệu của chính công
+ty. Cấu hình, lập luận chọn từng linh kiện, và **những gì chưa đo** nằm ở
+[`tai-lieu/MAY-BDSG-OS.md`](tai-lieu/MAY-BDSG-OS.md).
+
+---
 
 > **Số đo trong README này là số đo trên CƠ SỞ DỮ LIỆU NGUỒN và trên hệ đang chạy, không
 > phải số tệp bạn nhận được khi clone.** Việc kết xuất ngữ liệu ra tệp và nạp bộ câu hỏi
@@ -25,7 +124,14 @@ trước khi dùng bất cứ thứ gì ở đây.
 
 ## Mục lục
 
+- [Luận đề](#luan-de)
+- [Quy mô huấn luyện hướng tới: 30 tỷ tham số](#quy-mo-huan-luyen-huong-toi-30-ty-tham-so)
+- [Hệ sinh thái](#he-sinh-thai-nhung-thiet-bi-ma-he-dieu-hanh-nay-lai)
+- [Cấp phép trọng số đi kèm máy](#cap-phep-trong-so-di-kem-may)
+- [Máy trạm BDSG OS](#may-tram-bdsg-os)
+- [Hai thứ khác nhau trong kho này](#hai-thu-khac-nhau-trong-kho-nay)
 - [Bảng trạng thái thẳng thắn](#bang-trang-thai-thang-than)
+- [Backend Gemma 4 31B của Google](#backend-gemma-4-31b-cua-google)
 - [Vì sao phát hành dữ liệu trước, trọng số sau](#vi-sao-phat-hanh-du-lieu-truoc-trong-so-sau)
 - [Thứ tự ngôn ngữ: Việt chính, Anh phụ](#thu-tu-ngon-ngu-viet-chinh-anh-phu)
 - [Bộ dữ liệu: số đo ngày 25/09/2026](#bo-du-lieu-so-do-ngay-25092026)
@@ -41,6 +147,33 @@ trước khi dùng bất cứ thứ gì ở đây.
 
 ---
 
+<a id="hai-thu-khac-nhau-trong-kho-nay"></a>
+
+## Hai thứ khác nhau trong kho này
+
+Kho này chứa **hai thứ tách rời**. Trộn chúng vào một mục là cách nhanh nhất để nói sai về
+cả hai, nên chúng được tách ngay từ đây:
+
+| | **(a) Mô hình nhỏ BDSG tự huấn luyện** | **(b) Backend phục vụ Gemma 4 31B** |
+|---|---|---|
+| Trọng số của ai | **BDSG** — huấn luyện từ đầu | **Google DeepMind** |
+| Cỡ | 26.878.464 tham số (đo 26/09/2026) | 31.273.088.876 tham số |
+| Từ vựng | 6.400 token, BDSG tự luyện | 262.144 token, của Google |
+| Dùng được chưa | **chưa** — nhánh nghiên cứu, xem lý do bên dưới | chưa chạy thật lần nào (chưa có GPU) |
+| `bdsg_la_trong_so_bdsg` | `true` cho đúng bản trọng số ấy | **`false`** — BDSG chỉ phục vụ |
+| Thư mục | `mo-hinh/` · `huan-luyen/` | `trien-khai/` · `tai-lieu/GEMMA4-31B.md` |
+| Giấy phép | Apache-2.0 (mã), CC BY 4.0 (dữ liệu) | Apache-2.0 (trọng số của Google) |
+
+**Hai nhánh này không được trộn về mặt kỹ thuật**, và hai điều cấm dưới đây đều hỏng một
+cách lặng lẽ — không có thông báo lỗi nào:
+
+- **Không nạp trọng số Gemma 4 vào kiến trúc trong `mo-hinh/`.** Hai kiến trúc khác nhau ở
+  gần như mọi chiều; nạp được một phần rồi sinh chữ vô nghĩa còn tệ hơn báo lỗi.
+- **Không thay tokenizer/chat template gốc của Gemma bằng bộ từ vựng 6.400 của BDSG.** Đổi
+  tokenizer là đổi ý nghĩa của từng mã token mà mô hình đã học.
+
+---
+
 <a id="bang-trang-thai-thang-than"></a>
 
 ## Bảng trạng thái thẳng thắn
@@ -53,10 +186,15 @@ thẳng là **chưa đo**, không ước lượng.
 | Ngữ liệu phát hành được | **ĐÃ CÓ** | 11.733 đoạn · 7.509.969 ký tự · 7,16 MB | 25/09/2026 |
 | Lớp doanh nghiệp có cấu trúc | **ĐÃ CÓ** | 5.424 doanh nghiệp đủ ba điều kiện | 25/09/2026 |
 | Quét dữ liệu cá nhân trên ngữ liệu | **ĐÃ CHẠY** | 0 email · 0 số điện thoại · 0 URL nội bộ | 25/09/2026 |
-| Bộ đánh giá đóng băng | **ĐÃ CÓ** | 227 câu, 5 nhóm | 22/09/2026 |
+| Bộ đánh giá đóng băng | **ĐÃ CÓ** | 227 câu, 4 nhóm (111 + 31 + 60 + 25) | 22/09/2026 |
 | Đường cơ sở đánh giá | **ĐÃ CÓ** | xem [bảng M3](#duong-co-so-danh-gia-m3) | 22/09/2026 |
 | API tương thích OpenAI tại `llm.bdsg.vn` | **ĐÃ SỐNG** | `/` → 200 · `/v1/models` → 200 · `/api/suc-khoe` → 200 | 25/09/2026 |
-| **Trọng số do BDSG huấn luyện** | **CHƯA CÓ** | API tự khai `bdsg_la_trong_so_bdsg = false` cho **mọi** mã mô hình | 25/09/2026 |
+| **Trọng số do BDSG huấn luyện** — bản **nghiên cứu** đầu tiên | **ĐÃ CÓ** | 26.878.464 tham số · 107,5 MB · perplexity kiểm 102,5 · **chưa dùng được cho việc gì** | 26/09/2026 |
+| Trọng số do BDSG huấn luyện — bản **dùng được** | **CHƯA CÓ** | quá khớp 5,2 lần; ngữ liệu thiếu ~348 lần so với mức tính-toán-tối-ưu | 26/09/2026 |
+| Mô hình BDSG phục vụ tại `llm.bdsg.vn` | **CHƯA PHẢI của BDSG** | API tự khai `bdsg_la_trong_so_bdsg = false` cho **mọi** mã mô hình | 25/09/2026 |
+| **Backend phục vụ Gemma 4 31B của Google** — kịch bản + tài liệu | **ĐÃ CÓ** | `trien-khai/chay-vllm.sh` · tự kiểm ĐẠT 45/45 · lần chạy kiểm mặc định trên máy không GPU chặn 4 vấn đề | 26/09/2026 |
+| Backend Gemma 4 31B — **chạy thật** | **CHƯA CHẠY** | chưa cài được `vllm`, chưa nạp trọng số, chưa có GPU | chưa đo |
+| Độ trễ / thông lượng của Gemma 4 31B | **CHƯA ĐO** | không có GPU để đo | chưa đo |
 | Từ vựng (tokenizer) tiếng Việt — bản **thử nghiệm** | **ĐÃ ĐO** | giảm 66,1% token tiếng Việt so với một từ vựng cùng cỡ 6.400 nhưng không học tiếng Việt | 25/09/2026 |
 | Từ vựng (tokenizer) — bản **phát hành** | **CHƯA CÓ** | chưa trộn tiếng Anh | chưa đo |
 | Bộ dữ liệu tiền huấn luyện đóng gói `.jsonl` | **CHƯA CÓ** | — | chưa đo |
@@ -64,9 +202,13 @@ thẳng là **chưa đo**, không ước lượng.
 
 ### Phải nói rõ ba điều
 
-1. **Bản phát hành này chưa có trọng số do BDSG huấn luyện.** Không có tệp `.safetensors`
-   nào trong kho, và không có liên kết tải trọng số nào ở phần dưới. Mục nào cần trọng số
-   thì trong [MODEL-CARD.md](MODEL-CARD.md) đều ghi "chưa huấn luyện — mục này trống cho tới M7".
+1. **Kho này không chứa tệp trọng số nào.** Không có `.safetensors` trong kho và không có
+   liên kết tải trọng số nào ở phần dưới — trọng số lớn không đi vào git (xem `.gitignore`).
+   BDSG **đã** huấn luyện một bản trọng số nghiên cứu ngày 26/09/2026 (26.878.464 tham số,
+   [chi tiết](tai-lieu/LAN-HUAN-LUYEN-DAU-TIEN.md)), nhưng nó **chưa dùng được cho việc gì**:
+   perplexity phần kiểm 102,5 so với phần học 19,9, tức quá khớp 5,2 lần. Mục nào cần một
+   bản trọng số **dùng được** thì trong [MODEL-CARD.md](MODEL-CARD.md) vẫn ghi "chưa huấn
+   luyện — mục này trống cho tới M7".
 
 2. **Thứ đang chạy tại `llm.bdsg.vn` là TRUY HỒI đặt trước một mô hình của bên thứ ba,
    không phải trọng số của BDSG.** Lớp truy hồi dùng `pg_trgm` + `tsvector` của PostgreSQL —
@@ -76,8 +218,69 @@ thẳng là **chưa đo**, không ước lượng.
    `bdsg_la_trong_so_bdsg = false` (gọi lại và đọc tận nơi ngày 25/09/2026).
 
 3. **Vì thế kho này KHÔNG được gọi là "mô hình ngôn ngữ của BDSG" cho tới mốc M7.** Cho tới
-   lúc đó nó là một bộ dữ liệu mở, một bộ đánh giá đóng băng, và một dây chuyền huấn luyện
-   sẽ dùng để tạo ra trọng số ấy.
+   lúc đó nó là một bộ dữ liệu mở, một bộ đánh giá đóng băng, một dây chuyền huấn luyện đã
+   chứng minh chạy hết được, và — từ 26/09/2026 — một backend **phục vụ trọng số của
+   Google**. Cái cuối cùng ấy là của Google, không phải của BDSG.
+
+---
+
+<a id="backend-gemma-4-31b-cua-google"></a>
+
+## Backend Gemma 4 31B của Google
+
+Từ 26/09/2026 kho này có thêm một đường chạy **khác hẳn** nhánh mô hình nhỏ: phục vụ
+**`google/gemma-4-31B-it`** qua **vLLM**, với API tương thích OpenAI, **trên máy nội bộ**.
+
+**Trọng số là của Google DeepMind, giấy phép Apache-2.0.** BDSG **phục vụ** chúng; BDSG
+**không** huấn luyện chúng và không sở hữu chúng.
+
+| Nguồn chính thức | |
+|---|---|
+| Trọng số bản chat | `https://huggingface.co/google/gemma-4-31B-it` |
+| Trọng số bản nền | `https://huggingface.co/google/gemma-4-31B` |
+| Mã triển khai của Google | `https://github.com/google-deepmind/gemma` |
+| Bài báo | arXiv:2607.02770 |
+| Giấy phép | **Apache-2.0** (khác hẳn giấy phép riêng của Gemma 1–3) |
+
+Tài liệu đầy đủ: **[`tai-lieu/GEMMA4-31B.md`](tai-lieu/GEMMA4-31B.md)** — thông số mô
+hình, bảng VRAM, cảnh báo lượng tử hoá, và mục "ai sở hữu cái gì".
+Lộ trình tinh chỉnh: **[`tai-lieu/LO-TRINH-LORA.md`](tai-lieu/LO-TRINH-LORA.md)**.
+
+### Khởi động nội bộ
+
+```bash
+cp trien-khai/cau-hinh.mau.env cau-hinh.env   # bản mẫu KHÔNG chứa bí mật
+$EDITOR cau-hinh.env
+set -a; . ./cau-hinh.env; set +a
+
+trien-khai/chay-vllm.sh --chi-kiem   # chỉ kiểm, không khởi động
+trien-khai/chay-vllm.sh              # đạt hết thì chạy
+trien-khai/chay-vllm.sh --tu-kiem    # thử ngược các hàm tính, KHÔNG CẦN GPU
+```
+
+Kịch bản **kiểm trước rồi mới chạy** và **dừng hẳn** khi thiếu điều kiện, thay vì chạy rồi
+hỏng giữa chừng với một thông báo khó đọc: không biết lấy trọng số ở đâu · tên phục vụ
+khai sai quyền sở hữu · vLLM cũ hơn 0.19.0 (bản đầu có kiến trúc `gemma4`) · không thấy
+`nvidia-smi` · VRAM tính ra không đủ · `--max-model-len` vượt 262.144.
+
+### Bốn điều phải biết trước khi dùng
+
+1. **CHƯA CÓ ĐĂNG NHẬP.** Mặc định nghe `127.0.0.1`, có chủ ý. Bản này là **demo một
+   người trên localhost** — **chưa dùng được cho nhiều nhân viên**. Không có "ai đã hỏi
+   gì", không có hạn mức theo người, không có cách tách hội thoại người này khỏi người kia.
+
+2. **Không có đường dự phòng ra nhà cung cấp bên ngoài.** Máy nội bộ hỏng thì **báo lỗi rõ
+   ràng và dừng**. Một chuỗi "cục bộ trước, đám mây sau" phá đúng thứ hệ này hứa: người
+   dùng tưởng đang chạy cục bộ, còn câu hỏi thì âm thầm đi ra ngoài.
+
+3. **Chưa chạy thật lần nào.** Máy soạn phần này là macOS arm64, không CUDA, nên chưa cài
+   được `vllm` và chưa nạp trọng số. Mọi số VRAM trong tài liệu là **TÍNH RA**, không phải
+   đo. Độ trễ và thông lượng: **chưa đo**.
+
+4. **⚠ Lượng tử hoá có thể giết năng lực gọi công cụ.** Số đo 26/09/2026: Gemma-3 12B ở
+   Q4_K_M rớt 91,3% → 69,0% trên BFCL (−22,3 điểm), trong khi chất lượng chữ thường gần
+   như không đổi. Đó là **mô hình khác, họ khác** — chưa ai đo Gemma 4 ở INT4 cho gọi công
+   cụ. Nên chạy 31B ở INT4 là một **rủi ro đã biết**, phải tự đo trước khi hứa.
 
 ---
 
@@ -445,10 +648,29 @@ Các thư mục `mo-hinh/`, `huan-luyen/`, `bo-du-lieu/`, `danh-gia/`, `cong/`, 
 chú đo lường riêng — đọc tệp trong chính thư mục đó, đừng suy từ README này. Bản phát hành
 đầu tiên ở gốc kho là **mặt tiền**: README, thẻ mô hình, giấy phép và quy tắc đóng góp.
 
+### `trien-khai/` — phục vụ Gemma 4 31B của Google
+
+Đường chạy thứ hai, và là đường **duy nhất** trong kho hôm nay có thể cho ra chữ ở chất
+lượng dùng được — nhưng nó cần **một GPU NVIDIA đủ lớn**, và **chưa ai chạy thử**. Lệnh,
+điều kiện và bảng VRAM ở mục [backend Gemma 4 31B](#backend-gemma-4-31b-cua-google) và
+trong [`tai-lieu/GEMMA4-31B.md`](tai-lieu/GEMMA4-31B.md).
+
+Chạy được ngay trên máy không GPU, vì nó chỉ kiểm chứ không nạp gì:
+
+```bash
+trien-khai/chay-vllm.sh --tu-kiem    # thử ngược các hàm tính — ĐẠT 45/45 ngày 26/09/2026
+trien-khai/chay-vllm.sh --chi-kiem   # nói thẳng máy này thiếu gì để chạy được
+```
+
 ### Chưa chạy được, và vì sao
 
-Không có trọng số ⇒ **không có lệnh chạy cục bộ nào cho ra chữ.** Kho này không có tệp
-`.safetensors` nào và không có liên kết tải trọng số nào.
+**Mô hình nhỏ của BDSG:** bản trọng số nghiên cứu ngày 26/09/2026 có thật và sinh được
+chữ, nhưng **chưa dùng được cho việc gì** — nó bịa tên công ty, và quá khớp 5,2 lần. Kho
+này **không** chứa tệp trọng số nào: `.safetensors` không đi vào git.
+
+**Backend Gemma 4 31B:** cần GPU NVIDIA và ~65 GB VRAM ở cấu hình nhỏ nhất (BF16, ngữ cảnh
+8K, 2 chuỗi — **tính ra, chưa đo**). Máy không có GPU NVIDIA thì `chay-vllm.sh` dừng ở
+bước kiểm và nói rõ lý do, thay vì chạy rồi hỏng giữa chừng.
 
 Mục tiêu của dự án là người dùng tải mô hình về **máy cá nhân** chạy được, kể cả khi không
 có GPU rời. Cỡ mô hình BDSG nhắm tới đủ nhỏ để mục tiêu ấy khả thi trên CPU — các con số
@@ -538,8 +760,17 @@ open-bdsg-os/
 ├── bo-du-lieu/            ← ngữ liệu phát hành (CC BY 4.0)
 ├── danh-gia/              ← M3: bộ 227 câu + mã chấm
 ├── cong/                  ← cổng nghiệm thu (M6)
+├── trien-khai/            ← backend phục vụ trọng số GOOGLE Gemma 4 31B qua vLLM
+│   ├── chay-vllm.sh       ←   kịch bản khởi động, kiểm trước rồi mới chạy
+│   ├── cau-hinh.mau.env   ←   cấu hình mẫu, KHÔNG chứa bí mật
+│   └── yeu-cau.txt        ←   phụ thuộc đã ghim phiên bản
 └── tai-lieu/
+    ├── GEMMA4-31B.md      ← tài liệu gốc về backend Gemma 4 31B
+    └── LO-TRINH-LORA.md   ← lộ trình tinh chỉnh LoRA/QLoRA
 ```
+
+`trien-khai/` là thư mục **duy nhất** nói về trọng số của bên ngoài. Mọi thư mục còn lại
+nói về mô hình và dữ liệu của BDSG — xem [bảng tách hai nhánh](#hai-thu-khac-nhau-trong-kho-nay).
 
 Các thư mục ngoài gốc kho có tài liệu riêng và trạng thái riêng theo mốc M2–M6. README này
 chỉ chịu trách nhiệm về các tệp **ở gốc**; đừng suy trạng thái của một thư mục từ tài liệu
@@ -551,15 +782,25 @@ này mà hãy đọc tệp trong chính thư mục đó.
 
 ## Giấy phép
 
-| Phạm vi | Giấy phép | Tệp |
+| Phạm vi | Giấy phép | Tệp / nguồn |
 |---|---|---|
-| **Mã nguồn** | Apache License 2.0 | [LICENSE-CODE](LICENSE-CODE) |
+| **Mã nguồn** (gồm cả `trien-khai/`) | Apache License 2.0 | [LICENSE-CODE](LICENSE-CODE) |
 | **Dữ liệu trong `bo-du-lieu/`** | CC BY 4.0 | [LICENSE-DATA](LICENSE-DATA) |
+| **Trọng số Gemma 4 31B — của Google DeepMind, KHÔNG nằm trong kho này** | Apache License 2.0 | `https://huggingface.co/google/gemma-4-31B-it` |
 
-Apache-2.0 là **lựa chọn của BDSG**, không phải ràng buộc kế thừa từ đâu cả. Mã trong kho
-này do BDSG viết độc lập, nên không có giấy phép thượng nguồn nào phải khớp. Chọn
+Apache-2.0 cho **mã** là **lựa chọn của BDSG**, không phải ràng buộc kế thừa từ đâu cả. Mã
+trong kho này do BDSG viết độc lập, nên không có giấy phép thượng nguồn nào phải khớp. Chọn
 Apache-2.0 vì nó cho phép dùng thương mại và có điều khoản cấp phép sáng chế tường minh —
 hai thứ mà người dùng doanh nghiệp cần trả lời được trước khi đưa mô hình vào sản phẩm.
+
+**Dòng thứ ba là chuyện khác, và phải đọc riêng.** Trọng số Gemma 4 là của **Google
+DeepMind**, phát hành theo Apache-2.0 (tra 26/09/2026, `gated = false`) — khác hẳn giấy
+phép riêng của Gemma 1–3. Trọng số **không nằm trong kho này** và không được commit vào
+đây; kho chỉ có kịch bản phục vụ chúng. Việc hai bên cùng dùng Apache-2.0 là **trùng hợp
+thuận lợi, không phải quan hệ thượng nguồn**: nghĩa vụ chính còn lại là giữ ghi công và
+nêu rõ chỗ đã sửa (Apache-2.0 điều 4), và chỗ giữ ghi công ấy là
+[`tai-lieu/GEMMA4-31B.md`](tai-lieu/GEMMA4-31B.md) §1 cùng mục
+[backend](#backend-gemma-4-31b-cua-google) ở trên. Đừng gỡ.
 
 Giấy phép của kho này **không** áp cho các nguồn đã bị loại ở
 [mục loại trừ](#nhung-gi-co-y-khong-co-trong-bo-nay-va-vi-sao) — chúng không nằm trong kho,
@@ -595,7 +836,10 @@ kho mã đứng giữa không được nhận thay.
 
 ---
 
-*Cập nhật lần cuối: 26/09/2026 — bản này thu phạm vi ngôn ngữ về đúng hai (Việt chính, Anh
-phụ) và ghi lại đúng nguồn gốc kiến trúc: do BDSG viết từ kỹ thuật đã công bố trong bài
-báo. Mọi số đo giữ nguyên, không con số nào bị sửa theo. Mọi số trong tài liệu này đều kèm
-ngày đo; số nào chưa đo được ghi thẳng là chưa đo.*
+*Cập nhật lần cuối: 26/09/2026 — bản này thêm backend phục vụ trọng số **Gemma 4 31B của
+Google DeepMind** (Apache-2.0) trong `trien-khai/`, và tách hẳn nó khỏi nhánh mô hình nhỏ
+do BDSG tự huấn luyện. Bản trước đó thu phạm vi ngôn ngữ về đúng hai (Việt chính, Anh phụ)
+và ghi lại đúng nguồn gốc kiến trúc: do BDSG viết từ kỹ thuật đã công bố trong bài báo.
+Mọi số đo cũ giữ nguyên, không con số nào bị sửa theo. Số VRAM của backend Gemma là số
+TÍNH RA, chưa đo — kho chưa có GPU. Mọi số trong tài liệu này đều kèm ngày đo; số nào chưa
+đo được ghi thẳng là chưa đo.*

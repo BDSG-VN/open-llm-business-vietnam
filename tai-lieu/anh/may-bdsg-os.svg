@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="Roboto, Helvetica, Arial, sans-serif">
+  <!-- ẢNH DỰNG TẠM — bản vẽ kỹ thuật, KHÔNG phải ảnh chụp sản phẩm có thật. -->
+  <defs>
+    <linearGradient id="nen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"   stop-color="#041124"/>
+      <stop offset="0.55" stop-color="#071b33"/>
+      <stop offset="1"   stop-color="#002b4e"/>
+    </linearGradient>
+    <linearGradient id="vo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#1b2a3d"/>
+      <stop offset="0.14" stop-color="#2c4055"/>
+      <stop offset="0.80" stop-color="#20303f"/>
+      <stop offset="1"    stop-color="#131d28"/>
+    </linearGradient>
+    <linearGradient id="kinh" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0"   stop-color="#0a2c4d" stop-opacity="0.92"/>
+      <stop offset="1"   stop-color="#041a2e" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="quat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#005CA6"/>
+      <stop offset="1" stop-color="#01497f"/>
+    </linearGradient>
+    <pattern id="luoi" width="13" height="13" patternUnits="userSpaceOnUse">
+      <rect width="13" height="13" fill="#16202c"/>
+      <circle cx="6.5" cy="6.5" r="3.1" fill="#0b1219"/>
+    </pattern>
+    <filter id="toa" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#nen)"/>
+  <ellipse cx="420" cy="812" rx="290" ry="30" fill="#000" opacity="0.45"/>
+
+  <!-- ══ THÙNG MÁY ══ -->
+  <g>
+    <rect x="215" y="120" width="410" height="680" rx="16" fill="url(#vo)" stroke="#40566e" stroke-width="2"/>
+    <!-- mặt kính hông -->
+    <rect x="243" y="146" width="262" height="628" rx="8" fill="url(#kinh)" stroke="#2f4a63" stroke-width="1.5"/>
+    <!-- lưới tản nhiệt mặt trước (dải phải) -->
+    <rect x="519" y="146" width="80" height="628" rx="8" fill="url(#luoi)" stroke="#2f4a63" stroke-width="1.5"/>
+
+    <!-- card đồ hoạ: khối nằm ngang, ba quạt -->
+    <rect x="266" y="386" width="216" height="92" rx="7" fill="#101a24" stroke="#3b5a78" stroke-width="1.6"/>
+    <g fill="url(#quat)" opacity="0.95">
+      <circle cx="302" cy="432" r="26"/><circle cx="374" cy="432" r="26"/><circle cx="446" cy="432" r="26"/>
+    </g>
+    <g fill="#041124" opacity="0.85">
+      <circle cx="302" cy="432" r="8"/><circle cx="374" cy="432" r="8"/><circle cx="446" cy="432" r="8"/>
+    </g>
+    <text x="374" y="503" text-anchor="middle" fill="#7fb2dd" font-size="15" letter-spacing="0.13em">GPU · 48 GB VRAM</text>
+
+    <!-- bo mạch + tản nhiệt CPU -->
+    <rect x="266" y="196" width="216" height="150" rx="7" fill="#0c1620" stroke="#3b5a78" stroke-width="1.4"/>
+    <rect x="292" y="222" width="86" height="86" rx="5" fill="#1a2b3b" stroke="#4a6b8a" stroke-width="1.3"/>
+    <g stroke="#41648a" stroke-width="2.2">
+      <path d="M300 232v66M314 232v66M328 232v66M342 232v66M356 232v66M370 232v66"/>
+    </g>
+    <!-- thanh RAM -->
+    <g fill="#13202c" stroke="#3b5a78" stroke-width="1.2">
+      <rect x="396" y="216" width="14" height="98" rx="3"/><rect x="416" y="216" width="14" height="98" rx="3"/>
+      <rect x="436" y="216" width="14" height="98" rx="3"/><rect x="456" y="216" width="14" height="98" rx="3"/>
+    </g>
+    <text x="374" y="336" text-anchor="middle" fill="#7fb2dd" font-size="14" letter-spacing="0.12em">CPU · RAM ECC 256 GB</text>
+
+    <!-- ổ NVMe -->
+    <g fill="#0c1620" stroke="#3b5a78" stroke-width="1.3">
+      <rect x="266" y="546" width="216" height="34" rx="5"/><rect x="266" y="592" width="216" height="34" rx="5"/>
+    </g>
+    <circle cx="462" cy="563" r="4" fill="#00573f"/><circle cx="462" cy="609" r="4" fill="#00573f"/>
+    <text x="374" y="652" text-anchor="middle" fill="#7fb2dd" font-size="14" letter-spacing="0.12em">NVMe 2 × 4 TB</text>
+
+    <!-- nguồn -->
+    <rect x="266" y="676" width="216" height="76" rx="6" fill="#0a131c" stroke="#3b5a78" stroke-width="1.3"/>
+    <text x="374" y="722" text-anchor="middle" fill="#5f8cb5" font-size="14" letter-spacing="0.12em">PSU 1600 W</text>
+
+    <!-- chấm nguồn + chữ trên dải lưới -->
+    <circle cx="559" cy="186" r="7" fill="#7fe3b0" filter="url(#toa)"/>
+    <g transform="translate(559,470) rotate(-90)">
+      <text text-anchor="middle" fill="#cfe4f6" font-size="20" font-weight="600" letter-spacing="0.34em">BDSG OS</text>
+    </g>
+  </g>
+
+  <!-- ══ CHÚ THÍCH ══ -->
+  <g transform="translate(760,0)">
+    <text x="0" y="150" fill="#92c1e9" font-size="15" font-weight="600" letter-spacing="0.16em">MÁY TRẠM BDSG OS · BẢN VẼ DỰNG TẠM</text>
+    <text x="0" y="212" fill="#ffffff" font-size="46" font-weight="600" letter-spacing="-0.01em">Một thùng máy.</text>
+    <text x="0" y="266" fill="#ffffff" font-size="46" font-weight="600" letter-spacing="-0.01em">Cả hệ điều hành ở trong.</text>
+    <text x="0" y="316" fill="#b9d4ea" font-size="18">Ban ngày phục vụ nhân sự. Ban đêm huấn luyện trên tài liệu của chính công ty.</text>
+
+    <g font-size="17">
+      <g transform="translate(0,372)">
+        <rect x="0" y="-24" width="4" height="34" fill="#005CA6"/>
+        <text x="20" y="0" fill="#ffffff" font-weight="600">Phục vụ nội bộ</text>
+        <text x="20" y="26" fill="#9fc3e0">8–12 lượt hỏi cùng lúc · quy mô ~30 nhân sự</text>
+      </g>
+      <g transform="translate(0,452)">
+        <rect x="0" y="-24" width="4" height="34" fill="#00573f"/>
+        <text x="20" y="0" fill="#ffffff" font-weight="600">Tinh chỉnh tại chỗ</text>
+        <text x="20" y="26" fill="#9fc3e0">LoRA/QLoRA trên tài liệu riêng — dữ liệu không rời phòng máy</text>
+      </g>
+      <g transform="translate(0,532)">
+        <rect x="0" y="-24" width="4" height="34" fill="#a34400"/>
+        <text x="20" y="0" fill="#ffffff" font-weight="600">Đấu nối hệ sinh thái</text>
+        <text x="20" y="26" fill="#9fc3e0">MCP tới CRM, kho dữ liệu, bản đồ, không gian 3D của doanh nghiệp</text>
+      </g>
+      <g transform="translate(0,612)">
+        <rect x="0" y="-24" width="4" height="34" fill="#A6192E"/>
+        <text x="20" y="0" fill="#ffffff" font-weight="600">Không khoá API bên thứ ba</text>
+        <text x="20" y="26" fill="#9fc3e0">Mất mạng vẫn chạy; máy nội bộ lỗi thì báo lỗi, không lặng lẽ gửi ra ngoài</text>
+      </g>
+    </g>
+
+    <line x1="0" y1="672" x2="700" y2="672" stroke="#20405e" stroke-width="1.5"/>
+    <text x="0" y="708" fill="#6f97bb" font-size="14.5">Đây là BẢN VẼ MINH HOẠ cấu hình, không phải ảnh chụp một cỗ máy đã xuất xưởng.</text>
+    <text x="0" y="734" fill="#6f97bb" font-size="14.5">Số liệu hiệu năng chỉ được công bố sau khi đo trên máy thật — xem tai-lieu/MAY-BDSG-OS.md.</text>
+  </g>
+</svg>
