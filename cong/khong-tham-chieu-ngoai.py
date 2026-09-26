@@ -182,7 +182,30 @@ MAU_MA_NGON_NGU = re.compile("zh" + r"[-_](?:CN|TW|HK|MO|SG|Hans|Hant)\b", re.IG
 _THU_VIEN = "jie" + "ba"
 MAU_THU_VIEN = re.compile(_THU_VIEN, re.IGNORECASE)
 
+# ── Luật 7: TÊN SẢN PHẨM CŨ ───────────────────────────────────────────────────
+# Thêm 26/09/2026 sau một lần sót đo được. Sản phẩm đã đổi tên hai lần, và lần đổi
+# trước ĐÃ chạm vào cả ba khối trích dẫn trong kho — nó sửa đúng trường `title` và
+# bỏ sót đúng cái KHOÁ BibTeX. Ba tệp, ba lần sót giống hệt nhau, nên đây là vết sót
+# cơ học chứ không phải một quyết định giữ tên.
+#
+# Vì sao một khoá BibTeX đáng có luật riêng: khoá không phải biến nội bộ. Nó là thứ
+# người khác CHÉP NGUYÊN VĂN vào tệp .bib của họ, và vài kiểu trích dẫn in thẳng nó
+# ra. Một cái tên chết phát tán theo đường ấy thì BDSG không sửa được ở phía người
+# trích nữa. Đó là dạng lan truyền mà mọi luật khác trong tệp này không chặn.
+#
+# Mẫu dựng từ ba mảnh, cùng lý do với Luật 1. Cho phép một ký tự nối giữa các mảnh,
+# và cho phép một cụm chen vào giữa — dạng cũ thứ hai có chữ ấy nằm giữa.
+_CU_A = "open"
+_CU_B = "llm"
+_CU_C = "busi" + "ness"
+MAU_TEN_CU = re.compile(
+    _CU_A + r"[-_ ]?" + _CU_B + r"[-_ ]?(?:bdsg[-_ ]?)?" + _CU_C,
+    re.IGNORECASE,
+)
+
 LUAT = (
+    ("ten-san-pham-cu", MAU_TEN_CU,
+     "tên sản phẩm cũ — đã đổi 26/09/2026; khoá trích dẫn cũng phải đổi theo"),
     ("ten-du-an-ngoai", MAU_TEN_NGOAI,
      "tên một dự án ngoài — kho này viết độc lập từ bài báo, không dẫn xuất"),
     ("ngon-ngu-da-bo", MAU_NGON_NGU,

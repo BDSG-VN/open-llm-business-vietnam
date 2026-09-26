@@ -441,7 +441,7 @@ https://github.com/BDSG-VN/open-bdsg-os
 BibTeX:
 
 ```bibtex
-@misc{bdsg_open_llm_business_vietnam_2026,
+@misc{openbdsgos_bodulieu_2026,
   title        = {Bo du lieu mo Open BDSG OS},
   author       = {{BDSG}},
   year         = {2026},

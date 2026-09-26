@@ -50,8 +50,19 @@ GHI = "ghi"
 
 # Tên công cụ đầy đủ: <trinh_dieu_khien>.<cong_cu>. Xem `nhan/dinh_tuyen.py` để
 # biết vì sao có dấu chấm thay vì một không gian tên phẳng.
-MAU_TEN_DAY_DU = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}\.[a-z0-9][a-z0-9_]{0,63}$")
-MAU_TEN_VAI = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}$")
+# NEO CUỐI LÀ \Z, KHÔNG PHẢI $. Sửa 26/09/2026.
+#
+#   Trong Python, `$` khớp ở cuối chuỗi VÀ ngay trước một ký tự xuống dòng ở
+#   cuối chuỗi. Nên `re.compile(r"^[a-z]+$").match("quan-tri\n")` KHỚP. Hệ quả đo
+#   được: một tên vai / tên công cụ / mã danh tính kết thúc bằng xuống dòng đi
+#   lọt qua mọi phép kiểm hợp lệ, rồi bẻ gãy nhật ký một-dòng-một-bản-ghi ở tầng
+#   dưới — bản ghi bị cắt làm đôi và câu "ai đã làm gì" mất nửa sau.
+#
+#   `\Z` chỉ khớp ở cuối chuỗi thật. Mọi mẫu KIỂM HỢP LỆ trong nhân dùng \Z.
+#   Các mẫu DÒ TÌM trong nhat_ky.py giữ `$`: ở đó khớp rộng hơn là làm mờ nhiều
+#   hơn, tức nghiêng về phía an toàn.
+MAU_TEN_DAY_DU = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}\.[a-z0-9][a-z0-9_]{0,63}\Z")
+MAU_TEN_VAI = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}\Z")
 
 
 class LoiChinhSach(ValueError):
@@ -86,6 +97,17 @@ class CongGhi:
     """
 
     def __init__(self, mo: bool = False, ly_do: str = "", nguoi_mo: str = "") -> None:
+        # ĐƯỜNG VÒNG ĐÃ BỊT, 26/09/2026.
+        #
+        #   `mo()` đòi ly_do và nguoi_mo — nhưng hàm khởi tạo thì không, nên
+        #   `CongGhi(mo=True)` mở được cổng ghi toàn nhân mà không để lại dấu vết
+        #   nào về vì sao và do ai. Một phép kiểm chỉ đứng ở MỘT cửa thì cửa kia
+        #   là đường vòng, và đường vòng ấy ngắn hơn cửa chính.
+        if mo and (not ly_do or not nguoi_mo):
+            raise LoiChinhSach(
+                "CongGhi(mo=True) phải kèm ly_do và nguoi_mo — cùng một luật với "
+                "mo(). Mở cổng ghi vô danh là thứ nhật ký không giải thích được."
+            )
         self._mo = bool(mo)
         self._ly_do = ly_do
         self._nguoi_mo = nguoi_mo
@@ -192,8 +214,23 @@ class ChinhSach:
                     "của vai %r. Quyền ghi phải khai tường minh ở ghi=." % (ten, ten_vai)
                 )
 
-        self._vai_doc.setdefault(ten_vai, set()).update(doc)
-        self._vai_ghi.setdefault(ten_vai, set()).update(ghi)
+        # THAY THẾ, KHÔNG CỘNG DỒN. Sửa 26/09/2026.
+        #
+        #   Bản trước dùng `setdefault(...).update(...)` — tức HỢP TẬP. Hệ quả đo
+        #   được: khai lại một vai với danh sách NGẮN HƠN không rút được gì. Sau
+        #   khai_vai("v", doc=["crm.a","crm.b"]) rồi khai_vai("v", doc=["crm.a"]),
+        #   duoc_goi(dt, "crm.b") VẪN trả (True, "vai 'v' có quyền ĐỌC 'crm.b'").
+        #   Trong một nhân phân quyền, không thu hồi được quyền là lỗi nặng hơn
+        #   cấp nhầm: cấp nhầm còn sửa được, còn cái này thì không có đường sửa.
+        #
+        #   Nay khai_vai KHAI BÁO trạng thái cuối của vai. Một tệp chính sách đọc
+        #   lên là thấy đúng quyền hiện có, không phải quyền cộng dồn qua các lần
+        #   nạp trước đó mà không ai còn nhớ.
+        #
+        #   Nếu về sau thật sự cần cộng dồn (nạp chính sách từ nhiều tệp), hãy
+        #   thêm một hàm RIÊNG tên rõ nghĩa — đừng đổi hàm này lại thành update().
+        self._vai_doc[ten_vai] = set(doc)
+        self._vai_ghi[ten_vai] = set(ghi)
 
     # -- tra cứu --------------------------------------------------------------
 

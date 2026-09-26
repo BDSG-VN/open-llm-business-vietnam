@@ -58,9 +58,20 @@ NGUON_PHIEN = "phien-nguoi-dung"
 # nhỏ mà bẩn: một mã chứa dấu chấm sẽ trộn lẫn với cú pháp
 # `<trinh_dieu_khien>.<cong_cu>`, một mã chứa xuống dòng sẽ bẻ gãy nhật ký
 # một-dòng-một-bản-ghi. Chặn ngay từ lúc dựng đối tượng.
-MAU_MA = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-@]{0,127}$")
-MAU_VAI = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}$")
-MAU_NGUON = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}$")
+# NEO CUỐI LÀ \Z, KHÔNG PHẢI $. Sửa 26/09/2026.
+#
+#   Trong Python, `$` khớp ở cuối chuỗi VÀ ngay trước một ký tự xuống dòng ở
+#   cuối chuỗi. Nên `re.compile(r"^[a-z]+$").match("quan-tri\n")` KHỚP. Hệ quả đo
+#   được: một tên vai / tên công cụ / mã danh tính kết thúc bằng xuống dòng đi
+#   lọt qua mọi phép kiểm hợp lệ, rồi bẻ gãy nhật ký một-dòng-một-bản-ghi ở tầng
+#   dưới — bản ghi bị cắt làm đôi và câu "ai đã làm gì" mất nửa sau.
+#
+#   `\Z` chỉ khớp ở cuối chuỗi thật. Mọi mẫu KIỂM HỢP LỆ trong nhân dùng \Z.
+#   Các mẫu DÒ TÌM trong nhat_ky.py giữ `$`: ở đó khớp rộng hơn là làm mờ nhiều
+#   hơn, tức nghiêng về phía an toàn.
+MAU_MA = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-@]{0,127}\Z")
+MAU_VAI = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}\Z")
+MAU_NGUON = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,63}\Z")
 
 
 class LoiDanhTinh(ValueError):

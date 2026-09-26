@@ -441,7 +441,7 @@ chạy thật. Không điền số của thượng nguồn vào ô của mình.
 ## 10. Trích dẫn
 
 ```bibtex
-@misc{openllmbusinessvietnam2026,
+@misc{openbdsgos2026,
   title        = {Open BDSG OS: bộ dữ liệu và bộ đánh giá mở
                   cho tri thức doanh nghiệp Việt Nam},
   author       = {BDSG},

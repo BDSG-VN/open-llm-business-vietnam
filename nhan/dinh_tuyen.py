@@ -72,8 +72,19 @@ from .han_muc import BoHanMuc, HanMuc
 from .nhat_ky import LOI, THANH_CONG, TU_CHOI, LoiNhatKy, NhatKy, lam_mo, ma_theo_doi_moi
 from .quyen import ChinhSach, CongGhi
 
-MAU_TEN_TRINH = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}$")
-MAU_TEN_NGAN = re.compile(r"^[a-z0-9][a-z0-9_]{0,63}$")
+# NEO CUỐI LÀ \Z, KHÔNG PHẢI $. Sửa 26/09/2026.
+#
+#   Trong Python, `$` khớp ở cuối chuỗi VÀ ngay trước một ký tự xuống dòng ở
+#   cuối chuỗi. Nên `re.compile(r"^[a-z]+$").match("quan-tri\n")` KHỚP. Hệ quả đo
+#   được: một tên vai / tên công cụ / mã danh tính kết thúc bằng xuống dòng đi
+#   lọt qua mọi phép kiểm hợp lệ, rồi bẻ gãy nhật ký một-dòng-một-bản-ghi ở tầng
+#   dưới — bản ghi bị cắt làm đôi và câu "ai đã làm gì" mất nửa sau.
+#
+#   `\Z` chỉ khớp ở cuối chuỗi thật. Mọi mẫu KIỂM HỢP LỆ trong nhân dùng \Z.
+#   Các mẫu DÒ TÌM trong nhat_ky.py giữ `$`: ở đó khớp rộng hơn là làm mờ nhiều
+#   hơn, tức nghiêng về phía an toàn.
+MAU_TEN_TRINH = re.compile(r"^[a-z0-9][a-z0-9_]{0,31}\Z")
+MAU_TEN_NGAN = re.compile(r"^[a-z0-9][a-z0-9_]{0,63}\Z")
 
 
 class LoiDangKy(ValueError):
