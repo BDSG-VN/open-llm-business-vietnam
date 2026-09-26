@@ -39,6 +39,7 @@ BA QUYẾT ĐỊNH, và vì sao
    người cho người khác. Dự án này đã dính đúng họ lỗi ấy một lần (phép kiểm
    quyền xoá vẫn xanh khi chủ sở hữu là None), nên ở đây cách ly nằm trong SQL.
 """
+import hashlib
 import os
 import re
 import sqlite3
@@ -119,9 +120,13 @@ class KhoTriNho:
                 ma_agent    TEXT NOT NULL REFERENCES agent(ma) ON DELETE CASCADE,
                 noi_dung    TEXT NOT NULL,
                 nhan        TEXT NOT NULL DEFAULT '',
+                bam         TEXT NOT NULL DEFAULT '',
                 tao_luc     REAL NOT NULL
             );
             CREATE INDEX IF NOT EXISTS mau_theo_agent ON mau(ma_agent, tao_luc DESC);
+            -- Chỉ mục cho nho_mot_lan(): thiếu nó thì mỗi lần ghi là một phép
+            -- quét, và 1,08 triệu lần quét biến việc 20 phút thành việc vài ngày.
+            CREATE INDEX IF NOT EXISTS mau_theo_bam ON mau(ma_agent, bam);
             """
         )
         # FTS5 = BM25 sẵn có, chạy trên CPU. `ma_agent` là cột UNINDEXED: nó
@@ -183,15 +188,44 @@ class KhoTriNho:
                 % (ma_agent, dem, TRAN_MAU_MOI_AGENT))
         mid = _ma_moi()
         gio = time.time()
+        bam = hashlib.blake2b(noi_dung.encode("utf-8"), digest_size=16).hexdigest()
         self.db.execute(
-            "INSERT INTO mau (id, ma_agent, noi_dung, nhan, tao_luc) VALUES (?, ?, ?, ?, ?)",
-            (mid, ma_agent, noi_dung, nhan, gio))
+            "INSERT INTO mau (id, ma_agent, noi_dung, nhan, bam, tao_luc) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (mid, ma_agent, noi_dung, nhan, bam, gio))
         self.db.execute(
             "INSERT INTO mau_tim (pham_vi, noi_dung, nhan, ma_agent, id) "
             "VALUES (?, ?, ?, ?, ?)",
             (khoa_pham_vi(ma_agent), noi_dung, nhan, ma_agent, mid))
         self.db.commit()
         return mid
+
+    def nho_mot_lan(self, ma_agent: str, noi_dung: str, nhan: str = "") -> Optional[str]:
+        """Ghi một mẩu CHỈ KHI agent chưa có mẩu y hệt. Trả None nếu đã có.
+
+        VÌ SAO CẦN — TÍNH BẤT BIẾN KHI CHẠY LẠI:
+          Nạp 1,08 triệu doanh nghiệp là việc hàng chục phút. Nó sẽ đứt, và sẽ
+          phải chạy lại. `nho()` thì lần nào cũng ghi, nên chạy lại hai lần là
+          mỗi agent có hai bản mẩu giống hệt — truy hồi trả về hai kết quả
+          trùng, và không ai thấy lúc nó bắt đầu sai vì tra cứu vẫn "có kết
+          quả". Đúng họ lỗi hỏng-mà-không-báo.
+
+          So sánh bằng BĂM nội dung chứ không bằng LIKE: nội dung có thể dài,
+          và so chuỗi dài trên mỗi lần ghi là tự tạo một phép quét toàn bảng.
+        """
+        kiem_ma_agent(ma_agent)
+        noi_dung = (noi_dung or "").strip()
+        if not noi_dung:
+            raise LoiTriNho("không ghi một mẩu trí nhớ rỗng")
+        if len(noi_dung) > TRAN_NOI_DUNG:
+            noi_dung = noi_dung[:TRAN_NOI_DUNG]
+        bam = hashlib.blake2b(noi_dung.encode("utf-8"), digest_size=16).hexdigest()
+        co = self.db.execute(
+            "SELECT id FROM mau WHERE ma_agent = ? AND bam = ? LIMIT 1",
+            (ma_agent, bam)).fetchone()
+        if co is not None:
+            return None
+        return self.nho(ma_agent, noi_dung, nhan)
 
     # -- nhớ lại -------------------------------------------------------------
 

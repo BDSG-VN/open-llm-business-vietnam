@@ -183,6 +183,50 @@ kiem("26. ★ Khoá phạm vi nằm TRONG biểu thức MATCH — đo được: 
      "khoa_pham_vi(ma_agent)," in _ng and "mau_tim MATCH ? AND ma_agent = ?" in _ng,
      "và mệnh đề WHERE VẪN GIỮ: khoá để NHANH, WHERE để ĐÚNG")
 
+# ── ★ PHÉP ĐO CÁCH LY PHẢI SO BẰNG ID, KHÔNG BẰNG CHỮ ──────────────────
+#
+#   Lỗi đã dính thật ngày 26/09/2026 khi đo trên 50.000 doanh nghiệp: phép
+#   kiểm rò rỉ so NỘI DUNG của kết quả với nội dung mẩu của agent khác, và báo
+#   "RÒ RỈ". Đo lại bằng ID thì 399/399 cặp sạch.
+#   Lý do: hai doanh nghiệp cùng một xã có mẩu địa bàn TRÙNG CHỮ một cách hợp
+#   lệ ("Trụ sở tại xã X, tỉnh Y"), và cùng nguồn thì mẩu nguồn cũng trùng.
+#   Trùng chữ KHÔNG phải rò rỉ; rò rỉ là nhận được BẢN GHI của người khác.
+#   Một phép đo không phân biệt được hai điều ấy sẽ báo động giả mãi, rồi tới
+#   lúc người ta tắt nó đi — và khi ấy mới là lúc rò rỉ thật đi qua.
+k4 = KhoTriNho()
+for m in ("dn.a", "dn.b"):
+    k4.mo_agent(m)
+    k4.nho(m, "Trụ sở tại xã Phường Hoàn Kiếm, tỉnh/thành phố Hà Nội.", "dia-ban")
+
+ma_b = k4.gan_day("dn.b", 9)
+id_b = {x["id"] for x in ma_b}
+kq = k4.nho_lai("dn.a", ma_b[0]["noi_dung"][:50], so_luong=9)
+
+kiem("27. ★ Hai agent TRÙNG CHỮ vẫn không thấy bản ghi của nhau",
+     len(kq) == 1 and not any(z["id"] in id_b for z in kq),
+     "nhận {} kết quả, {} thuộc agent kia — so bằng ID, không bằng chữ"
+     .format(len(kq), sum(1 for z in kq if z["id"] in id_b)))
+
+kiem("28. Phép đo SO BẰNG CHỮ sẽ báo động giả ở đúng ca trên",
+     any(z["noi_dung"] == ma_b[0]["noi_dung"] for z in kq),
+     "chính vì vậy mà ca 27 phải so bằng ID")
+
+# ── ★ GHI MỘT LẦN: chạy lại không nhân đôi ────────────────────────────
+k5 = KhoTriNho()
+k5.mo_agent("dn.c")
+x1 = k5.nho_mot_lan("dn.c", "Công ty TNHH Xây dựng Thái Nguyên", "ten")
+x2 = k5.nho_mot_lan("dn.c", "Công ty TNHH Xây dựng Thái Nguyên", "ten")
+x3 = k5.nho_mot_lan("dn.c", "Trụ sở tại xã Phú Lương.", "dia-ban")
+kiem("29. ★ nho_mot_lan: ghi lần đầu, BỎ QUA lần hai, vẫn ghi mẩu khác",
+     x1 and x2 is None and x3 and k5.dem_mau("dn.c") == 2,
+     "nạp 1,08 triệu bản ghi là việc hàng chục phút — nó SẼ phải chạy lại")
+
+kiem("30. Ghi một lần vẫn CÁCH LY: agent khác ghi cùng nội dung thì vẫn ghi được",
+     k5.mo_agent("dn.d") is not None
+     and k5.nho_mot_lan("dn.d", "Công ty TNHH Xây dựng Thái Nguyên", "ten") is not None
+     and k5.dem_mau("dn.d") == 1,
+     "trùng nội dung với người khác không phải lý do từ chối")
+
 print("-" * 74)
 print("  KET QUA: {}/{} DAT".format(dat, tong))
 print("")
